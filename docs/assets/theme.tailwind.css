@@ -1,0 +1,49 @@
+/* Tailwind v4 theme mapping. Import after tokens.css.
+   Components reference these utilities; never a hex literal. */
+@import './tokens.css';
+
+@theme inline {
+  --color-primary-50:  var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  --color-accent:      var(--accent-fill);
+  --color-accent-text: var(--accent-text);
+
+  --color-bg:          var(--bg-base);
+  --color-surface:     var(--bg-surface);
+  --color-surface-2:   var(--bg-surface-2);
+  --color-fg:          var(--text-primary);
+  --color-fg-muted:    var(--text-secondary);
+  --color-border:      var(--border-subtle);
+  --color-border-int:  var(--border-interactive);
+
+  --color-success:     var(--success-text);
+  --color-warning:     var(--warning-text);
+  --color-danger:      var(--danger-text);
+  --color-info:        var(--info-text);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans:    var(--font-sans);
+  --font-display: var(--font-display);
+
+  --text-display:  40px; --text-display--line-height: 44px;
+  --text-h1:       32px; --text-h1--line-height:      40px;
+  --text-h2:       24px; --text-h2--line-height:      32px;
+  --text-h3:       20px; --text-h3--line-height:      28px;
+  --text-body-lg:  17px; --text-body-lg--line-height: 28px;
+  --text-body:     15px; --text-body--line-height:    24px;
+  --text-body-sm:  13px; --text-body-sm--line-height: 20px;
+}

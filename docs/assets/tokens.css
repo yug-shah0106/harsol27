@@ -1,0 +1,135 @@
+/* ============================================================================
+   Design tokens — Community B2B Marketplace Portal
+   GENERATED from packages/tokens/tokens.json. Do not edit by hand.
+   Every value here is contrast-verified in docs/05-DESIGN-SYSTEM.md.
+   ========================================================================= */
+
+:root {
+  /* ---- Primary: Harbor Blue ---- */
+  --primary-50:  #F0F5FF;
+  --primary-100: #DEE9FF;
+  --primary-200: #C2D6FF;
+  --primary-300: #9BB8FF;
+  --primary-400: #6C90FB;
+  --primary-500: #4569EF;
+  --primary-600: #2E4BD8;   /* action fill / link — 6.74:1 on white */
+  --primary-700: #243BAE;   /* hover — 9.08:1 */
+  --primary-800: #1E3186;   /* pressed — 11.42:1 */
+  --primary-900: #1B2A6B;
+  --primary-950: #121B44;
+
+  /* ---- Accent: Trade Gold. FILL ONLY on light backgrounds. ---- */
+  --accent-50:  #FFF9EB;
+  --accent-100: #FFF0C7;
+  --accent-200: #FFE08A;
+  --accent-300: #FFCA4D;
+  --accent-400: #FDB524;
+  --accent-fill:#F59E0B;    /* 2.15:1 on white — NEVER text on white */
+  --accent-600: #D97706;
+  --accent-text:#B45309;    /* 5.02:1 on white — this is the text-safe gold */
+
+  /* ---- Neutrals: Slate ---- */
+  --neutral-0:   #FFFFFF;
+  --neutral-50:  #F8FAFC;
+  --neutral-100: #F1F5F9;
+  --neutral-200: #E2E8F0;   /* decorative dividers only — 1.23:1 */
+  --neutral-300: #CBD5E1;   /* disabled borders — 1.48:1 */
+  --neutral-400: #94A3B8;   /* placeholder icons — 2.56:1, NOT an input border */
+  --neutral-500: #64748B;   /* input borders + muted text — 4.76:1 */
+  --neutral-600: #475569;   /* secondary text — 7.58:1 */
+  --neutral-700: #334155;   /* body text — 10.35:1 */
+  --neutral-800: #1E293B;
+  --neutral-900: #0F172A;   /* primary text — 17.85:1 */
+
+  /* ---- Semantic ---- */
+  --success-text: #15803D;  --success-fill: #16A34A;  --success-bg: #ECFDF5;
+  --warning-text: #B45309;  --warning-fill: #F59E0B;  --warning-bg: #FFFBEB;
+  --danger-text:  #B91C1C;  --danger-fill:  #DC2626;  --danger-bg:  #FEF2F2;
+  --info-text:    #0369A1;  --info-fill:    #0284C7;  --info-bg:    #F0F9FF;
+
+  /* ---- Charts ---- */
+  --chart-1: #2E4BD8; --chart-2: #F59E0B; --chart-3: #0891B2;
+  --chart-4: #7C3AED; --chart-5: #DB2777; --chart-6: #65A30D;
+
+  /* ---- Semantic surface roles (light) ---- */
+  --bg-base:            var(--neutral-50);
+  --bg-surface:         var(--neutral-0);
+  --bg-surface-2:       var(--neutral-100);
+  --bg-tint:            var(--primary-50);
+  --text-primary:       var(--neutral-900);
+  --text-secondary:     var(--neutral-600);
+  --text-muted:         var(--neutral-500);
+  --text-on-fill:       var(--neutral-0);
+  --text-on-accent:     #111827;             /* 8.26:1 on accent fill */
+  --border-subtle:      var(--neutral-200);  /* decorative */
+  --border-interactive: var(--neutral-500);  /* inputs & controls — meets 3:1 */
+  --action:             var(--primary-600);
+  --action-hover:       var(--primary-700);
+  --action-active:      var(--primary-800);
+  --focus:              var(--primary-500);
+
+  /* ---- Radius ---- */
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px;
+  --radius-xl: 20px; --radius-full: 9999px;
+
+  /* ---- Elevation ---- */
+  --shadow-xs: 0 1px 2px  hsl(220 40% 12% / .06);
+  --shadow-sm: 0 2px 4px  hsl(220 40% 12% / .08);
+  --shadow-md: 0 6px 16px hsl(220 40% 12% / .10);
+  --shadow-lg: 0 16px 40px hsl(220 40% 12% / .14);
+
+  /* ---- Motion ---- */
+  --dur-fast: 120ms; --dur-base: 200ms; --dur-slow: 320ms;
+  --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --ease-enter:    cubic-bezier(0, 0, .2, 1);
+
+  /* ---- Type ---- */
+  --font-sans:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Inter Tight', var(--font-sans);
+}
+
+[data-theme='dark'] {
+  --bg-base:            #0B1020;
+  --bg-surface:         #131A2E;
+  --bg-surface-2:       #1B2440;
+  --bg-tint:            #17224A;
+  --text-primary:       #E6EBF5;   /* 15.84:1 */
+  --text-secondary:     #9AA6C0;   /* 7.74:1 base, 7.07:1 surface */
+  --text-muted:         #7382A8;
+  --border-subtle:      #2A3550;   /* decorative — 1.42:1 */
+  --border-interactive: #6B7BA3;   /* 4.11:1 on surface */
+  --action:             #3B5BE0;   /* white label 5.59:1 */
+  --action-hover:       var(--primary-500);
+  --action-active:      var(--primary-400);
+  --focus:              #6C90FB;   /* 5.78:1 on surface */
+
+  --accent-fill:  #FDB524;
+  --accent-text:  #FFCA4D;         /* 12.45:1 on base */
+  --success-text: #4ADE80;  --success-bg: #0E2A1A;
+  --warning-text: #FBBF24;  --warning-bg: #2A2110;
+  --danger-text:  #F87171;  --danger-bg:  #2C1417;
+  --info-text:    #38BDF8;  --info-bg:    #0C2436;
+
+  /* Shadows barely register on dark; convey elevation with surface + border. */
+  --shadow-xs: 0 1px 2px  hsl(220 60% 2% / .40);
+  --shadow-sm: 0 2px 6px  hsl(220 60% 2% / .45);
+  --shadow-md: 0 8px 20px hsl(220 60% 2% / .50);
+  --shadow-lg: 0 20px 48px hsl(220 60% 2% / .55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --dur-fast: 1ms; --dur-base: 1ms; --dur-slow: 1ms; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Universal focus treatment — no component may remove this without replacing it. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
