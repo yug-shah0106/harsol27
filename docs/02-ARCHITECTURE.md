@@ -16,28 +16,30 @@
 | Images | **Cloudflare R2** + `next/image` | Zero egress fees. Sharp re-encodes to WebP on upload. |
 | Email | **Resend** (or Brevo) with **React Email** templates | Free tier covers launch volume. Templates as components stay in the repo and in review. |
 | SMS/OTP | **MSG91** (India DLT-registered) | ⚠️ Requires DLT template registration — start this in week 1, it takes 3–7 working days. |
-| Jobs | **pg-boss** (PostgreSQL-backed queue) | Email retries and digests without adding Redis. One less service to host. |
+| Jobs | **pg-boss** (PostgreSQL-backed queue) | Email retries, the 10-minute admin lead digest (D-09), nightly subscription expiry sweep and renewal reminders — all without adding Redis. One less service to host. |
+| PDF receipts | **@react-pdf/renderer** | Subscription receipts (SUB-08) rendered from a React component in-process. No headless Chrome, which would not fit in 2 GB. |
+| Payments | **None in v1** — admin records payments manually (D-19 / Q-05) | Razorpay self-serve is CR-002. Keeping money out of the app for v1 removes PCI scope, webhook reconciliation and refund handling from a 7-week build. |
 | Push | **Web Push (VAPID)** via `web-push` | Free, no FCM project needed. |
 | Errors | **Sentry** free tier | |
 | Tests | **Vitest** + **Playwright** + **axe-core** | |
 | CI/CD | **GitHub Actions** → build image → deploy over SSH | |
 | Host | Single VPS, **Docker Compose** (app + Postgres + Caddy), **Cloudflare** in front | See `00-SCOPE-RECONCILIATION.md` §D. |
 
-### 1.1 The one deviation from Quotation B — read this before signing
+### 1.1 Runtime — resolved (D-12)
 
-Quotation B specifies "Node.js with Express.js". This plan uses **Next.js**, which *is* a Node.js
-server and uses a Connect/Express-compatible middleware model underneath. The client gets everything
-the quotation promised — a RESTful JSON API at `/api/v1`, JWT auth, Swagger docs — in one deployable
-unit instead of two.
+Client instruction: **"stick with Node.js."** Confirmed — Next.js 15 runs on **Node 22**, and it uses
+a Connect/Express-compatible middleware model underneath. One Node process serves both the rendered
+app and the REST API at `/api/v1`, with JWT auth and Swagger docs, exactly as Quotation B promised.
 
-Why it matters practically: a separate Express API means two processes, two deploys, two sets of
-logs and a CORS surface, on a box that costs ₹500/month. It also means the public product pages are
-client-rendered, which measurably hurts Google indexing for a directory site whose entire growth
-model is organic search.
+We are reading that instruction as *"the backend must be Node.js"* rather than *"there must be a
+separate Express service."* The distinction matters: a second Express process means two deploys, two
+sets of logs and a CORS surface on a box we are explicitly trying to keep as cheap as possible, and
+it forces the public product pages to be client-rendered — which measurably hurts Google indexing
+for a directory whose entire growth model is organic search.
 
-**Get this deviation acknowledged in writing before Phase 0.** If the client insists on literal
-Express, the fallback is Next.js for the web app plus a thin Express service that mounts the same
-handlers — roughly three extra days and about ₹400/month more hosting, for no user-visible benefit.
+⚠️ **If you specifically meant Node + Express as two services, say so before Phase 0** (Q-02). The
+fallback is Next.js for the web app plus a thin Express service mounting the same handlers: about
+three extra days and roughly ₹400/month more hosting, for no user-visible benefit.
 
 ## 2. Repository layout
 
@@ -72,6 +74,8 @@ Monorepo, pnpm workspaces. Flat enough that an AI agent always knows where a fil
 │     │  │  │  ├─ product/
 │     │  │  │  ├─ category/
 │     │  │  │  ├─ lead/
+│     │  │  │  ├─ subscription/   # plans, terms, expiry, reminders, receipts
+│     │  │  │  ├─ adminuser/      # admin invites & roles (D-07)
 │     │  │  │  ├─ notification/
 │     │  │  │  ├─ cms/
 │     │  │  │  └─ audit/
@@ -168,7 +172,51 @@ inventory is written alongside the dump so a restore can detect missing objects.
 **A restore rehearsal is a Phase 6 exit gate** (`09-QA-SECURITY-LAUNCH.md` §5), and the measured
 restore time goes in the handover runbook.
 
-## 8. Scale headroom
+## 8. Minimum-cost production stack (D-11)
+
+Instruction: keep hosting as low as possible. Every line below is either free or the cheapest option
+that will genuinely run this workload.
+
+| Component | Choice | Monthly |
+|---|---|---|
+| App + PostgreSQL + Caddy + worker | **One 2 GB / 2 vCPU VPS**, Indian or Singapore region, Docker Compose | ₹450–1,000 |
+| CDN, TLS, WAF, bot rules, DDoS | **Cloudflare free** | ₹0 |
+| Product images | **Cloudflare R2** — 10 GB free, zero egress | ₹0 to ~30k images |
+| Transactional email | **Brevo** (300/day) or **Resend** (3k/month) free tier | ₹0 |
+| SMS OTP | MSG91, per message | ₹150–200 at 1k inquiries/month |
+| Errors | **Sentry** free | ₹0 |
+| Uptime | **UptimeRobot** free | ₹0 |
+| CI/CD, image registry | **GitHub Actions + GHCR** free | ₹0 |
+| Backups | `pg_dump` → R2 (inside the free 10 GB) | ₹0 |
+| **Total** | | **≈ ₹600–1,200/month** |
+
+Verify current VPS pricing at purchase time; the ₹450–1,000 band reflects the small-VPS market
+generally rather than one provider's promotional rate. Prefer a provider with an Indian or
+Singapore region — Cloudflare absorbs most of the latency for cached public pages, but the seller
+and admin dashboards are uncached and their responsiveness tracks origin latency directly.
+
+**Three techniques that make 2 GB comfortable rather than marginal:**
+
+1. **Build in CI, never on the server.** GitHub Actions builds and pushes the Docker image; the VPS
+   only pulls and runs it. A Next.js production build is by far the most memory-hungry thing this
+   project does — keeping it off the box is what allows the small tier.
+2. **Cache the public catalogue at Cloudflare.** The read-heavy pages carrying nearly all the traffic
+   are served from the edge; the origin sees very little.
+3. **No Redis, no Elasticsearch, no headless Chrome.** pg-boss replaces the queue, Postgres
+   full-text replaces the search engine, and React-PDF replaces Chrome for receipts. Each avoided
+   service is 200–500 MB of RAM and one more thing to monitor.
+
+**Tune Postgres for a small box.** The defaults assume a dedicated server: set `shared_buffers` to
+~256 MB, `effective_cache_size` ~768 MB, `work_mem` ~8 MB, `max_connections` 40, and put Prisma
+behind a connection pool. Untuned Postgres on a 2 GB box is the most common cause of "the site got
+slow after launch".
+
+**The honest limitation.** One box is one point of failure: a hardware failure means downtime until
+a restore completes. Mitigations are nightly off-box backups, an image that redeploys in minutes, and
+a rehearsed restore with a measured time. At this budget that is the right trade, but it must be
+stated in the handover rather than discovered.
+
+## 9. Scale headroom
 
 The quotation targets 500–1,000 users/month. This architecture handles roughly 100× that on a single
 ₹600/month box, because the read-heavy public catalogue is cacheable at Cloudflare and every write

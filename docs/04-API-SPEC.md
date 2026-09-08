@@ -88,9 +88,10 @@ client-supplied flag.
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/leads/inquiries` | Body: `productId?`, `sellerId?`, buyer fields, `message`. Creates `Lead(PENDING_VERIFICATION)` + `OtpChallenge`, sends OTP. Returns `{ challengeId, maskedDestination: "+91 98••••3210", expiresInSec: 600 }`. **Never returns the code**, even in dev — in dev it is printed to the server console by the `console` OTP provider. |
+| POST | `/leads/inquiries` | Body: `productId?`, `sellerId?`, buyer fields, `message`, **`channel: "SMS" \| "EMAIL"` (D-02)**. Creates `Lead(PENDING_VERIFICATION)` + `OtpChallenge`, sends the code on the chosen channel. Returns `{ challengeId, channel, maskedDestination: "+91 98••••3210" or "p••••a@gmail.com", expiresInSec }`. **Never returns the code**, even in dev — in dev it is printed to the server console by the `console` provider. |
 | POST | `/leads/inquiries/verify` | `{ challengeId, code }`. On success: lead → `NEW`, buyer user created/linked, session set, notifications enqueued, returns the unmasked seller contact. On failure: increments attempts, 400; after `maxAttempts`, 429 and the challenge is burned. |
 | POST | `/leads/inquiries/resend` | 60 s cooldown, max 3 per challenge |
+| POST | `/leads/inquiries/switch-channel` | Buyer falls back from SMS to email (or back) without re-entering the form; issues a fresh challenge and burns the old one |
 | GET | `/me/inquiries` | Buyer's own leads with revealed contacts (LEAD-08) |
 
 Sequence:
@@ -165,6 +166,62 @@ It gets its own test in `tests/unit/policy/product.spec.ts`.
 
 Every admin mutation writes an `AuditLog` row **inside the same transaction** as the change. Outside
 the transaction, the log and the reality drift the first time something fails halfway.
+
+## 6a. Subscriptions (D-19)
+
+**Seller-facing** — role `SELLER`:
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/seller/subscription` | Current plan, snapshotted limits, live usage (`productsUsed/productsAllowed`), status, `expiresAt`, days remaining |
+| GET | `/seller/subscription/payments` | Payment history |
+| GET | `/seller/subscription/payments/:id/receipt` | PDF receipt |
+| GET | `/plans` | **Public** — active plans for the pricing page and upgrade prompts |
+
+**Admin-facing** — role `ADMIN`:
+
+| Method | Path | Notes |
+|---|---|---|
+| GET/POST | `/admin/plans` | Super-admin only for POST |
+| PATCH | `/admin/plans/:id` | Super-admin only. Never rewrites existing subscribers' snapshotted limits. |
+| DELETE | `/admin/plans/:id` | 409 if any subscription references it |
+| GET | `/admin/subscriptions` | Filter by `status`, `planId`, `expiringWithinDays`, `q` |
+| POST | `/admin/subscriptions/:sellerId/payments` | **Record a payment.** `{ planId, amount, mode, reference, paidAt }`. Computes the term, activates, issues a receipt number, writes `AuditLog` — all in one transaction. |
+| POST | `/admin/subscriptions/:sellerId/change-plan` | Immediate plan change without payment (corrections, comps) |
+| POST | `/admin/subscriptions/:sellerId/cancel` | `{ reason }` |
+| POST | `/admin/subscriptions/:sellerId/extend` | `{ days, reason }` — goodwill extensions; audited |
+| GET | `/admin/subscriptions/expiring` | CSV export — the renewal call sheet (SUB-09) |
+| GET | `/admin/subscriptions/stats` | Active/grace/expired counts, ARR, renewal rate |
+
+**Term arithmetic lives in one pure function**, `computeTerm(currentSub, paidAt)`:
+
+```
+if subscription is ACTIVE or GRACE and expiresAt > paidAt:
+    periodStart = existing expiresAt      // early renewal extends, never truncates
+else:
+    periodStart = paidAt                  // lapsed: the new term starts now
+periodEnd = periodStart + 1 year
+```
+
+Every date is stored UTC and evaluated in IST. This function has exhaustive boundary tests (`09` §1.1
+#9) because getting it wrong either gives away time or takes away time a seller has paid for, and the
+second is the kind of mistake a small community does not forget.
+
+## 6b. Admin users (D-07)
+
+Super-admin only unless noted.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/admin/users` | List admins with their level and last login |
+| POST | `/admin/users/invite` | `{ email, adminLevel }` — emails a single-use, 7-day invite |
+| POST | `/admin/users/accept-invite` | **Public** — `{ token, name, password }` |
+| PATCH | `/admin/users/:id` | Change level or deactivate |
+| DELETE | `/admin/users/:id` | 409 if it would remove the last active super-admin |
+
+Role enforcement is a `requireAdminLevel(MODERATOR | ADMIN | SUPER_ADMIN)` guard in each handler's
+`policy.ts`, **not** merely hidden navigation. A moderator who guesses `/admin/plans` must get a 403
+from the API, not a working page with the buttons removed.
 
 ## 7. Uploads
 

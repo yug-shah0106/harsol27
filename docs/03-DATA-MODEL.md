@@ -10,7 +10,10 @@ every stale call site at compile time, which is exactly what we want.
 User ──1:1── SellerProfile ──*── Product ──*── ProductImage
  │                │                 │
  │                │                 └──*── Lead ──*── LeadEvent
- │                └──*── SellerCategory ──*── Category ──self──> Category (parent)
+ │                ├──*── SellerCategory ──*── Category ──self──> Category (parent)
+ │                └──*── Subscription ──*── SubscriptionPayment
+ │                             │
+ │                             └──── Plan
  │
  ├──*── Notification
  ├──*── PushSubscription
@@ -34,9 +37,14 @@ datasource db    { provider = "postgresql"; url = env("DATABASE_URL") }
 
 enum Role { BUYER SELLER ADMIN }
 
+/// D-07: three admin levels. Only meaningful when Role = ADMIN.
+enum AdminLevel { SUPER_ADMIN ADMIN MODERATOR }
+
 model User {
   id             String    @id @default(cuid())
   role           Role      @default(BUYER)
+  adminLevel     AdminLevel?                // set only when role = ADMIN (D-07)
+  invitedById    String?                    // admin invite chain
   email          String?   @unique          // optional: OTP-only buyers may have no email
   emailVerified  DateTime?
   phone          String?   @unique          // E.164, e.g. +919876543210
@@ -85,6 +93,13 @@ model SellerProfile {
   gstNumber       String?
   websiteUrl      String?
 
+  // Community membership (D-03) — optional; most sellers will have it, not all.
+  communityName   String?
+  membershipId    String?
+  isCommunityVerified Boolean  @default(false)
+  communityVerifiedAt DateTime?
+  communityVerifiedById String?
+
   status          SellerStatus @default(PENDING)
   rejectionReason String?
   approvedAt      DateTime?
@@ -98,17 +113,31 @@ model SellerProfile {
   categories      SellerCategory[]
   products        Product[]
   leads           Lead[]
+  subscriptions   Subscription[]
 
   @@index([status, isActive])
+  @@index([isCommunityVerified])
   @@index([city]) @@index([state])
 }
 ```
 
 **`isPubliclyVisible` is a derived rule, not a column:**
-`status = APPROVED AND isActive = true`. It is expressed once, in
-`server/modules/seller/repository.ts` as a reusable Prisma `where` fragment, and every public query
-composes it. Duplicating this condition across queries is the most likely way a private seller leaks
-into public results — so it exists in exactly one place, with its own unit test.
+
+```
+status = APPROVED  AND  isActive = true  AND  subscription is ACTIVE, TRIALING or GRACE
+```
+
+It is expressed once, in `server/modules/seller/repository.ts` as a reusable Prisma `where` fragment,
+and every public query composes it. Duplicating this condition across queries is the most likely way
+a private seller leaks into public results — so it exists in exactly one place, with its own unit
+test.
+
+The subscription clause (D-19) is the newest and most dangerous of the three, because it changes over
+time without anyone touching a record: a seller who was visible yesterday is hidden today purely
+because a date passed. Two consequences: the clause is evaluated against `expiresAt + graceDays`
+rather than a cached status column, so a stalled worker can never leave an expired seller visible or
+a renewed seller hidden; and the visibility fragment gets a dedicated boundary-date test suite
+(`03` §4.4).
 
 ```prisma
 // ─────────────────────────── Category ───────────────────────────
@@ -153,7 +182,7 @@ model SellerCategory {
 
 // ─────────────────────────── Product ───────────────────────────
 
-enum ProductStatus { DRAFT PENDING APPROVED REJECTED }
+enum ProductStatus { DRAFT PENDING APPROVED PENDING_EDIT REJECTED }
 enum PriceUnit { PER_PIECE PER_KG PER_TON PER_METER PER_SQFT PER_LITRE PER_BOX PER_SET }
 
 model Product {
@@ -174,6 +203,9 @@ model Product {
   state           String
 
   status          ProductStatus @default(PENDING)
+  /// D-05: every edit to an approved product needs re-approval. The approved snapshot below keeps
+  /// the live listing intact while the edit sits in the queue, so a typo fix costs no visibility.
+  pendingChanges  Json?
   rejectionReason String?
   approvedAt      DateTime?
   approvedById    String?
@@ -368,6 +400,115 @@ model PushSubscription {
   @@index([userId])
 }
 
+// ─────────────────────── Subscriptions (D-19) ───────────────────────
+
+enum SubscriptionStatus { TRIALING ACTIVE GRACE EXPIRED CANCELLED }
+enum PaymentMode        { UPI BANK_TRANSFER CHEQUE CASH CARD OTHER }
+
+model Plan {
+  id             String   @id @default(cuid())
+  name           String                       // Free | Standard | Premium — fully client-editable
+  slug           String   @unique
+  description    String?
+  annualPrice    Decimal  @db.Decimal(10, 2)  // 0 for the free tier
+  currency       String   @default("INR")
+
+  maxProducts    Int?                         // null = unlimited
+  maxImagesPerProduct Int  @default(8)
+  isFeatured     Boolean  @default(false)     // priority placement in listings
+  showBadge      Boolean  @default(false)
+
+  isActive       Boolean  @default(true)
+  isDefault      Boolean  @default(false)     // auto-assigned on seller approval
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  subscriptions  Subscription[]
+
+  @@index([isActive, sortOrder])
+}
+
+model Subscription {
+  id            String   @id @default(cuid())
+  sellerId      String
+  seller        SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          Plan     @relation(fields: [planId], references: [id])
+
+  status        SubscriptionStatus @default(TRIALING)
+  startsAt      DateTime
+  expiresAt     DateTime
+  graceDays     Int      @default(15)
+  cancelledAt   DateTime?
+  cancelReason  String?
+
+  /// Plan limits are SNAPSHOTTED at purchase. If the client later re-prices or re-limits a plan,
+  /// existing subscribers keep what they paid for until renewal. Without this, editing a plan
+  /// silently changes what every current subscriber is entitled to.
+  snapshotMaxProducts Int?
+  snapshotMaxImages   Int      @default(8)
+  snapshotIsFeatured  Boolean  @default(false)
+
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  payments      SubscriptionPayment[]
+  reminders     SubscriptionReminder[]
+
+  @@index([sellerId, status])
+  @@index([status, expiresAt])          // the nightly expiry sweep and the renewal call sheet
+}
+
+model SubscriptionPayment {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  amount         Decimal  @db.Decimal(10, 2)
+  currency       String   @default("INR")
+  mode           PaymentMode
+  reference      String?                  // UPI txn id, cheque no., bank UTR
+  paidAt         DateTime
+  periodStart    DateTime
+  periodEnd      DateTime
+
+  receiptNumber  String   @unique         // sequential, gap-free (see below)
+  recordedById   String?                  // the admin who entered it
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([subscriptionId, paidAt])
+  @@index([paidAt])
+}
+
+model SubscriptionReminder {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  kind           String                   // T_MINUS_30 | T_MINUS_14 | T_MINUS_7 | T_MINUS_1 | EXPIRED | GRACE_END
+  sentAt         DateTime @default(now())
+
+  /// Idempotency: one reminder of each kind per subscription, ever. A retrying worker cannot spam.
+  @@unique([subscriptionId, kind])
+}
+
+// ─────────────────────── Admin accounts (D-07) ───────────────────────
+
+model AdminInvite {
+  id          String     @id @default(cuid())
+  email       String
+  adminLevel  AdminLevel
+  tokenHash   String
+  invitedById String
+  acceptedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime   @default(now())
+
+  @@index([email, acceptedAt])
+}
+
 // ─────────────────────────── CMS & misc ───────────────────────────
 
 model CmsPage {
@@ -452,19 +593,32 @@ cheapest bug prevention in the whole project.
 ### 4.2 Product
 
 ```
-  (create draft) ──► DRAFT ──submit──► PENDING ──approve──► APPROVED
-                                          │                    │
-                                    reject(reason)        seller edits
-                                          ▼                    │
-                                      REJECTED ──edit+resubmit─┘► PENDING
+ (create) ──► DRAFT ──submit──► PENDING ──approve──► APPROVED ◄──────────┐
+                                   │                    │                │
+                             reject(reason)       seller edits (D-05)    │ approve edit
+                                   ▼                    ▼                │
+                               REJECTED           PENDING_EDIT ──────────┘
+                                   │                    │
+                            edit + resubmit        reject edit → stays APPROVED,
+                                   │                 seller notified with the reason
+                                   └──────► PENDING
 ```
-- **A seller editing an approved product returns it to `PENDING` and delists it.** This is the
-  correct behaviour for a curated marketplace, and it is also the behaviour sellers complain about
-  most. Mitigation: an "edit" that touches only price, MOQ or images can stay approved (configurable
-  in `Setting`, default: name/description/category edits re-review, price/MOQ/image edits do not).
+
+- **Every edit to an approved product requires re-approval (D-05).** The edited fields are held in
+  `pendingChanges` while the previously approved version stays live, so a seller correcting a typo or
+  a price never loses visibility. Approving merges `pendingChanges` into the row and clears it;
+  rejecting discards them and the live version is untouched.
+- Editing a `DRAFT`, `PENDING` or `REJECTED` product mutates it directly — there is no approved
+  version to protect.
 - `publishedAt` is set on the *first* approval only, so re-approval does not jump a product back to
   the top of "newest".
+- Product creation and re-approval both check the seller's plan limits (SUB-05); limits cannot be
+  bypassed by editing an existing product.
 - Delete is soft (`deletedAt`); leads keep `productNameAtInquiry`.
+
+> If the client instead wants edited products to go dark immediately until re-approved, that is a
+> one-line change: skip the `pendingChanges` path and set `status = PENDING`. See the operational
+> warning in `10-OPEN-DECISIONS.md` §A.
 
 ### 4.3 Lead
 
@@ -478,16 +632,57 @@ cheapest bug prevention in the whole project.
 Only `NEW` triggers notifications. `PENDING_VERIFICATION` rows older than 24 h are purged nightly —
 they contain an unverified phone number and have no business value.
 
+### 4.4 Subscription
+
+```
+  seller approved ──► TRIALING ──payment recorded──► ACTIVE
+                          │                            │
+                     trial ends                   expiresAt passes
+                          ▼                            ▼
+                       GRACE ◄───────────────────────GRACE   (expiresAt + graceDays)
+                          │                            │
+                   payment recorded              grace ends
+                          ▼                            ▼
+                       ACTIVE                       EXPIRED ──payment──► ACTIVE
+                                    any state ──admin──► CANCELLED
+```
+
+Rules that are easy to get wrong and are therefore tested explicitly:
+
+- **Early renewal extends from `expiresAt`, not from today** (SUB-03). A seller who renews a month
+  early must not forfeit that month. If the subscription is already `EXPIRED`, the new term starts
+  today instead — otherwise they pay for time already gone.
+- `TRIALING` and `GRACE` are **publicly visible**; `EXPIRED` and `CANCELLED` are not.
+- Expiry is evaluated live from `expiresAt + graceDays`, never from a cached status column. A nightly
+  worker updates the `status` field for reporting and reminders, but visibility never depends on that
+  worker having run.
+- All dates are stored UTC and compared in **IST**. The boundary case — a subscription expiring at
+  23:00 UTC, which is already tomorrow in India — has its own test.
+- Every automatic status change writes an `AuditLog` row, so "why did my listings disappear?" is
+  answerable in seconds.
+
+**Receipt numbering.** `receiptNumber` must be sequential and gap-free (SUB-08), which a
+`@default(autoincrement())` cannot guarantee under rollback. Generate it inside the payment
+transaction from a dedicated counter row locked with `SELECT … FOR UPDATE`. Format:
+`RCPT-2026-0001`, resetting annually.
+
 ## 5. Seed data
 
 `prisma/seed.ts` must produce a database an agent can verify against and a client can demo from:
 
-- 1 admin (`admin@example.com`), 3 buyers.
-- 12 sellers: 8 approved+active, 2 pending, 1 rejected, 1 approved-but-deactivated.
+- 3 admins — one of each level (`super@example.com`, `admin@example.com`, `mod@example.com`) — and
+  3 buyers.
+- 3 plans: Free (₹0, 5 products), Standard, Premium (unlimited, featured).
+- 12 sellers: 8 approved+active, 2 pending, 1 rejected, 1 approved-but-deactivated. Of the approved
+  ones: 3 on Free, 3 on Standard, 1 on Premium, 1 **in grace** and 1 **expired** — subscription
+  states are otherwise impossible to test without waiting a year.
+- 7 of the 12 sellers are community-verified, 5 are not.
 - 18 categories across 5 parents.
 - 120 products: ~85 approved, 20 pending, 10 rejected, 5 soft-deleted — deliberately spread across
   sellers, cities and states so filters and pagination have something real to bite on.
 - 40 leads across every status, some clustered on one product to exercise dedupe.
+- Subscription payments spread across the last 18 months so the revenue dashboard and the
+  expiring-soon call sheet both have real data.
 - The 4 CMS pages with real placeholder copy including the liability disclaimer.
 - Deterministic: fixed seed, so E2E assertions on counts are stable.
 

@@ -1,9 +1,13 @@
 # 07 — Phase-Wise Development Plan
 
-Seven phases over **7 calendar weeks**, matching Quotation B's committed 6.5–7 weeks. AI-assisted
-build should finish the engineering inside 5; the remaining time is deliberately reserved for client
-review latency and the rework that approval-workflow products always generate. Do not spend the
-buffer early.
+Seven phases over **8.5 calendar weeks** — the original 7 plus the ~6.5–7 engineering days added by
+the client decisions of 2026-09-08 (annual subscriptions, multiple admin accounts, community
+verification, dual verification). See `10-OPEN-DECISIONS.md` §C for the two alternatives if 7 weeks
+is a hard commitment.
+
+AI-assisted build should finish the engineering inside 6 weeks; the remainder is deliberately
+reserved for client review latency and the rework that approval-workflow products always generate.
+Do not spend the buffer early.
 
 **Exit gates are binary.** A phase is not done until every box is ticked, `pnpm verify` is green on
 `main`, and the demo has been shown. Half-finished phases compound; this is the discipline that
@@ -54,6 +58,10 @@ Deliverables:
 - Login/logout, forgot/reset password (SEL-03, SEL-04), with the anti-enumeration behaviour.
 - Seller status screens: pending, rejected (with reason), deactivated.
 - Admin: seller list with filters, seller detail, approve/reject/activate/deactivate (ADM-02).
+- **Multiple admin accounts (ADM-10, D-07)**: invite flow, three role levels, `requireAdminLevel`
+  guard, last-super-admin protection.
+- **Community fields + verified badge (ADM-11, D-03)**: optional association name and membership ID
+  on registration, admin grant/revoke.
 - Admin: category CRUD + reorder + two-level tree (ADM-03).
 - Admin: seller↔category assignment with the affected-products warning (ADM-04).
 - The seller state machine (`03-DATA-MODEL.md` §4.1) in `policy.ts`, with the illegal-transition test.
@@ -68,6 +76,8 @@ Deliverables:
 - [ ] Deactivate/reactivate restores the prior status without re-approval
 - [ ] Every illegal seller transition returns 409, covered by unit tests
 - [ ] Password reset token is single-use and invalidates other sessions
+- [ ] A moderator receives 403 from `/admin/plans` at the **API**, not just a hidden nav item
+- [ ] The last active super-admin cannot be deleted or demoted
 - [ ] A failed email send retries and is visible in `EmailLog` without breaking the request
 
 ---
@@ -98,7 +108,43 @@ Deliverables:
 
 ---
 
-## Phase 3 — Public marketplace & search (Week 3 day 4 → Week 4 day 3)
+## Phase 2b — Subscriptions (Week 3 days 4–5 → Week 4 day 2) · **new, CR-001**
+
+**Goal: the revenue model works end to end without anyone touching a payment gateway.**
+
+Placed here deliberately: it needs products (Phase 2) so limits mean something, and it must precede
+Phase 3 so the public catalogue respects subscription-based visibility from the first line of code
+rather than having it retrofitted.
+
+Deliverables:
+- `Plan` CRUD, super-admin gated (SUB-01), with three seeded plans.
+- `Subscription` + `SubscriptionPayment` + `SubscriptionReminder` models and the lifecycle state
+  machine (`03-DATA-MODEL.md` §4.4).
+- **`computeTerm()`** with exhaustive boundary tests — early renewal, lapsed renewal, UTC/IST
+  day-boundary, leap year.
+- Admin: record a payment, change plan, cancel, goodwill extend, subscriber list, expiring-soon CSV
+  (SUB-03, SUB-09).
+- Plan-limit enforcement on product create **and** re-approval (SUB-05), with a real upgrade prompt
+  rather than a bare error.
+- Nightly expiry sweep + reminders at T-30/14/7/1, expiry, grace end (SUB-06), idempotent by unique
+  constraint.
+- Seller billing page with usage bars and payment history (SUB-07).
+- Sequential gap-free receipt numbering + PDF (SUB-08).
+- Founding-member programme as a ₹0 `TRIALING` subscription (SUB-10) — no special-case code.
+
+**Exit gate**
+- [ ] Recording a renewal 30 days early extends from the old expiry, not from today
+- [ ] Recording a renewal on a lapsed subscription starts the term today
+- [ ] An expired seller's listings vanish from public view within 60 s; their **lead inbox still
+      works** and nothing is deleted
+- [ ] A seller in grace is still publicly visible and sees the banner
+- [ ] Free-tier seller is blocked at the 6th product with a plan-comparison prompt
+- [ ] Lowering a plan's limit does not retroactively hide an existing subscriber's products
+- [ ] Receipt numbers are sequential with no gaps after a deliberately rolled-back transaction
+- [ ] Reminder worker run twice sends each reminder exactly once
+- [ ] Every automatic expiry writes an `AuditLog` row
+
+## Phase 3 — Public marketplace & search (Week 4 day 3 → Week 5 day 2)
 
 **Goal: the public site is live, fast, indexable, and contact is provably hidden.**
 
@@ -108,6 +154,10 @@ Deliverables:
 - Search (SRC-01…04): `tsvector` migration, trigram fallback, composed filters, pagination.
 - `ProductCard`, `FilterBar`, `ImageGallery`, `Breadcrumbs`, `Pagination`, `EmptyState`, skeletons.
 - **`toPublicSeller()` serialiser + the no-contact-in-payload test** (`04-API-SPEC.md` §2.1).
+- Visibility fragment including the subscription clause, with boundary-date tests.
+- Community Verified badge on cards and profiles; featured-plan priority in listing sort.
+- Public pricing page from `GET /plans`, and the founding-member / early-access landing page
+  (`11-MARKETING-GTM.md` §2).
 - SEO (PUB-06): metadata, JSON-LD, sitemap with tag revalidation, robots.
 - CMS pages (PUB-05, ADM-07) with server-side sanitisation, and the Contact-Us form.
 - ISR + Cloudflare caching per `04-API-SPEC.md` §8.
@@ -120,27 +170,30 @@ Deliverables:
 - [ ] Lighthouse mobile on product detail: Perf ≥ 90, A11y = 100, SEO ≥ 95
 - [ ] Approving a product makes it publicly visible within 60 s
 - [ ] Deactivating a seller removes all their products from public view within 60 s
+- [ ] An expired seller's products are absent from search, category pages and sitemap
 - [ ] axe reports zero violations across all public pages
 
 ---
 
-## Phase 4 — Leads, verification & notifications (Week 4 day 4 → Week 5 day 3)
+## Phase 4 — Leads, verification & notifications (Week 5 day 3 → Week 6 day 3)
 
 **The revenue phase.** Everything before this was scaffolding for it.
 
 Deliverables:
 - `ContactGate` component in all its states (`05-DESIGN-SYSTEM.md` §6.4).
-- Inquiry submission → OTP challenge → verification → reveal (LEAD-01…04), with the
-  `OTP_PROVIDER=console` path so E2E and local dev need no SMS spend.
-- MSG91 integration. ⚠️ **DLT template registration must have been started in week 1** — it takes
-  3–7 working days and is the most likely external blocker in the whole plan.
+- Inquiry submission → challenge → verification → reveal (LEAD-01…04) over **both channels (D-02)**:
+  phone OTP and email, with a "verify by email instead" switch, and the `console` provider so E2E and
+  local dev need no SMS spend.
+- MSG91 integration. **DLT template registration should still start in week 1**, but with the email
+  channel fully built (D-02) a delay no longer blocks launch.
 - Silent buyer account creation + session; "My Inquiries" (LEAD-08).
 - Dedupe (LEAD-06) and rate limits (LEAD-07).
 - Seller lead inbox: list, detail, status changes, notes, CSV export (SEL-11).
 - Admin lead management with filters and export (ADM-06).
 - Seller dashboard with stats and the 30-day sparkline (SEL-05).
 - Admin dashboard with all seven counts and the attention queue (ADM-01).
-- In-app notification centre (SEL-12, ADM-08) and remaining emails (NOT-05, NOT-09).
+- In-app notification centre (SEL-12, ADM-08), the **10-minute admin lead digest (D-09)** with
+  empty-digest suppression, and remaining emails (NOT-05, NOT-09).
 - Funnel analytics events (SYS-07).
 
 **Exit gate**
@@ -155,7 +208,7 @@ Deliverables:
 
 ---
 
-## Phase 5 — PWA, performance & accessibility (Week 5 days 4–5)
+## Phase 5 — PWA, performance & accessibility (Week 6 days 4–5)
 
 Deliverables: everything in `06-PWA-SPEC.md` — manifest, icons incl. maskable, screenshots, Serwist
 caching rules, offline page, install prompt logic, Web Push with contextual permission, iOS
@@ -173,7 +226,7 @@ flow, focus-order audit, reduced-motion verification).
 
 ---
 
-## Phase 6 — Hardening, QA, UAT & launch (Weeks 6–7)
+## Phase 6 — Hardening, QA, UAT & launch (Weeks 7–8.5)
 
 Deliverables:
 - Full regression pass on the matrix in `09-QA-SECURITY-LAUNCH.md` §2.
@@ -200,19 +253,24 @@ Deliverables:
 ## Dependency map
 
 ```
-Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 3 ──┐
-                            │                 ├──► Phase 4 ──► Phase 5 ──► Phase 6
-                            └─────────────────┘
+Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 2b ──► Phase 3 ──► Phase 4 ──► Phase 5 ──► Phase 6
+                            │           │           ▲
+                            └───────────┴───────────┘
+                         2b needs 2's products; 3 needs 2b's visibility rule
 ```
-Phase 3 (public catalogue) and Phase 4 (leads) both need Phase 2's products. Phase 4's UI attaches
-to Phase 3's product detail page, so 3 must land first. Phases 3 and 4 can partially overlap across
-two parallel workstreams once Phase 2's exit gate is met — see `08-AI-BUILD-PLAYBOOK.md` §4.
+Phase 2b sits before Phase 3 on purpose: subscription state is part of the public visibility rule
+(`03-DATA-MODEL.md` §2), and retrofitting a visibility clause across an already-built catalogue is
+how sellers end up leaking into public results. Phases 2b and 3 can overlap partially across two
+tracks once the visibility fragment itself is merged — see `08-AI-BUILD-PLAYBOOK.md` §4.
 
 ## Risk register
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|:--:|:--:|---|
-| **MSG91 DLT template approval delays** | High | High | Start day 1. `OTP_PROVIDER=email` fallback is fully built, so launch is never blocked on it. |
+| **MSG91 DLT template approval delays** | High | ~~High~~ **Low** | Neutralised by D-02: the email channel is fully built, so a DLT delay costs a channel, not a launch date. Still start day 1. |
+| **Subscription date arithmetic bug** hides a paying seller | Medium | **High** | One pure `computeTerm()` function, exhaustive boundary tests, live evaluation rather than a cached status column, `AuditLog` on every automatic change. In a small community, hiding a paying member's listings is a trust failure that outlives the bug. |
+| **Sellers resist paying** at renewal | Medium | High | Leads-per-seller is the leading indicator (`01-PRD.md` §6); free tier keeps the catalogue full; founding-member year builds the habit before the first invoice. |
+| Re-approval load from D-05 overwhelms the admin | Medium | Medium | `PENDING_EDIT` keeps listings live, and the moderation queue pins recent edits for fast scanning. Watch the queue depth in week 1 of production. |
 | Client is slow to supply categories, logo, legal copy | High | Medium | Seed realistic placeholders in Phase 0; request real content in writing at the Phase 1 demo with a Phase 5 deadline. |
 | Scope creep via approval-workflow requests ("add a status", "add a field") | High | High | CR log in `10-OPEN-DECISIONS.md`; nothing unlisted gets built without written approval. |
 | Hosting budget gap (§D of doc 00) | Certain | Medium | Raise in week 0, before any hosting is bought. |

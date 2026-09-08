@@ -141,7 +141,8 @@ parallelising them produces two incompatible interpretations of the same spine.
 |---|---|---|
 | **A — Catalogue & seller portal** | Product CRUD, images, seller dashboard | `modules/product`, `(seller)/*` |
 | **B — Public site & search** | Home, listing, detail, seller profile, SEO | `(public)/*`, `components/marketplace` |
-| **C — Admin panel** | Moderation, categories, CMS, admin dashboard | `(admin)/*`, `modules/category`, `modules/cms` |
+| **C — Admin panel** | Moderation, categories, CMS, admin dashboard, admin users & roles | `(admin)/*`, `modules/category`, `modules/cms`, `modules/adminuser` |
+| **E — Subscriptions** | Plans, terms, expiry sweep, reminders, receipts, billing page | `modules/subscription`, `(seller)/seller/billing`, `(admin)/admin/subscriptions` |
 | **D — Leads & notifications** | Inquiry, OTP, notifications, email templates | `modules/lead`, `modules/notification`, `emails/` |
 
 Rules that keep four agents from fighting:
@@ -228,6 +229,9 @@ is required. These need a person:
 - **Rejection-email tone.** Rejecting a community member's application badly is a reputational
   problem the community office will hear about.
 - **Accepting the hosting budget gap** (`00-SCOPE-RECONCILIATION.md` §D).
+- **Plan names and prices**, and what a subscription gates (Q-04/Q-06). This is the business model;
+  an agent should implement it, not choose it.
+- **Recording a real payment.** Money entering the system is a human action with a human audit trail.
 
 ## 8. Estimated AI effort
 
@@ -239,10 +243,11 @@ Rough, for planning. "Sessions" means focused agent sessions including review an
 | 1 — Identity & approval spine | 10–12 | 4–5 days |
 | 2 — Catalogue | 12–14 | 4–5 days |
 | 3 — Public & search | 12–14 | 4–5 days |
+| 2b — Subscriptions | 8–10 | 3–4 days |
 | 4 — Leads & notifications | 14–16 | 5–6 days |
 | 5 — PWA, perf, a11y | 6–8 | 2 days |
 | 6 — Hardening & launch | 10–14 | 7–10 days (dominated by client UAT latency, not engineering) |
-| **Total** | **70–86** | **≈ 5 weeks engineering inside a 7-week calendar** |
+| **Total** | **78–96** | **≈ 6 weeks engineering inside an 8.5-week calendar** |
 
-The gap between 5 and 7 weeks is the buffer. Phase 6 is deliberately the least compressible: it is
+The gap between 6 and 8.5 weeks is the buffer. Phase 6 is deliberately the least compressible: it is
 gated on the client's availability, not on how fast code can be written.

@@ -14,7 +14,12 @@ Everything needed to build this product end-to-end with AI agents. Read in order
 | 07 | [07-ROADMAP.md](./07-ROADMAP.md) | Phase-by-phase build plan with exit gates. |
 | 08 | [08-AI-BUILD-PLAYBOOK.md](./08-AI-BUILD-PLAYBOOK.md) | How the AI actually builds it: guardrails, agent split, prompt templates, definition of done. |
 | 09 | [09-QA-SECURITY-LAUNCH.md](./09-QA-SECURITY-LAUNCH.md) | Test strategy, security checklist, launch and handover runbook. |
-| 10 | [10-OPEN-DECISIONS.md](./10-OPEN-DECISIONS.md) | Questions for the client, each with a default so nothing blocks. |
+| 10 | [10-OPEN-DECISIONS.md](./10-OPEN-DECISIONS.md) | Decisions resolved on 2026-09-08, questions still open, and the change log. |
+| 11 | [11-MARKETING-GTM.md](./11-MARKETING-GTM.md) | Launch strategy: founding members, city groups, weekly digest, SEO. |
+
+> **Updated 2026-09-08.** Client decisions are recorded in `10-OPEN-DECISIONS.md` §A. Two of them
+> reshape the project: **₹1,00,000 is the signed fee**, and **annual seller subscriptions are now in
+> scope**. Read `10-OPEN-DECISIONS.md` §C before committing to a date.
 
 ## The 60-second version
 
@@ -23,6 +28,9 @@ categories. Sellers list products only inside their assigned categories; the adm
 product. Buyers search the public catalogue, and a seller's phone/email stays hidden until the
 buyer submits a verified inquiry — that submission *is* the lead. Everyone gets notified. No
 payments, no cart, no pricing enforcement, ever.
+
+Sellers pay an **annual subscription** — plans gate listing capacity and prominence, never lead
+access. Payments are recorded manually by an admin in v1; no gateway.
 
 Delivered as one responsive web app that installs as a PWA on Android and iOS.
 

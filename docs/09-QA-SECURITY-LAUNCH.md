@@ -34,8 +34,18 @@ site:
 6. `cache-headers.spec.ts` — every authenticated route responds `private, no-store`.
 7. `lead-flow.spec.ts` — the full inquiry→OTP→reveal path, plus expiry, attempt exhaustion, resend
    cooldown, and dedupe.
-8. `visibility.spec.ts` — pending, rejected and deactivated sellers and their products are absent
-   from every public surface.
+8. `visibility.spec.ts` — pending, rejected, deactivated **and subscription-expired** sellers and
+   their products are absent from every public surface; sellers in `TRIALING` and `GRACE` are present.
+9. `subscription-term.spec.ts` — `computeTerm()` across every boundary: early renewal, on-expiry
+   renewal, lapsed renewal, a payment recorded at 23:30 IST on the expiry date, leap years, and a
+   renewal recorded while the subscription is in grace. Each wrong answer either gives away time or
+   takes away time a seller paid for.
+10. `plan-limits.spec.ts` — limits enforced on create *and* on re-approval; a plan edit does not
+    retroactively change an existing subscriber's snapshotted entitlements.
+11. `receipt-numbering.spec.ts` — sequential and gap-free across concurrent inserts and a
+    deliberately rolled-back transaction.
+12. `admin-roles.spec.ts` — moderator, admin and super-admin each receive 403 from every route above
+    their level, at the API layer; the last super-admin cannot be removed.
 
 ### 1.2 Browser & device matrix
 
@@ -66,7 +76,14 @@ with 1 image and with 8 · edit approved product (re-review) vs price-only edit 
 delete with existing leads · unassigned-category rejection · zero-categories empty state · lead
 inbox, filters, status changes, CSV export · notification bell.
 
-**Admin** — dashboard counts reconcile against SQL · seller approve/reject/activate/deactivate ·
+**Subscriptions** — record a payment on a free seller (activates, limit lifts) · early renewal
+extends from the old expiry · lapsed renewal starts today · expiry hides listings but keeps the lead
+inbox working · grace-period banner · each reminder sends exactly once · receipt PDF downloads for
+both seller and admin · plan edit does not disturb existing subscribers · expiring-soon CSV ·
+founding-member ₹0 subscription expires and converts through the normal path.
+
+**Admin** — dashboard counts reconcile against SQL · admin invite, role change, last-super-admin
+protection · seller approve/reject/activate/deactivate · community badge grant/revoke ·
 category CRUD, delete-with-products blocked, reorder · category assignment incl. the
 affected-products warning · moderation queue and bulk approve · lead filters and export · CMS edit
 with XSS payload attempted · audit log entries present for every action above.
@@ -120,8 +137,14 @@ rendered, it is `rel="nofollow noopener"` and never fetched.
 
 **Application-specific**
 - Seller-list scraping: the whole business asset is the vetted seller list. Cloudflare bot rules +
-  per-IP rate limits on catalogue endpoints + contact behind verification. Consider a soft cap on
-  contact reveals per buyer per day (default: 20).
+  per-IP rate limits on catalogue endpoints + contact behind verification. **No product-level reveal
+  cap (D-08)**, so the abuse limits are the only ceiling — 60 reveals/hour per account, 200/hour per
+  IP. Review these numbers against real traffic in the first month.
+- Subscription tampering: plan limits, expiry and featured status are read server-side from the
+  `Subscription` row on every check, never from a client-supplied plan id or a JWT claim. A seller
+  changing a request payload must not be able to lift their own limits.
+- Financial integrity: only `ADMIN`+ may record a payment; every payment writes an `AuditLog` row in
+  the same transaction; receipt numbers are gap-free so a missing receipt is detectable.
 - Spam leads: honeypot field, timing check (submissions faster than 3 s are suspect), phone
   verification, per-phone rate limits, and an admin `SPAM` status.
 - Image uploads: magic-byte check, re-encode through sharp (which neutralises embedded payloads),
