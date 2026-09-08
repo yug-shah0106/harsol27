@@ -11,9 +11,7 @@ User ──1:1── SellerProfile ──*── Product ──*── ProductIm
  │                │                 │
  │                │                 └──*── Lead ──*── LeadEvent
  │                ├──*── SellerCategory ──*── Category ──self──> Category (parent)
- │                └──*── Subscription ──*── SubscriptionPayment
- │                             │
- │                             └──── Plan
+ │                └──*── SubscriptionTerm ──*── SubscriptionReminder
  │
  ├──*── Notification
  ├──*── PushSubscription
@@ -113,7 +111,7 @@ model SellerProfile {
   categories      SellerCategory[]
   products        Product[]
   leads           Lead[]
-  subscriptions   Subscription[]
+  terms           SubscriptionTerm[]
 
   @@index([status, isActive])
   @@index([isCommunityVerified])
@@ -124,7 +122,7 @@ model SellerProfile {
 **`isPubliclyVisible` is a derived rule, not a column:**
 
 ```
-status = APPROVED  AND  isActive = true  AND  subscription is ACTIVE, TRIALING or GRACE
+status = APPROVED  AND  isActive = true  AND  now() <= latest validUntil + graceDays
 ```
 
 It is expressed once, in `server/modules/seller/repository.ts` as a reusable Prisma `where` fragment,
@@ -132,12 +130,12 @@ and every public query composes it. Duplicating this condition across queries is
 a private seller leaks into public results — so it exists in exactly one place, with its own unit
 test.
 
-The subscription clause (D-19) is the newest and most dangerous of the three, because it changes over
+The validity clause (D-19) is the newest and most dangerous of the three, because it changes over
 time without anyone touching a record: a seller who was visible yesterday is hidden today purely
-because a date passed. Two consequences: the clause is evaluated against `expiresAt + graceDays`
-rather than a cached status column, so a stalled worker can never leave an expired seller visible or
-a renewed seller hidden; and the visibility fragment gets a dedicated boundary-date test suite
-(`03` §4.4).
+because a date passed. Two consequences. The clause is evaluated **live** against
+`validUntil + graceDays`, never from a cached status column — so a stalled worker can never leave a
+lapsed seller visible or a renewed one hidden. And the visibility fragment gets a dedicated
+boundary-date test suite (§4.4).
 
 ```prisma
 // ─────────────────────────── Category ───────────────────────────
@@ -400,98 +398,44 @@ model PushSubscription {
   @@index([userId])
 }
 
-// ─────────────────────── Subscriptions (D-19) ───────────────────────
+// ─────────────── Subscription validity (D-19 / Q-04) ───────────────
+// No plans, no prices, no payments. An admin-managed validity window per seller.
 
-enum SubscriptionStatus { TRIALING ACTIVE GRACE EXPIRED CANCELLED }
-enum PaymentMode        { UPI BANK_TRANSFER CHEQUE CASH CARD OTHER }
+enum SubscriptionStatus { ACTIVE GRACE EXPIRED CANCELLED }
 
-model Plan {
-  id             String   @id @default(cuid())
-  name           String                       // Free | Standard | Premium — fully client-editable
-  slug           String   @unique
-  description    String?
-  annualPrice    Decimal  @db.Decimal(10, 2)  // 0 for the free tier
-  currency       String   @default("INR")
+model SubscriptionTerm {
+  id           String   @id @default(cuid())
+  sellerId     String
+  seller       SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
-  maxProducts    Int?                         // null = unlimited
-  maxImagesPerProduct Int  @default(8)
-  isFeatured     Boolean  @default(false)     // priority placement in listings
-  showBadge      Boolean  @default(false)
+  validFrom    DateTime
+  validUntil   DateTime
+  graceDays    Int      @default(15)
 
-  isActive       Boolean  @default(true)
-  isDefault      Boolean  @default(false)     // auto-assigned on seller approval
-  sortOrder      Int      @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  /// Append-only history. The seller's live window is the row with the latest validUntil.
+  /// A correction creates a new row referencing the one it supersedes rather than mutating it.
+  supersedesId String?
+  note         String?                   // free text: "paid by UPI at Jan AGM", etc.
+  setById      String?                   // the admin who set it
+  cancelledAt  DateTime?
+  cancelReason String?
+  createdAt    DateTime @default(now())
 
-  subscriptions  Subscription[]
+  reminders    SubscriptionReminder[]
 
-  @@index([isActive, sortOrder])
-}
-
-model Subscription {
-  id            String   @id @default(cuid())
-  sellerId      String
-  seller        SellerProfile @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  planId        String
-  plan          Plan     @relation(fields: [planId], references: [id])
-
-  status        SubscriptionStatus @default(TRIALING)
-  startsAt      DateTime
-  expiresAt     DateTime
-  graceDays     Int      @default(15)
-  cancelledAt   DateTime?
-  cancelReason  String?
-
-  /// Plan limits are SNAPSHOTTED at purchase. If the client later re-prices or re-limits a plan,
-  /// existing subscribers keep what they paid for until renewal. Without this, editing a plan
-  /// silently changes what every current subscriber is entitled to.
-  snapshotMaxProducts Int?
-  snapshotMaxImages   Int      @default(8)
-  snapshotIsFeatured  Boolean  @default(false)
-
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  payments      SubscriptionPayment[]
-  reminders     SubscriptionReminder[]
-
-  @@index([sellerId, status])
-  @@index([status, expiresAt])          // the nightly expiry sweep and the renewal call sheet
-}
-
-model SubscriptionPayment {
-  id             String   @id @default(cuid())
-  subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-
-  amount         Decimal  @db.Decimal(10, 2)
-  currency       String   @default("INR")
-  mode           PaymentMode
-  reference      String?                  // UPI txn id, cheque no., bank UTR
-  paidAt         DateTime
-  periodStart    DateTime
-  periodEnd      DateTime
-
-  receiptNumber  String   @unique         // sequential, gap-free (see below)
-  recordedById   String?                  // the admin who entered it
-  notes          String?
-  createdAt      DateTime @default(now())
-
-  @@index([subscriptionId, paidAt])
-  @@index([paidAt])
+  @@index([sellerId, validUntil(sort: Desc)])
+  @@index([validUntil])                  // the nightly sweep and the renewal call sheet
 }
 
 model SubscriptionReminder {
-  id             String   @id @default(cuid())
-  subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  kind           String                   // T_MINUS_30 | T_MINUS_14 | T_MINUS_7 | T_MINUS_1 | EXPIRED | GRACE_END
-  sentAt         DateTime @default(now())
+  id       String   @id @default(cuid())
+  termId   String
+  term     SubscriptionTerm @relation(fields: [termId], references: [id], onDelete: Cascade)
+  kind     String                        // T_MINUS_30 | T_MINUS_14 | T_MINUS_7 | T_MINUS_1 | EXPIRED | GRACE_END
+  sentAt   DateTime @default(now())
 
-  /// Idempotency: one reminder of each kind per subscription, ever. A retrying worker cannot spam.
-  @@unique([subscriptionId, kind])
+  /// Idempotency: one reminder of each kind per term, ever. A retrying worker cannot spam.
+  @@unique([termId, kind])
 }
 
 // ─────────────────────── Admin accounts (D-07) ───────────────────────
@@ -632,39 +576,37 @@ cheapest bug prevention in the whole project.
 Only `NEW` triggers notifications. `PENDING_VERIFICATION` rows older than 24 h are purged nightly —
 they contain an unverified phone number and have no business value.
 
-### 4.4 Subscription
+### 4.4 Subscription validity
 
 ```
-  seller approved ──► TRIALING ──payment recorded──► ACTIVE
-                          │                            │
-                     trial ends                   expiresAt passes
-                          ▼                            ▼
-                       GRACE ◄───────────────────────GRACE   (expiresAt + graceDays)
-                          │                            │
-                   payment recorded              grace ends
-                          ▼                            ▼
-                       ACTIVE                       EXPIRED ──payment──► ACTIVE
-                                    any state ──admin──► CANCELLED
+  admin sets window ──► ACTIVE ──validUntil passes──► GRACE ──+graceDays──► EXPIRED
+                           ▲                            │                     │
+                           └──── admin extends ─────────┴─────────────────────┘
+                                          any state ──admin──► CANCELLED
 ```
 
 Rules that are easy to get wrong and are therefore tested explicitly:
 
-- **Early renewal extends from `expiresAt`, not from today** (SUB-03). A seller who renews a month
-  early must not forfeit that month. If the subscription is already `EXPIRED`, the new term starts
-  today instead — otherwise they pay for time already gone.
-- `TRIALING` and `GRACE` are **publicly visible**; `EXPIRED` and `CANCELLED` are not.
-- Expiry is evaluated live from `expiresAt + graceDays`, never from a cached status column. A nightly
-  worker updates the `status` field for reporting and reminders, but visibility never depends on that
-  worker having run.
-- All dates are stored UTC and compared in **IST**. The boundary case — a subscription expiring at
-  23:00 UTC, which is already tomorrow in India — has its own test.
+- **Extending an active or in-grace seller adds to the existing `validUntil`, not to today**
+  (SUB-02). A seller renewed a month early must not forfeit that month. If they are already
+  `EXPIRED`, the new window starts today instead — otherwise they pay for time already gone.
+- `ACTIVE` and `GRACE` are **publicly visible**; `EXPIRED` and `CANCELLED` are not.
+- Status is derived live from dates. A nightly worker materialises it for reminders and reporting,
+  but **visibility never depends on that worker having run.**
+- All dates are stored UTC and compared in **IST**. The boundary case — a window ending at 23:00 UTC,
+  which is already tomorrow in India — has its own test.
 - Every automatic status change writes an `AuditLog` row, so "why did my listings disappear?" is
   answerable in seconds.
 
-**Receipt numbering.** `receiptNumber` must be sequential and gap-free (SUB-08), which a
-`@default(autoincrement())` cannot guarantee under rollback. Generate it inside the payment
-transaction from a dedicated counter row locked with `SELECT … FOR UPDATE`. Format:
-`RCPT-2026-0001`, resetting annually.
+Term arithmetic lives in one pure function:
+
+```
+computeNewWindow(currentTerm, extendFrom = now, years = 1):
+    base = (currentTerm exists AND currentTerm.validUntil > now)
+             ? currentTerm.validUntil     // early renewal extends, never truncates
+             : now                        // lapsed: the new window starts today
+    return { validFrom: base, validUntil: base + years }
+```
 
 ## 5. Seed data
 
@@ -672,17 +614,16 @@ transaction from a dedicated counter row locked with `SELECT … FOR UPDATE`. Fo
 
 - 3 admins — one of each level (`super@example.com`, `admin@example.com`, `mod@example.com`) — and
   3 buyers.
-- 3 plans: Free (₹0, 5 products), Standard, Premium (unlimited, featured).
 - 12 sellers: 8 approved+active, 2 pending, 1 rejected, 1 approved-but-deactivated. Of the approved
-  ones: 3 on Free, 3 on Standard, 1 on Premium, 1 **in grace** and 1 **expired** — subscription
+  ones: 5 comfortably valid, 1 **expiring in 12 days**, 1 **in grace** and 1 **expired** — validity
   states are otherwise impossible to test without waiting a year.
 - 7 of the 12 sellers are community-verified, 5 are not.
 - 18 categories across 5 parents.
 - 120 products: ~85 approved, 20 pending, 10 rejected, 5 soft-deleted — deliberately spread across
   sellers, cities and states so filters and pagination have something real to bite on.
 - 40 leads across every status, some clustered on one product to exercise dedupe.
-- Subscription payments spread across the last 18 months so the revenue dashboard and the
-  expiring-soon call sheet both have real data.
+- Two or three renewal terms per long-standing seller, so the history view and the expiring-soon
+  call sheet both have real data.
 - The 4 CMS pages with real placeholder copy including the liability disclaimer.
 - Deterministic: fixed seed, so E2E assertions on counts are stable.
 

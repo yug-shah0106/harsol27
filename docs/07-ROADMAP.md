@@ -1,11 +1,11 @@
 # 07 — Phase-Wise Development Plan
 
-Seven phases over **8.5 calendar weeks** — the original 7 plus the ~6.5–7 engineering days added by
-the client decisions of 2026-09-08 (annual subscriptions, multiple admin accounts, community
-verification, dual verification). See `10-OPEN-DECISIONS.md` §C for the two alternatives if 7 weeks
-is a hard commitment.
+Eight phases over **7.5 calendar weeks** — the original 7 plus the ~3.5–4.5 engineering days net
+added by the client decisions of 2026-09-08. Subscriptions were simplified to an admin-managed
+validity window with no payments (Q-04), which cut that module from ~4–5 days to ~2 and brought the
+schedule back to within half a week of the original commitment.
 
-AI-assisted build should finish the engineering inside 6 weeks; the remainder is deliberately
+AI-assisted build should finish the engineering inside 5.5 weeks; the remainder is deliberately
 reserved for client review latency and the rework that approval-workflow products always generate.
 Do not spend the buffer early.
 
@@ -108,43 +108,34 @@ Deliverables:
 
 ---
 
-## Phase 2b — Subscriptions (Week 3 days 4–5 → Week 4 day 2) · **new, CR-001**
+## Phase 2b — Subscription validity (Week 3 days 4–5) · **CR-001, simplified by Q-04**
 
-**Goal: the revenue model works end to end without anyone touching a payment gateway.**
+**Goal: a seller's public presence is governed by an admin-set validity date.**
 
-Placed here deliberately: it needs products (Phase 2) so limits mean something, and it must precede
-Phase 3 so the public catalogue respects subscription-based visibility from the first line of code
-rather than having it retrofitted.
+Placed here deliberately: it must precede Phase 3 so the public catalogue respects validity from the
+first line of code rather than having it retrofitted.
 
 Deliverables:
-- `Plan` CRUD, super-admin gated (SUB-01), with three seeded plans.
-- `Subscription` + `SubscriptionPayment` + `SubscriptionReminder` models and the lifecycle state
-  machine (`03-DATA-MODEL.md` §4.4).
-- **`computeTerm()`** with exhaustive boundary tests — early renewal, lapsed renewal, UTC/IST
-  day-boundary, leap year.
-- Admin: record a payment, change plan, cancel, goodwill extend, subscriber list, expiring-soon CSV
-  (SUB-03, SUB-09).
-- Plan-limit enforcement on product create **and** re-approval (SUB-05), with a real upgrade prompt
-  rather than a bare error.
-- Nightly expiry sweep + reminders at T-30/14/7/1, expiry, grace end (SUB-06), idempotent by unique
-  constraint.
-- Seller billing page with usage bars and payment history (SUB-07).
-- Sequential gap-free receipt numbering + PDF (SUB-08).
-- Founding-member programme as a ₹0 `TRIALING` subscription (SUB-10) — no special-case code.
+- `SubscriptionTerm` + `SubscriptionReminder` models and the lifecycle in `03-DATA-MODEL.md` §4.4.
+- **`computeNewWindow()`** with exhaustive boundary tests — early renewal, lapsed renewal, UTC/IST
+  day boundary, leap year.
+- Admin: set/extend validity, correct a term, cancel, bulk extend, subscriptions list with filters,
+  expiring-soon CSV (SUB-01…03, SUB-07, SUB-08).
+- Nightly validity sweep + reminders at T-30/14/7/1, expiry and grace end (SUB-05), idempotent by
+  unique constraint.
+- Seller status strip showing validity and days remaining (SUB-06).
 
 **Exit gate**
-- [ ] Recording a renewal 30 days early extends from the old expiry, not from today
-- [ ] Recording a renewal on a lapsed subscription starts the term today
-- [ ] An expired seller's listings vanish from public view within 60 s; their **lead inbox still
-      works** and nothing is deleted
+- [ ] Extending a seller 30 days early adds to the old `validUntil`, not to today
+- [ ] Extending a lapsed seller starts the window today
+- [ ] A lapsed seller's listings vanish from public view within 60 s; their **lead inbox still works**
+      and nothing is deleted
 - [ ] A seller in grace is still publicly visible and sees the banner
-- [ ] Free-tier seller is blocked at the 6th product with a plan-comparison prompt
-- [ ] Lowering a plan's limit does not retroactively hide an existing subscriber's products
-- [ ] Receipt numbers are sequential with no gaps after a deliberately rolled-back transaction
+- [ ] Visibility is correct even when the nightly worker has not run
 - [ ] Reminder worker run twice sends each reminder exactly once
 - [ ] Every automatic expiry writes an `AuditLog` row
 
-## Phase 3 — Public marketplace & search (Week 4 day 3 → Week 5 day 2)
+## Phase 3 — Public marketplace & search (Week 4)
 
 **Goal: the public site is live, fast, indexable, and contact is provably hidden.**
 
@@ -154,10 +145,9 @@ Deliverables:
 - Search (SRC-01…04): `tsvector` migration, trigram fallback, composed filters, pagination.
 - `ProductCard`, `FilterBar`, `ImageGallery`, `Breadcrumbs`, `Pagination`, `EmptyState`, skeletons.
 - **`toPublicSeller()` serialiser + the no-contact-in-payload test** (`04-API-SPEC.md` §2.1).
-- Visibility fragment including the subscription clause, with boundary-date tests.
-- Community Verified badge on cards and profiles; featured-plan priority in listing sort.
-- Public pricing page from `GET /plans`, and the founding-member / early-access landing page
-  (`11-MARKETING-GTM.md` §2).
+- Visibility fragment including the validity clause, with boundary-date tests.
+- Community Verified badge on cards and profiles.
+- Founding-member / early-access landing page (`11-MARKETING-GTM.md` §2).
 - SEO (PUB-06): metadata, JSON-LD, sitemap with tag revalidation, robots.
 - CMS pages (PUB-05, ADM-07) with server-side sanitisation, and the Contact-Us form.
 - ISR + Cloudflare caching per `04-API-SPEC.md` §8.
@@ -170,12 +160,12 @@ Deliverables:
 - [ ] Lighthouse mobile on product detail: Perf ≥ 90, A11y = 100, SEO ≥ 95
 - [ ] Approving a product makes it publicly visible within 60 s
 - [ ] Deactivating a seller removes all their products from public view within 60 s
-- [ ] An expired seller's products are absent from search, category pages and sitemap
+- [ ] A lapsed seller's products are absent from search, category pages and sitemap
 - [ ] axe reports zero violations across all public pages
 
 ---
 
-## Phase 4 — Leads, verification & notifications (Week 5 day 3 → Week 6 day 3)
+## Phase 4 — Leads, verification & notifications (Week 5 → Week 6 day 1)
 
 **The revenue phase.** Everything before this was scaffolding for it.
 
@@ -208,7 +198,7 @@ Deliverables:
 
 ---
 
-## Phase 5 — PWA, performance & accessibility (Week 6 days 4–5)
+## Phase 5 — PWA, performance & accessibility (Week 6 days 2–3)
 
 Deliverables: everything in `06-PWA-SPEC.md` — manifest, icons incl. maskable, screenshots, Serwist
 caching rules, offline page, install prompt logic, Web Push with contextual permission, iOS
@@ -226,7 +216,7 @@ flow, focus-order audit, reduced-motion verification).
 
 ---
 
-## Phase 6 — Hardening, QA, UAT & launch (Weeks 7–8.5)
+## Phase 6 — Hardening, QA, UAT & launch (Week 6 day 4 → Week 7.5)
 
 Deliverables:
 - Full regression pass on the matrix in `09-QA-SECURITY-LAUNCH.md` §2.
@@ -254,22 +244,20 @@ Deliverables:
 
 ```
 Phase 0 ──► Phase 1 ──► Phase 2 ──► Phase 2b ──► Phase 3 ──► Phase 4 ──► Phase 5 ──► Phase 6
-                            │           │           ▲
-                            └───────────┴───────────┘
-                         2b needs 2's products; 3 needs 2b's visibility rule
 ```
-Phase 2b sits before Phase 3 on purpose: subscription state is part of the public visibility rule
+Phase 2b sits before Phase 3 on purpose: validity is part of the public visibility rule
 (`03-DATA-MODEL.md` §2), and retrofitting a visibility clause across an already-built catalogue is
-how sellers end up leaking into public results. Phases 2b and 3 can overlap partially across two
-tracks once the visibility fragment itself is merged — see `08-AI-BUILD-PLAYBOOK.md` §4.
+how sellers end up leaking into public results. Phases 2b and 3 can overlap across two tracks once
+the visibility fragment itself is merged — see `08-AI-BUILD-PLAYBOOK.md` §4.
 
 ## Risk register
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|:--:|:--:|---|
 | **MSG91 DLT template approval delays** | High | ~~High~~ **Low** | Neutralised by D-02: the email channel is fully built, so a DLT delay costs a channel, not a launch date. Still start day 1. |
-| **Subscription date arithmetic bug** hides a paying seller | Medium | **High** | One pure `computeTerm()` function, exhaustive boundary tests, live evaluation rather than a cached status column, `AuditLog` on every automatic change. In a small community, hiding a paying member's listings is a trust failure that outlives the bug. |
-| **Sellers resist paying** at renewal | Medium | High | Leads-per-seller is the leading indicator (`01-PRD.md` §6); free tier keeps the catalogue full; founding-member year builds the habit before the first invoice. |
+| **Validity date arithmetic bug** hides a paying seller | Medium | **High** | One pure `computeNewWindow()` function, exhaustive boundary tests, live evaluation rather than a cached status column, `AuditLog` on every automatic change. In a small community, hiding a paying member's listings is a trust failure that outlives the bug. |
+| **Sellers resist paying** at renewal | Medium | High | Leads-per-seller is the leading indicator (`01-PRD.md` §6); the founding-member year builds the habit before the first ask; the weekly digest is the evidence. |
+| Admin forgets to extend a paid seller | Medium | Medium | Expiring-soon CSV call sheet, weekly admin summary, and a 15-day grace period that keeps listings live past the date. |
 | Re-approval load from D-05 overwhelms the admin | Medium | Medium | `PENDING_EDIT` keeps listings live, and the moderation queue pins recent edits for fast scanning. Watch the queue depth in week 1 of production. |
 | Client is slow to supply categories, logo, legal copy | High | Medium | Seed realistic placeholders in Phase 0; request real content in writing at the Phase 1 demo with a Phase 5 deadline. |
 | Scope creep via approval-workflow requests ("add a status", "add a field") | High | High | CR log in `10-OPEN-DECISIONS.md`; nothing unlisted gets built without written approval. |

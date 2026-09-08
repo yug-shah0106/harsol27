@@ -23,7 +23,8 @@ Confirmed by the client on 2026-09-08. These are now binding; changing one becom
 | D-16 | Dark mode in v1? | **Yes, both themes** | Tokens already exist. |
 | D-17 | Analytics | **GA4** (free) | Funnel events per `01-PRD.md` §6. |
 | D-18 | Email sending domain + DNS | **Client to share later** | ⚠️ **Hard-required by Phase 4.** See the warning below. |
-| D-19 | **Seller subscriptions** *(new)* | **Yes — annual, per seller** | Major addition. Full spec in `01-PRD.md` §4.8. |
+| D-19 | **Seller subscriptions** *(new)* | **Yes — annual, per seller** | Full spec in `01-PRD.md` §4.7. |
+| Q-04 | What does a subscription gate? | **Nothing at feature level. No payment handling.** An admin-managed annual validity window; on lapse the seller's listings come off the public site, and that is the only effect | Cuts the module from ~4–5 days to ~2 and brings the schedule back to 7.5 weeks. |
 
 ### Operational warning on D-05
 
@@ -67,44 +68,44 @@ Each has a default so nothing blocks.
 | # | Question | Default if unanswered | Needed by |
 |---|---|---|---|
 | Q-01 | What identifies community membership — an association name, a membership number, an uploaded document, or a referral by an existing member? | Optional free-text "Community / association" field + optional membership ID, verified manually by the admin, who grants a **Community Verified** badge | Phase 1 |
-| Q-02 | D-12 read as "any Node.js runtime is fine, Next.js included". If you specifically meant *Node + Express as two services*, say so now. | Next.js on Node 22, single process | Before Phase 0 |
+| Q-02 | D-12 read as "any Node.js runtime is fine, Next.js included". If you specifically meant *Node + Express as two services*, say so now. | Next.js on Node 22, single process. Rationale and the Next/Nest/Express comparison: `02-ARCHITECTURE.md` §1.1 | Before Phase 0 |
 | Q-03 | Category depth — two levels (group → category) or three? | **Two.** The schema is self-referential so depth is a constant; going to three later is a small change plus UI work | Phase 1 |
-| Q-04 | **What does a subscription actually gate?** | Product listing capacity + featured placement. **Lead access stays free on every plan** — see `01-PRD.md` §4.8 for why | Phase 2 |
-| Q-05 | Subscription payment collection — manual (admin records a UPI/bank payment) or self-serve online (Razorpay)? | **Manual for v1**, self-serve as CR-002 | Phase 2 |
-| Q-06 | Plan names and annual prices | Vendor seeds three plans; client edits them in the admin panel before launch | Phase 6 |
-| Q-07 | Does the client have a GSTIN, and must subscription receipts be GST tax invoices? | Plain numbered receipts, no GST breakup | Phase 2 |
-| Q-08 | Free/discounted founding-member period for early sellers? | **Yes — free first year for the first 100 sellers.** Central to the launch plan in `11-MARKETING-GTM.md` | Phase 2 |
+| Q-08 | Free/discounted founding-member period for early sellers? | **Yes — free first year for the first 100 sellers.** Costs nothing to implement now that validity is admin-set; central to `11-MARKETING-GTM.md` | Phase 2b |
+| Q-09 | Default validity term and grace period | **1 year, 15 days grace**, both editable per seller | Phase 2b |
 
-## C. Scope has grown past the signed fee — read this
+**Resolved and closed:** Q-04 (gating — none), Q-05 (payment collection — none, off-platform),
+Q-06 (plan names/prices — no plans exist), Q-07 (GST receipts — no receipts).
+
+## C. Scope vs the signed fee
 
 ₹1,00,000 was signed (D-01). Per `00-SCOPE-RECONCILIATION.md` §B5, that figure already implied
-trimming roughly ₹20,000 of the larger quotation's feature set. Since then, four additions have
-landed:
+trimming roughly ₹20,000 of the larger quotation's feature set. Additions and savings since:
 
-| Addition | Source | Est. effort |
+| Change | Source | Est. effort |
 |---|---|---|
-| Annual seller subscriptions (manual payment) | D-19 | 4–5 days |
+| Subscription validity window (no plans, no payments) | D-19 + Q-04 | 1.5–2 days |
 | Multiple admin accounts with roles | D-07 | 1–1.5 days |
 | Community verification field + badge | D-03 | 0.5 day |
 | Dual verification (email *and* OTP) | D-02 | 0.5 day |
-| Founding-member / waitlist landing page | Q-08, marketing | 0.5 day |
+| Founding-member / waitlist landing page | Q-08 | 0.5 day |
 | *(saving)* Uniform re-approval removes the conditional-edit logic | D-05 | −0.5 day |
-| **Net** | | **≈ +6.5–7.5 days** |
+| **Net** | | **≈ +3.5–4.5 days** |
 
-Against a ~25-day engineering plan, that is roughly **+30%**. Three honest ways to absorb it — this
-is the client's call, not the vendor's:
+Against a ~25-day engineering plan that is **+15–18%**, and the schedule in `07-ROADMAP.md` now runs
+**7.5 weeks** rather than the original 7.
 
-1. **Extend to 8.5 weeks** and keep everything. Cleanest.
-2. **Hold 7 weeks and drop:** Web Push notifications, the in-app notification centre (email only),
-   and PUB-08 "post your requirement". Roughly the right size. Dark mode is *not* on this list —
-   it is nearly free once tokens exist.
-3. **Hold 7 weeks and full scope** by raising the fee toward the ₹1,20,000 originally quoted.
+Simplifying subscriptions (Q-04) is what recovered this. Plans, tiers, limit enforcement, payment
+recording and receipt generation would have cost ~3 more days and roughly doubled the test surface of
+that module.
 
-**Recommendation: option 1.** Subscriptions are the revenue model; shipping them properly is worth
-six working days, and they also make the hosting cost self-funding.
+Two ways to close the remaining half-week, if 7 weeks is a hard commitment:
 
-Whichever is chosen, decide before Phase 2 — that is when the subscription work starts and the
-timeline commitment becomes real.
+1. **Accept 7.5 weeks.** Recommended — it is half a week against a fixed-scope build, and the buffer
+   in Phase 6 exists precisely because client review latency is unpredictable.
+2. **Drop Web Push** (`06-PWA-SPEC.md` §5). Roughly the right size, and email plus the in-app bell
+   still cover every notification trigger. Push is the least load-bearing feature in the plan.
+
+**Do not** recover it by cutting the Phase 6 hardening or the restore rehearsal.
 
 ## D. Assumptions
 
@@ -115,14 +116,18 @@ timeline commitment becomes real.
 5. The admin approves within about a day — including the higher re-approval volume from D-05.
 6. No integration with any existing client system (CRM, ERP, member database).
 7. Hosting, domain and email live in the client's own accounts, with vendor access delegated.
-8. Subscription revenue is collected by the client directly; the vendor never touches funds.
+8. Subscription money is collected entirely off-platform by the client. The application never
+   processes, records or reconciles a payment — an admin simply extends a validity date once money
+   has changed hands. ⚠️ This means the portal is **not** a record of who has paid; if the client
+   later wants that, it is CR-002.
 
 ## E. Change request log
 
 | CR | Date | Request | Est. effort | Status | Decided by |
 |---|---|---|---|---|---|
-| CR-001 | 2026-09-08 | Annual seller subscriptions, manual payment recording | 4–5 days | **Approved** (D-19) | Client |
-| CR-002 | — | Self-serve online subscription payment (Razorpay: UPI/cards/netbanking, webhooks, auto-activation, GST tax invoices) | 4–5 days | **Proposed** — quote separately | — |
+| CR-001 | 2026-09-08 | Annual seller subscription validity, admin-managed, no payments | 1.5–2 days | **Approved** (D-19, Q-04) | Client |
+| CR-007 | — | Plan tiers with feature gating (product limits, image limits, featured placement) | 3–4 days | **Deferred** by Q-04 | Client |
+| CR-002 | — | Self-serve online payment (Razorpay: UPI/cards/netbanking, webhooks, auto-extension, GST tax invoices, receipts) | 4–5 days | **Deferred** — requires CR-007 first to be worth anything | — |
 | CR-003 | — | Programmatic city × category SEO landing pages (`11-MARKETING-GTM.md` §5) | 2–3 days | **Proposed** — highest-ROI marketing addition | — |
 | CR-004 | — | Seller referral tracking with subscription credit | 1.5 days | **Proposed** | — |
 | CR-005 | — | WhatsApp notifications via Meta Business API | 3 days + per-message cost | Deferred | — |
@@ -133,11 +138,13 @@ An unapproved CR is never built.
 
 ## F. Likely post-launch roadmap
 
-Razorpay self-serve billing (CR-002) · programmatic SEO pages (CR-003) · referrals (CR-004) ·
+Plan tiers (CR-007) then Razorpay self-serve billing (CR-002) · programmatic SEO pages (CR-003) ·
+referrals (CR-004) ·
 WhatsApp notifications · bulk import · buyer requirement board · seller analytics (views, lead
 sources, conversion) · saved searches with alerts · verified-seller document checks · ratings and
 reviews · regional-language UI.
 
 The schema in `03-DATA-MODEL.md` accommodates most of these without migration pain — `Setting`,
-`AuditLog`, `LeadEvent`, the self-referential category tree and the plan-based subscription model
-all exist partly to keep those doors open.
+`AuditLog`, `LeadEvent`, the self-referential category tree and the append-only subscription term
+history all exist partly to keep those doors open — adding plan tiers later means a `Plan` table and
+a foreign key, not a rewrite.

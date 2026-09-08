@@ -4,9 +4,10 @@ Two quotations were supplied and they do not describe the same product. This doc
 scope so the build cannot drift.
 
 > **Updated 2026-09-08 after client sign-off.** ₹1,00,000 is the signed figure, and **annual seller
-> subscriptions have been added** — a feature both original quotations explicitly excluded. The
-> resolved scope below reflects every decision in `10-OPEN-DECISIONS.md` §A. The effort delta and
-> the three options for absorbing it are in `10-OPEN-DECISIONS.md` §C.
+> subscriptions have been added** — though in a form that keeps both quotations' "no payment
+> handling" clause fully intact: the portal tracks a validity date, and money changes hands
+> off-platform. The resolved scope below reflects every decision in `10-OPEN-DECISIONS.md` §A; the
+> effort delta is in §C.
 
 ## A. The two source documents
 
@@ -96,17 +97,16 @@ scope and revisit the fee. **This needs deciding before Phase 2 starts.**
 
 Stated so it cannot be assumed in later:
 
-- Buyer-side payments, checkout, cart, escrow. GST calculation on subscription receipts is out
-  unless Q-07 says otherwise.
+- All payment handling — buyer-side and seller-side. Checkout, cart, escrow, gateways, invoices,
+  receipts, GST. Subscription money changes hands entirely off-platform (Q-04/Q-05).
 - Order management, shipping, delivery tracking, returns.
 - Ratings, reviews, or seller scoring.
 - In-platform chat or messaging between buyer and seller (contact is by phone/email, off-platform).
 - Native iOS/Android app-store apps. **The PWA is the mobile strategy** — see `06-PWA-SPEC.md`.
 - Multi-language / multi-currency.
-- ~~Seller subscription tiers~~ — **now IN scope** (D-19). See `01-PRD.md` §4.8. Paid *listings* and
-  promoted placement beyond the plan-level featured flag remain out.
-- **Online payment collection for subscriptions** — out for v1. Payments are recorded manually by the
-  admin. Self-serve Razorpay checkout is CR-002.
+- Seller subscriptions are **IN** scope (D-19) but only as an admin-managed validity window — see
+  `01-PRD.md` §4.7. **Plan tiers and feature gating are out** (Q-04, deferred as CR-007), as is
+  promoted placement.
 - Bulk product import (CSV/Excel) — CR-006. Commonly requested late; quote separately.
 - Any responsibility for pricing disputes, transaction disputes, fraud, delivery or product quality
   — the platform is a connector only. This must be reflected in the T&C page copy.
@@ -146,7 +146,8 @@ Two techniques keep the VPS at the small end rather than the large:
 
 1. **Fund it from subscription revenue.** With D-19 now in scope the client has a revenue model.
    Even ten sellers at ₹2,000/year covers hosting for the life of the quotation. This is the real
-   answer, and it is a much better conversation than the other two.
+   answer, and it is a much better conversation than the other two. Note that the portal will not
+   *track* that revenue (Q-04) — the community office does, off-platform.
 2. Re-quote hosting honestly at ~₹600/month from year two, with the first year as quoted.
 3. Absorb it as a cost of sale.
 

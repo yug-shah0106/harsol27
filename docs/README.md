@@ -19,7 +19,8 @@ Everything needed to build this product end-to-end with AI agents. Read in order
 
 > **Updated 2026-09-08.** Client decisions are recorded in `10-OPEN-DECISIONS.md` §A. Two of them
 > reshape the project: **₹1,00,000 is the signed fee**, and **annual seller subscriptions are now in
-> scope**. Read `10-OPEN-DECISIONS.md` §C before committing to a date.
+> scope** as an admin-managed validity window with no payment handling. Timeline is **7.5 weeks**;
+> see `10-OPEN-DECISIONS.md` §C.
 
 ## The 60-second version
 
@@ -29,8 +30,9 @@ product. Buyers search the public catalogue, and a seller's phone/email stays hi
 buyer submits a verified inquiry — that submission *is* the lead. Everyone gets notified. No
 payments, no cart, no pricing enforcement, ever.
 
-Sellers pay an **annual subscription** — plans gate listing capacity and prominence, never lead
-access. Payments are recorded manually by an admin in v1; no gateway.
+Sellers pay an **annual subscription**, collected entirely off-platform. The portal tracks only a
+validity window that an admin sets and extends; when it lapses, the seller's listings come off the
+public site. No plans, no tiers, no feature gating, no payment handling.
 
 Delivered as one responsive web app that installs as a PWA on Android and iOS.
 

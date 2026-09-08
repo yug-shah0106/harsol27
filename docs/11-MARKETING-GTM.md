@@ -32,14 +32,12 @@ Reframe it as a **Founding Member** offer with real, expiring value:
 > **Founding Member — first 100 sellers**
 > · Free for the first full year (worth ₹X)
 > · Permanent "Founding Member" badge on your profile
-> · Priority placement in your category for the first 6 months
-> · Your categories set up for you — no paperwork
+> · Your categories and first products set up for you — no paperwork
 > · Closes when we hit 100, or on [date]
 
 Why each piece is there: the free year removes all risk at the moment of highest doubt; the badge is
-permanent status inside a community that knows each other, which is worth more here than in a generic
-marketplace; priority placement is a real, scarce good; "set up for you" removes the actual barrier,
-which is effort, not money.
+permanent status inside a community where everyone knows each other, which is worth more here than in
+a generic marketplace; and "set up for you" removes the actual barrier, which is effort, not money.
 
 The form itself should be short — **company name, contact person, phone, city, what you sell, and how
 many products you'd list.** That's it. Do not ask for GST, address or a description; you can collect
@@ -51,9 +49,10 @@ worse, but each submission is a real requirement you can hand to your first sell
 during onboarding. Nothing closes a seller faster than an inquiry in their hand.
 
 **Engineering:** the seller form is a landing page plus a `Waitlist` table — half a day, in Phase 3.
-The founding-member subscription needs no special code: it is a ₹0 `TRIALING` subscription with a
-12-month term (SUB-10), so it expires and converts through exactly the same reminder machinery as any
-paid plan.
+The founding-member offer needs no code at all: since subscriptions are now just an admin-set validity
+window (Q-04), a founding member is simply a seller given a one-year window without being asked for
+money. They expire, and get reminded, through exactly the same machinery as everyone else. The badge
+is a flag on the profile.
 
 ⚠️ **The trap to avoid:** a waitlist you don't convert within two weeks is a dead list. Enthusiasm
 decays fast. Plan the phone calls before you launch the form.
@@ -112,7 +111,7 @@ the community feel like a live thing that needs their participation.
 
 Send **Monday morning**, on WhatsApp *and* email. Keep it under 150 words.
 
-**This is also your renewal engine.** With a free founding year, the first invoice lands at month 12.
+**This is also your renewal engine.** With a free founding year, the first ask lands at month 12.
 By then you need every seller to have absorbed "the portal sends me business" — 50 weekly reminders
 of exactly that does more for renewal than any sales call in month 11.
 
@@ -147,9 +146,10 @@ cohort.
 
 ### 5.3 Seller referrals *(CR-004, 1.5 days)*
 
-"Refer a seller who gets approved — both of you get 2 months added." In a community where everyone
-knows everyone, referral is the cheapest acquisition channel that exists, and the subscription
-already gives you a currency to pay in that costs nothing.
+"Refer a seller who gets approved — both of you get 2 months added to your validity." In a community
+where everyone knows everyone, referral is the cheapest acquisition channel that exists, and the
+validity window gives you a currency to pay in that costs you nothing. With the simplified
+subscription model this is close to free to build: it is an extra call to the same extend function.
 
 ## 6. Launch sequence, mapped to the build
 
@@ -161,7 +161,7 @@ already gives you a currency to pay in that costs nothing.
 | Week 7 | Phase 5 | Soft launch to the WhatsApp group only. Seed real requirements. First weekly digest. |
 | Week 8–9 | Phase 6 + launch | Public launch. Offline community meeting/demo if possible — the community angle makes in-person work here in a way it wouldn't for a generic portal. Submit to Search Console. |
 | Months 2–3 | Post-launch | Weekly digests without fail. Recruit against the "found nothing" list. Only now consider city two. |
-| Month 10 | | Renewal campaign, armed with each seller's personal lead count. |
+| Month 10 | | Renewal campaign, armed with each seller's personal lead count and the expiring-soon call sheet from the admin panel. |
 
 ## 7. What to measure
 

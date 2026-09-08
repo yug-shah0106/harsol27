@@ -167,45 +167,40 @@ It gets its own test in `tests/unit/policy/product.spec.ts`.
 Every admin mutation writes an `AuditLog` row **inside the same transaction** as the change. Outside
 the transaction, the log and the reality drift the first time something fails halfway.
 
-## 6a. Subscriptions (D-19)
+## 6a. Subscription validity (D-19 / Q-04)
+
+No plans, no prices, no payments — an admin-managed validity window per seller.
 
 **Seller-facing** — role `SELLER`:
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/seller/subscription` | Current plan, snapshotted limits, live usage (`productsUsed/productsAllowed`), status, `expiresAt`, days remaining |
-| GET | `/seller/subscription/payments` | Payment history |
-| GET | `/seller/subscription/payments/:id/receipt` | PDF receipt |
-| GET | `/plans` | **Public** — active plans for the pricing page and upgrade prompts |
+| GET | `/seller/subscription` | `{ validFrom, validUntil, daysRemaining, status, graceEndsAt }` + term history |
 
 **Admin-facing** — role `ADMIN`:
 
 | Method | Path | Notes |
 |---|---|---|
-| GET/POST | `/admin/plans` | Super-admin only for POST |
-| PATCH | `/admin/plans/:id` | Super-admin only. Never rewrites existing subscribers' snapshotted limits. |
-| DELETE | `/admin/plans/:id` | 409 if any subscription references it |
-| GET | `/admin/subscriptions` | Filter by `status`, `planId`, `expiringWithinDays`, `q` |
-| POST | `/admin/subscriptions/:sellerId/payments` | **Record a payment.** `{ planId, amount, mode, reference, paidAt }`. Computes the term, activates, issues a receipt number, writes `AuditLog` — all in one transaction. |
-| POST | `/admin/subscriptions/:sellerId/change-plan` | Immediate plan change without payment (corrections, comps) |
+| GET | `/admin/subscriptions` | Filter by `status`, `expiringWithinDays`, `q` |
+| POST | `/admin/subscriptions/:sellerId/extend` | `{ years \| validUntil, note }` — the main action. Computes the window, writes the term row and an `AuditLog` entry in one transaction. |
+| PATCH | `/admin/subscriptions/:sellerId/term/:termId` | Correct a mistaken term. Creates a superseding row; never mutates history. |
 | POST | `/admin/subscriptions/:sellerId/cancel` | `{ reason }` |
-| POST | `/admin/subscriptions/:sellerId/extend` | `{ days, reason }` — goodwill extensions; audited |
-| GET | `/admin/subscriptions/expiring` | CSV export — the renewal call sheet (SUB-09) |
-| GET | `/admin/subscriptions/stats` | Active/grace/expired counts, ARR, renewal rate |
+| POST | `/admin/subscriptions/bulk-extend` | `{ sellerIds[], validUntil, note }`, max 100 (SUB-08) |
+| GET | `/admin/subscriptions/expiring` | CSV — the renewal call sheet (SUB-07) |
+| GET | `/admin/subscriptions/stats` | Active / grace / expired / expiring-in-30 counts |
 
-**Term arithmetic lives in one pure function**, `computeTerm(currentSub, paidAt)`:
+**Window arithmetic lives in one pure function**, `computeNewWindow(currentTerm, now, years)`:
 
 ```
-if subscription is ACTIVE or GRACE and expiresAt > paidAt:
-    periodStart = existing expiresAt      // early renewal extends, never truncates
-else:
-    periodStart = paidAt                  // lapsed: the new term starts now
-periodEnd = periodStart + 1 year
+base = (currentTerm exists AND currentTerm.validUntil > now)
+         ? currentTerm.validUntil     // early renewal extends, never truncates
+         : now                        // lapsed: the new window starts today
+return { validFrom: base, validUntil: base + years }
 ```
 
-Every date is stored UTC and evaluated in IST. This function has exhaustive boundary tests (`09` §1.1
-#9) because getting it wrong either gives away time or takes away time a seller has paid for, and the
-second is the kind of mistake a small community does not forget.
+Every date is stored UTC and evaluated in IST. This function has exhaustive boundary tests (`09`
+§1.1 #9) because getting it wrong either gives away time or takes away time a seller has already
+paid for, and the second is the kind of mistake a small community does not forget.
 
 ## 6b. Admin users (D-07)
 

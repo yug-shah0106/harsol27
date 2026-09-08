@@ -4,7 +4,7 @@
 **Version:** 1.0 (MVP)
 **Status:** Client-confirmed 2026-09-08 (see `10-OPEN-DECISIONS.md` §A)
 **Delivery form:** Responsive web application, installable as a PWA on Android and iOS
-**Revenue model:** Annual seller subscriptions, collected by the client
+**Revenue model:** Annual seller subscriptions, collected off-platform; the portal tracks validity only
 
 ---
 
@@ -51,17 +51,16 @@ decision, and no way to break the site. Success = she can clear the day's approv
 
 | Capability | Guest | Buyer | Seller (pending) | Seller (approved) | Admin |
 |---|:--:|:--:|:--:|:--:|:--:|
-| — *subscription-gated rows marked* 💳 | | | | | |
 | Browse / search / filter catalogue | ✅ | ✅ | ✅ | ✅ | ✅ |
 | View product detail (contact masked) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | View seller contact details | ❌ | after inquiry | ❌ | ❌ | ✅ |
 | Submit inquiry | ✅ (with verification) | ✅ | ✅ | ✅ | — |
 | View own inquiry history | ❌ | ✅ | ❌ | ❌ | — |
 | Access seller dashboard | ❌ | ❌ | ⚠️ read-only pending notice | ✅ | ✅ (impersonate-view) |
-| Create / edit / delete own products | ❌ | ❌ | ❌ | ✅ 💳 | ✅ |
-| View own subscription & renewal history | ❌ | ❌ | ✅ | ✅ | ✅ |
-| Record a subscription payment | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Manage plans, admins & roles | ❌ | ❌ | ❌ | ❌ | ✅ super-admin |
+| Create / edit / delete own products | ❌ | ❌ | ❌ | ✅ | ✅ |
+| View own validity dates & history | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Set or extend a seller's validity | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Manage admins & roles | ❌ | ❌ | ❌ | ❌ | ✅ super-admin |
 | Publish a product without approval | ❌ | ❌ | ❌ | ❌ | ✅ |
 | View own leads | ❌ | ❌ | ❌ | ✅ | ✅ |
 | Approve / reject sellers & products | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -174,67 +173,54 @@ expected, **P2** = ship if time allows. Every P0 and P1 must have an automated t
 All emails are queued, retried with exponential backoff (3 attempts), and logged with delivery
 status. A failing email provider must never break the user-facing request.
 
-### 4.7 Seller subscriptions (`SUB`) — annual, added by D-19
+### 4.7 Seller subscriptions (`SUB`) — annual validity window, D-19 / Q-04
 
-The revenue model. Sellers pay an **annual** subscription to list on the portal. Payments in v1 are
-collected off-platform and **recorded by an admin** (UPI, bank transfer, cheque, cash); the system
-owns everything else — plans, terms, expiry, reminders, enforcement and receipts. Self-serve online
-payment via Razorpay is CR-002.
+**Simplified by client decision (Q-04): a subscription gates nothing at feature level, and the
+platform handles no payments.** It is an **annual validity window per seller, set and extended by an
+admin.** No plans, no prices, no tiers, no product limits, no featured placement, no receipts, no
+gateway.
 
-**What a subscription gates — and what it must not.** ⚠️ Q-04, default below.
+What it does:
 
-Recommended: gate **listing capacity and visibility**, never lead access.
+- Every approved seller has a `validUntil` date.
+- While valid (plus a grace period), the seller is publicly listed and fully operational.
+- When it lapses past grace, **their listings come off the public site.** Nothing else changes and
+  nothing is deleted: they keep their login, their products, their full lead history and their lead
+  inbox. An admin extends the date and everything returns.
+- Sellers and admins get reminders before and at expiry.
 
-| Gated by plan | Not gated, ever |
-|---|---|
-| Number of products a seller may list | Receiving leads |
-| Featured / priority placement in listings | Seeing buyer name, phone, email and message |
-| Number of images per product | Lead CSV export |
-| "Featured Seller" badge | Reading past leads after expiry |
+That account-level expiry is the *only* enforcement in the system. It is also the point of the
+feature — a validity date that has no effect would be a note, not a subscription. If you want expiry
+to do nothing at all, say so and this becomes a display-only field.
 
-The reasoning matters, because the opposite model — charging sellers to unlock the buyer's number,
-as IndiaMART does — is the more obvious way to make money and it is the wrong one here. This is a
-*community* portal. A seller who receives an inquiry from a fellow community member and is then
-asked to pay before they can return the call will complain to the community office, not to the
-vendor. Selling capacity and prominence is quieter, renews better, and keeps the platform's promise
-intact: you list, you get leads.
-
-There is a free tier by design. An empty marketplace has no value, so the cheapest way to fill it is
-to let small sellers list a handful of products for nothing and upgrade when it works for them.
-
-Seeded plans (all editable by a super-admin, Q-06):
-
-| Plan | Annual price | Products | Images/product | Featured |
-|---|---|---|---|---|
-| Free | ₹0 | 5 | 3 | No |
-| Standard | *client sets* | 50 | 8 | No |
-| Premium | *client sets* | Unlimited | 8 | Yes |
+Money is collected entirely off-platform, by whatever means the community office prefers, with no
+record kept in the application beyond an optional free-text note on the term.
 
 | ID | P | Requirement | Acceptance criteria |
 |---|:--:|---|---|
-| SUB-01 | P0 | **Plan management** (super-admin): create, edit, activate/deactivate plans — name, annual price, product limit, image limit, featured flag, description, display order. | Editing a plan's limits never retroactively breaks existing subscribers: a seller over a newly lowered limit keeps their products but cannot add more. Deleting a plan with subscribers is blocked. |
-| SUB-02 | P0 | **Subscription record per seller**: plan, status, `startsAt`, `expiresAt`, amount paid, payment mode, reference, recorded-by, notes. | One active subscription per seller. Full history retained — renewals append, never overwrite. |
-| SUB-03 | P0 | **Admin records a payment**: select seller, plan, amount, mode (UPI/bank/cheque/cash/other), reference number, date; system computes `expiresAt` = start + 1 year and activates. | Idempotent. Writes an `AuditLog` entry. Recording a renewal on an already-active subscription **extends from the existing expiry, not from today** — sellers who renew early must not lose the days they paid for. |
-| SUB-04 | P0 | **Lifecycle & enforcement**: `TRIALING → ACTIVE → GRACE → EXPIRED`, plus `CANCELLED`. Grace period 15 days (configurable). | During grace, listings stay public and the seller sees a persistent banner. On expiry, products are hidden from public view and new product creation is blocked — **nothing is deleted, and the lead inbox stays fully accessible**. Reactivation on payment restores everything within 60 s. |
-| SUB-05 | P0 | **Limit enforcement**: product count and images-per-product checked against the active plan, server-side. | Attempting to exceed returns 409 with the current plan, the limit, and an upgrade prompt — never a bare error. Checked on create *and* on re-approval, so limits cannot be bypassed by editing. |
-| SUB-06 | P0 | **Renewal reminders** at 30, 14, 7 and 1 days before expiry, on expiry day, and on grace-period end. | Email + in-app. Deduplicated — a seller never gets the same reminder twice. Sending is idempotent so a worker retry cannot spam. |
-| SUB-07 | P1 | **Seller billing page**: current plan and its limits, usage against them (e.g. "23 of 50 products"), expiry date with a countdown, full payment history, downloadable receipts, and how to pay. | Usage bars use the semantic palette; approaching a limit is a warning state, not a failure state. |
-| SUB-08 | P1 | **Numbered receipts** generated per payment, downloadable as PDF by both seller and admin. | Sequential, gap-free numbering. GST breakup only if Q-07 requires it. |
-| SUB-09 | P1 | **Admin subscription dashboard**: active / in-grace / expired / expiring-in-30-days counts, annual recurring revenue, renewal rate, and a filterable subscriber list. | Expiring-soon list is exportable to CSV — it is the client's renewal call sheet. |
-| SUB-10 | P1 | **Founding-member programme** (Q-08): a plan may be granted free or discounted for a fixed term to the first N sellers. | Implemented as a normal subscription at ₹0 with a `TRIALING` status and an end date, so it expires and converts through exactly the same reminder machinery as any other plan. No special-case code path. |
-| SUB-11 | P2 | Bulk renewal recording for the admin (select many sellers, apply the same plan and date). | Useful when the community office collects payments at an annual meeting. |
+| SUB-01 | P0 | **Admin sets a seller's validity window**: pick the seller, set `validFrom` and `validUntil` (defaulting to one year), add an optional note. | Idempotent. Writes an `AuditLog` row. Available from both the seller detail page and a dedicated subscriptions list. |
+| SUB-02 | P0 | **Extend / renew**: extending an active seller **adds to the existing `validUntil`, never restarts from today.** Extending a lapsed seller starts from today. | The single most important rule in the module — a seller renewed early must not lose the months they already have. Own boundary tests. |
+| SUB-03 | P0 | **Term history**: every window is retained as a row, so the admin can see when each renewal was recorded and by whom. | History is append-only; editing a term creates a correction entry rather than overwriting. |
+| SUB-04 | P0 | **Lifecycle**: `ACTIVE → GRACE → EXPIRED`, plus `CANCELLED`. Grace period 15 days, configurable per seller. | During grace, listings stay public and the seller sees a persistent banner. On expiry, listings are hidden within 60 s and product creation is blocked. **Lead inbox and all data remain fully accessible.** |
+| SUB-05 | P0 | **Reminders** at 30, 14, 7 and 1 days before expiry, on expiry day, and at grace end. | Email + in-app to the seller; the admin gets a weekly expiring-soon summary. Idempotent — a worker retry cannot resend. |
+| SUB-06 | P1 | **Seller status strip**: current validity, days remaining, and a clear message on how to renew. | Approaching expiry is a warning state, not a failure state. |
+| SUB-07 | P1 | **Admin subscriptions view**: active / in-grace / expired / expiring-in-30-days counts, filterable list, CSV export. | The export is the community office's renewal call sheet. |
+| SUB-08 | P2 | **Bulk extend**: select many sellers, apply the same new `validUntil`. | Useful when payments are collected together at an annual meeting. |
 
-**Notification triggers added** (extending §4.6): subscription activated, renewal reminder ×4,
-subscription expired, grace period ending, plan changed, and — for the admin — a payment recorded
-and a weekly expiring-soon summary.
+**Notification triggers added** (extending §4.6): renewal reminder ×4, subscription expired, grace
+ending, validity extended by an admin; and for the admin, a weekly expiring-soon summary.
 
-**The failure mode to design against.** A subscription system that silently hides a paying seller's
-listings because of a date-arithmetic bug destroys trust in a way that is very hard to recover from
-in a small community. Three defences are mandatory: (1) expiry enforcement is a single pure function
-with exhaustive unit tests around boundary dates and timezones; (2) all subscription dates are stored
-UTC and evaluated in IST, with an explicit test for the case where those differ across a day
-boundary; (3) hiding a seller for expiry writes an `AuditLog` row, so "why did my listings vanish?"
-has an answer in ten seconds rather than an afternoon.
+**The failure mode to design against.** A date-arithmetic bug that hides a paying seller's listings
+destroys trust in a way that is hard to recover from in a small community. Three defences are
+mandatory: (1) the term calculation is a single pure function with exhaustive boundary tests;
+(2) dates are stored UTC and evaluated in IST, with an explicit test for the case where those differ
+across a day boundary; (3) every automatic expiry writes an `AuditLog` row, so "why did my listings
+vanish?" is answerable in ten seconds.
+
+> **What this decision saved.** Dropping plans, tiers, limit enforcement, payment recording and
+> receipt generation takes this module from ~4–5 days to ~1.5–2. See `10-OPEN-DECISIONS.md` §C for
+> what that does to the timeline. Plan-based gating remains straightforward to add later — the term
+> model below does not block it — but nothing is being built for it now.
 
 ### 4.8 Cross-cutting (`SYS`)
 
@@ -268,11 +254,12 @@ Login → dashboard shows 3 pending sellers, 11 pending products → approve 2 s
 reason → assign categories to the new sellers → bulk-approve 9 products, reject 2 with reason →
 review today's leads. *Target: under 10 minutes.*
 
-**CUJ-4 — Seller subscribes and renews.**
-Seller hits the 5-product limit on Free → sees the limit message with plan comparison → pays by UPI
-off-platform → admin records the payment → subscription activates within minutes → limit lifts
-immediately. Eleven months later the first renewal reminder arrives; the seller renews early and the
-new expiry extends from the old one, not from today.
+**CUJ-4 — Seller renews.**
+At 30 days out the seller gets a reminder; the admin's call sheet lists them. The seller pays the
+community office off-platform. The admin opens the seller and extends the validity by a year — and
+the new expiry extends from the *old* one, not from today, so the early renewal costs them nothing.
+If they instead lapse, their listings come off the site at grace end, their lead inbox still works,
+and one admin edit restores everything.
 
 ## 6. Success metrics
 
@@ -286,16 +273,16 @@ new expiry extends from the old one, not from today.
 | Leads per active seller per month | ≥ 3 | Below this sellers stop logging in and the catalogue rots. |
 | Mobile LCP (p75, field) | < 2.5 s | Half the traffic will be mid-range Android on 4G. |
 | PWA install rate among repeat buyers | ≥ 15% | Validates the PWA-instead-of-native bet. |
-| Paid (non-free) sellers | ≥ 30% of approved sellers | The revenue model working at all. |
 | Subscription renewal rate (year 2) | ≥ 70% | The real verdict on whether sellers got value. Leads per seller predicts this months in advance. |
-| Free → paid conversion within 90 days | ≥ 20% | Tells you whether the free tier is a funnel or a leak. |
+| Sellers lapsing past grace | < 10% | Mostly a measure of whether reminders and the call sheet are being used. |
 
 ## 7. Non-goals for v1
 
 Recommendation engines, promoted listings beyond the plan-level featured flag, RFQ auctions, in-app
 chat, multi-language, buyer verification badges, ratings and reviews, and any buyer-side payment.
 
-Seller subscriptions are now **in** scope (§4.7) but deliberately in their simplest form: annual
-terms, admin-recorded payments, no online checkout. Self-serve Razorpay billing is CR-002 and is a
-genuinely separate piece of work — webhooks, reconciliation, refunds, failed-payment retries and GST
-invoicing are where payment integrations actually consume time, not the checkout button.
+Seller subscriptions are **in** scope (§4.7) but in their minimal form: an admin-managed annual
+validity window, no plans, no tiers, no feature gating and **no payment handling of any kind**.
+Plan-based tiers (CR-007) and self-serve Razorpay billing (CR-002) are both deferred, and both are
+genuinely separate pieces of work — with payments, it is webhooks, reconciliation, refunds, retries
+and GST invoicing that consume the time, not the checkout button.

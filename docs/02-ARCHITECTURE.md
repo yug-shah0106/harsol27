@@ -16,9 +16,8 @@
 | Images | **Cloudflare R2** + `next/image` | Zero egress fees. Sharp re-encodes to WebP on upload. |
 | Email | **Resend** (or Brevo) with **React Email** templates | Free tier covers launch volume. Templates as components stay in the repo and in review. |
 | SMS/OTP | **MSG91** (India DLT-registered) | ⚠️ Requires DLT template registration — start this in week 1, it takes 3–7 working days. |
-| Jobs | **pg-boss** (PostgreSQL-backed queue) | Email retries, the 10-minute admin lead digest (D-09), nightly subscription expiry sweep and renewal reminders — all without adding Redis. One less service to host. |
-| PDF receipts | **@react-pdf/renderer** | Subscription receipts (SUB-08) rendered from a React component in-process. No headless Chrome, which would not fit in 2 GB. |
-| Payments | **None in v1** — admin records payments manually (D-19 / Q-05) | Razorpay self-serve is CR-002. Keeping money out of the app for v1 removes PCI scope, webhook reconciliation and refund handling from a 7-week build. |
+| Jobs | **pg-boss** (PostgreSQL-backed queue) | Email retries, the 10-minute admin lead digest (D-09), the nightly validity sweep and renewal reminders — all without adding Redis. One less service to host. |
+| Payments | **None — the application never touches money** (D-19 / Q-04) | Subscriptions are an admin-managed validity date. No gateway, no PCI scope, no reconciliation, no receipts. Plan tiers are CR-007 and Razorpay is CR-002, both deferred. |
 | Push | **Web Push (VAPID)** via `web-push` | Free, no FCM project needed. |
 | Errors | **Sentry** free tier | |
 | Tests | **Vitest** + **Playwright** + **axe-core** | |
@@ -32,14 +31,66 @@ a Connect/Express-compatible middleware model underneath. One Node process serve
 app and the REST API at `/api/v1`, with JWT auth and Swagger docs, exactly as Quotation B promised.
 
 We are reading that instruction as *"the backend must be Node.js"* rather than *"there must be a
-separate Express service."* The distinction matters: a second Express process means two deploys, two
-sets of logs and a CORS surface on a box we are explicitly trying to keep as cheap as possible, and
-it forces the public product pages to be client-rendered — which measurably hurts Google indexing
-for a directory whose entire growth model is organic search.
+separate Express service."* ⚠️ If you meant the latter, say so before Phase 0 (Q-02): the fallback is
+Next.js for the web app plus a thin Express service mounting the same handlers — about three extra
+days and roughly ₹400/month more hosting, for no user-visible benefit.
 
-⚠️ **If you specifically meant Node + Express as two services, say so before Phase 0** (Q-02). The
-fallback is Next.js for the web app plus a thin Express service mounting the same handlers: about
-three extra days and roughly ₹400/month more hosting, for no user-visible benefit.
+### 1.2 Next.js vs NestJS vs Express — clearing up the comparison
+
+A question worth answering properly, because the terms get mixed up constantly.
+
+**Node.js is not a competitor to any of these.** Node is the JavaScript *runtime* — the thing that
+executes the code. Express, NestJS and Next.js are all **frameworks that run on top of Node.js**.
+Asking "is Nest better than Node?" is like asking whether Django is better than Python: Django *is*
+Python. All three options below are Node.js, so the D-12 instruction is satisfied by any of them.
+
+The real question is which framework. Here is the honest comparison for *this* project:
+
+| | **Express** | **NestJS** | **Next.js** *(chosen)* |
+|---|---|---|---|
+| What it is | Minimal HTTP router | Opinionated backend framework (Angular-style modules, decorators, dependency injection) | Full-stack React framework |
+| Renders the UI? | No | No | **Yes — server-side** |
+| Structure imposed | None | Very strong | Moderate |
+| Built-in Swagger | No | **Yes**, from decorators | No — via `zod-to-openapi` |
+| Dependency injection | No | **Yes** | No |
+| Learning curve | Low | High | Moderate |
+| Processes to deploy | 1 (+1 for the UI) | 1 (+1 for the UI) | **1 total** |
+| SEO for public pages | Needs a separate SSR app | Needs a separate SSR app | **Native** |
+| RAM footprint | Small | Medium | Medium |
+
+**Where NestJS genuinely wins,** and it does win in the right context:
+
+- Large teams. The enforced module/controller/service/DTO structure stops a big codebase drifting,
+  because there is exactly one accepted way to add a feature.
+- Large or public API surfaces. Decorator-driven Swagger, validation pipes, guards and interceptors
+  are a genuinely better developer experience than assembling the same things by hand.
+- Complex backends — microservices, gRPC, WebSockets, CQRS. Nest treats all of these as first-class.
+- Heavy unit testing. Dependency injection makes mocking trivial.
+
+**Why it is still the wrong choice here**, in order of weight:
+
+1. **NestJS renders no UI.** It is backend-only. Choosing it means building *two* applications —
+   Nest for the API and React or Next for the frontend — which means two deploys, two sets of logs,
+   a CORS surface, and roughly double the hosting. That directly contradicts D-11, "hosting as low
+   as possible."
+2. **SEO is this product's growth engine.** A directory lives or dies on organic search for queries
+   like "SS sheet supplier Rajkot". Server-rendered product pages are not a nice-to-have here; they
+   are the acquisition strategy (`11-MARKETING-GTM.md` §5.1). Next.js does this natively. A Nest API
+   with a client-rendered React frontend does not.
+3. **The API is not the product.** Nest's strengths shine when many external clients consume your
+   API. Here there is exactly one consumer — our own frontend — so the ceremony buys little.
+4. **Team size is one to four AI agents on a 7.5-week build.** Nest's structure pays off over years
+   and many developers; over seven weeks its boilerplate is a tax.
+
+**We keep Nest's actual benefit without adopting Nest.** The thing worth copying is the discipline,
+not the decorators — so §2.1 mandates `server/modules/<domain>/{service,repository,schema,policy}.ts`
+and forbids business logic in route handlers. That gives the same predictable structure (which is
+exactly what keeps AI-generated code coherent) with none of the second-process cost.
+
+**Summary:** Express is too bare for a project of this size, NestJS is excellent but solves problems
+this project does not have while creating one it cannot afford, and Next.js is the only option of the
+three that serves the SEO-critical public site and the API from a single ₹600/month box. All three
+are Node.js.
 
 ## 2. Repository layout
 
@@ -74,7 +125,7 @@ Monorepo, pnpm workspaces. Flat enough that an AI agent always knows where a fil
 │     │  │  │  ├─ product/
 │     │  │  │  ├─ category/
 │     │  │  │  ├─ lead/
-│     │  │  │  ├─ subscription/   # plans, terms, expiry, reminders, receipts
+│     │  │  │  ├─ subscription/   # validity terms, expiry sweep, reminders
 │     │  │  │  ├─ adminuser/      # admin invites & roles (D-07)
 │     │  │  │  ├─ notification/
 │     │  │  │  ├─ cms/
@@ -202,9 +253,9 @@ and admin dashboards are uncached and their responsiveness tracks origin latency
    project does — keeping it off the box is what allows the small tier.
 2. **Cache the public catalogue at Cloudflare.** The read-heavy pages carrying nearly all the traffic
    are served from the edge; the origin sees very little.
-3. **No Redis, no Elasticsearch, no headless Chrome.** pg-boss replaces the queue, Postgres
-   full-text replaces the search engine, and React-PDF replaces Chrome for receipts. Each avoided
-   service is 200–500 MB of RAM and one more thing to monitor.
+3. **No Redis, no Elasticsearch, no headless Chrome, no payment gateway.** pg-boss replaces the
+   queue and Postgres full-text replaces the search engine; nothing in the app generates PDFs or
+   processes money. Each avoided service is 200–500 MB of RAM and one more thing to monitor.
 
 **Tune Postgres for a small box.** The defaults assume a dedicated server: set `shared_buffers` to
 ~256 MB, `effective_cache_size` ~768 MB, `work_mem` ~8 MB, `max_connections` 40, and put Prisma
