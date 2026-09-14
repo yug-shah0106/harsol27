@@ -7,7 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model Lead {
+model SellerInterest {
   id               Int      @id @default(autoincrement())
   name             String
   phoneNumber      String
