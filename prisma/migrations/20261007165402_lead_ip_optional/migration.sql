@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Inquiry" ALTER COLUMN "sourceIp" DROP NOT NULL,
+ALTER COLUMN "userAgent" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "Lead" ALTER COLUMN "sourceIp" DROP NOT NULL,
+ALTER COLUMN "userAgent" DROP NOT NULL;

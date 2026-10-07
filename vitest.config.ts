@@ -14,8 +14,10 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     environment: "node",
+    // Database tests share one test database; run files one at a time so they never interleave.
+    fileParallelism: false,
     globalSetup: ["tests/vitest-global-setup.ts"],
     env: {
       DATABASE_URL: testDatabaseUrl ?? "",

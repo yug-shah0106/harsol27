@@ -169,3 +169,12 @@ no grace period after paid-until · raw source IP stored (retention period still
 no OpenAPI deliverable (server actions, no public REST API).
 
 Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); IP retention period.
+
+### 2026-10-07, before Phase 2
+
+- Lead statuses confirmed: NEW / CONTACTED / CONVERTED / CLOSED.
+- No logo yet; palette and fonts left to the vendor (indigo + saffron on ivory, Plus Jakarta Sans).
+- English only for now; other languages (e.g. Gujarati) may be added later.
+- Industries are broad (e.g. Food Products, Steel & Metal Products); sellers describe their own
+  products inside one. A starting list of 18 is seeded and fully editable in the admin area.
+- Neon database not used for now (the existing `neondb` holds another project's tables).

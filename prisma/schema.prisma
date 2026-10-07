@@ -140,8 +140,8 @@ model Lead {
   industryId       String           @db.Uuid
   industry         Industry         @relation(fields: [industryId], references: [id], onDelete: Restrict)
   status           LeadStatus       @default(NEW)
-  sourceIp         String           @db.Inet // staff-only
-  userAgent        String // staff-only
+  sourceIp         String?          @db.Inet // staff-only; null if the proxy sent no client IP
+  userAgent        String? // staff-only
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
@@ -330,8 +330,8 @@ model Inquiry {
   message    String
   buyerName  String // snapshot, so the seller's record never changes underneath them
   buyerPhone String
-  sourceIp   String   @db.Inet
-  userAgent  String
+  sourceIp   String?  @db.Inet
+  userAgent  String?
   createdAt  DateTime @default(now())
 
   @@index([buyerId, sellerId]) // contact-unlock lookup

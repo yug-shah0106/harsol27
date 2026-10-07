@@ -1,4 +1,7 @@
 import { unstable_rethrow } from "next/navigation";
+import { logError } from "./log";
+
+export { logError };
 
 export type ActionResult<T = undefined> =
   | { ok: true; data: T }
@@ -13,16 +16,6 @@ export class UserFacingError extends Error {
     super(message);
     this.name = "UserFacingError";
   }
-}
-
-/** Logs an unexpected error as one JSON line and returns a short reference the user can quote. */
-export function logError(error: unknown, context: Record<string, unknown> = {}): string {
-  const ref = crypto.randomUUID().slice(0, 8);
-  const err = error instanceof Error ? error : new Error(String(error));
-  console.error(
-    JSON.stringify({ level: "error", ref, name: err.name, message: err.message, stack: err.stack, ...context }),
-  );
-  return ref;
 }
 
 /**

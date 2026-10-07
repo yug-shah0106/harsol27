@@ -10,8 +10,9 @@ Delivered as a single responsive web application, installable as a PWA on Androi
 
 ## Status
 
-**Phase 1 (foundation) built:** Next.js app, full Prisma schema, staff sign-in with Admin/Viewer
-roles, Docker Compose stack with ngrok staging, CI. The brief of 2026-10-07 supersedes `docs/`
+**Phases 1–2 built:** foundation (schema, staff sign-in with Admin/Viewer roles, Docker, CI) and
+public pages (design system, home, About/Terms/Privacy, lead form with emails, leads and industries
+admin). The brief of 2026-10-07 supersedes `docs/`
 where they disagree; `docs/` is kept for history.
 
 ## Local development
@@ -22,8 +23,10 @@ Requires Node 24, pnpm (via `corepack enable`) and PostgreSQL.
 cp .env.example .env          # fill in; create two databases: dev and test
 pnpm install
 pnpm db:migrate               # apply migrations to the dev database
+pnpm db:seed                  # starting list of industries
 pnpm staff create --email you@example.com --name "You" --role ADMIN
-pnpm dev                      # http://localhost:3000/staff/sign-in
+pnpm dev                      # http://localhost:3000
+pnpm worker                   # in a second terminal: sends queued emails
 ```
 
 Checks (the same ones CI runs):
