@@ -10,10 +10,32 @@ Delivered as a single responsive web application, installable as a PWA on Androi
 
 ## Status
 
-**Planning complete. No application code yet.** The full plan set lives in [`docs/`](./docs/) and is
-the brief that AI agents build from.
+**Phase 1 (foundation) built:** Next.js app, full Prisma schema, staff sign-in with Admin/Viewer
+roles, Docker Compose stack with ngrok staging, CI. The brief of 2026-10-07 supersedes `docs/`
+where they disagree; `docs/` is kept for history.
 
-Start here → **[docs/README.md](./docs/README.md)**
+## Local development
+
+Requires Node 24, pnpm (via `corepack enable`) and PostgreSQL.
+
+```bash
+cp .env.example .env          # fill in; create two databases: dev and test
+pnpm install
+pnpm db:migrate               # apply migrations to the dev database
+pnpm staff create --email you@example.com --name "You" --role ADMIN
+pnpm dev                      # http://localhost:3000/staff/sign-in
+```
+
+Checks (the same ones CI runs):
+
+```bash
+pnpm verify                   # lint, typecheck, unit tests, build
+pnpm test:e2e                 # Playwright, against the production build and the test database
+```
+
+Staging and deployment: [deploy/README.md](./deploy/README.md).
+
+## Plan documents (written before the 2026-10-07 brief)
 
 | | |
 |---|---|
@@ -32,12 +54,9 @@ Start here → **[docs/README.md](./docs/README.md)**
 
 ## Stack
 
-Next.js 15 (App Router, TypeScript strict) · PostgreSQL 16 + Prisma · Tailwind v4 + shadcn/ui ·
-Auth.js · Cloudflare R2 · Resend · MSG91 · pg-boss · Serwist (PWA) · Playwright + Vitest ·
-Docker Compose on a single VPS behind Cloudflare.
-
-Rationale, and the one documented deviation from the quoted stack, are in
-[docs/02-ARCHITECTURE.md](./docs/02-ARCHITECTURE.md) §1.
+Next.js 16 (App Router, TypeScript strict) · PostgreSQL + Prisma 7 · Tailwind v4 + shadcn/ui ·
+Better Auth (staff email + password; buyer/seller phone OTP) · Cloudflare R2 · Resend · MSG91 ·
+pg-boss · Serwist (PWA) · Playwright + Vitest · Docker Compose.
 
 ## Verify the design tokens
 
@@ -47,20 +66,3 @@ node docs/assets/check-contrast.mjs
 
 Checks every colour pairing in the design system against WCAG 2.1, and asserts that the three
 documented unsafe pairings are still unsafe.
-
-## Timeline
-
-8 phases over 7.5 calendar weeks — roughly 5.5 weeks of engineering plus buffer for client review.
-The original plan was 7 weeks; the client decisions of 2026-09-08 added a net ~4 days.
-See [docs/07-ROADMAP.md](./docs/07-ROADMAP.md).
-
-## Before building anything
-
-Most decisions are resolved (see [docs/10-OPEN-DECISIONS.md](./docs/10-OPEN-DECISIONS.md) §A). Two
-things still need an answer:
-
-1. **D-18 — the email sending domain and DNS access.** Hard-required by Phase 4; without SPF/DKIM
-   every approval, lead and renewal reminder lands in spam.
-2. **Accept 7.5 weeks, or drop Web Push to hold 7** (§C).
-
-Everything else has a default, so work can begin now.

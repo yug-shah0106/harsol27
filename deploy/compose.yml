@@ -1,0 +1,68 @@
+# Staging (and later production) stack. Run from the repo root:
+#   docker compose -f deploy/compose.yml up -d --build                     # app on http://127.0.0.1:3000
+#   docker compose -f deploy/compose.yml --profile ngrok up -d --build     # + public ngrok URL
+#   docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts create --email … --name … --role ADMIN
+# Settings come from deploy/.env (see deploy/.env.example), never from the developer .env.
+name: harsol27
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql://harsol27:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@db:5432/harsol27
+  BETTER_AUTH_URL: ${APP_URL:?set APP_URL in deploy/.env}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in deploy/.env}
+  CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-x-forwarded-for}
+
+services:
+  db:
+    image: postgres:18.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: harsol27
+      POSTGRES_USER: harsol27
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U harsol27 -d harsol27"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Applies pending migrations, then exits. The app only starts after it succeeds.
+  migrate:
+    build: { context: .., target: tools }
+    image: harsol27-tools
+    environment: *app-env
+    depends_on:
+      db: { condition: service_healthy }
+    restart: "no"
+
+  app:
+    build: { context: .., target: runner }
+    image: harsol27-app
+    restart: unless-stopped
+    environment: *app-env
+    ports:
+      - "127.0.0.1:3000:3000" # loopback only; the public route is ngrok (later Cloudflare)
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  # One-off admin commands: `docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts …`
+  tools:
+    image: harsol27-tools
+    profiles: [tools]
+    environment: *app-env
+    depends_on:
+      db: { condition: service_healthy }
+
+  ngrok:
+    image: ngrok/ngrok:3.39.11-alpine
+    profiles: [ngrok]
+    restart: unless-stopped
+    command: ["http", "app:3000", "--url", "${APP_URL}"]
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-} # ngrok refuses to start without it
+    depends_on:
+      app: { condition: service_healthy }
+
+volumes:
+  pgdata:

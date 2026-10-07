@@ -1,0 +1,16 @@
+**/node_modules
+.next
+.git
+.github
+.claude
+.code-review-graph
+coverage
+test-results
+playwright-report
+src/generated
+docs
+**/.env
+**/.env.*
+!.env.example
+*.log
+.DS_Store

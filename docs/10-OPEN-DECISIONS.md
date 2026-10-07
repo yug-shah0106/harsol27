@@ -148,3 +148,24 @@ The schema in `03-DATA-MODEL.md` accommodates most of these without migration pa
 `AuditLog`, `LeadEvent`, the self-referential category tree and the append-only subscription term
 history all exist partly to keep those doors open — adding plan tiers later means a `Plan` table and
 a foreign key, not a rewrite.
+
+## G. 2026-10-07 brief — supersedes the sections above where they disagree
+
+Decided by the team on 2026-10-07:
+
+| # | Decision |
+|---|---|
+| G-01 | Name: **Harsol27**. Scope = the 2026-10-07 brief; features above that are not in it are dropped. |
+| G-02 | Staging runs on our Docker Compose stack exposed through an **ngrok** reserved domain (domain to be supplied). Permanent hosting: **AWS**, decided later. |
+| G-03 | All accounts (GitHub, Cloudflare/R2, Resend, MSG91, hosting) are **ours**. |
+| G-04 | Fresh migration history; the old Express/Vite scaffold is replaced by one Next.js app. |
+| G-05 | Staff accounts are managed by CLI (`pnpm staff …`); no staff sign-up or self-service reset. |
+| G-06 | Auth library: **Better Auth** (database sessions), used as a library; its HTTP handler is not mounted. |
+
+Applied as defaults from the Phase 0 proposal (no objection raised; say so to change any):
+buyers sign in by phone OTP only · daily inquiry cap per buyer (number due Phase 4) · no product
+approval queue, admins remove listings · staff roles Admin + Viewer · flat Industries ·
+no grace period after paid-until · raw source IP stored (retention period still to be decided) ·
+no OpenAPI deliverable (server actions, no public REST API).
+
+Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); IP retention period.
