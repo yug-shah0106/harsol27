@@ -1,7 +1,7 @@
 import "server-only";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import { env } from "./env";
+import { baseEnv } from "./env";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
@@ -10,6 +10,6 @@ const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
  * imports route modules without any secrets present, never tries to read DATABASE_URL.
  */
 export function db(): PrismaClient {
-  globalForPrisma.prisma ??= new PrismaClient({ adapter: new PrismaPg({ connectionString: env().DATABASE_URL }) });
+  globalForPrisma.prisma ??= new PrismaClient({ adapter: new PrismaPg({ connectionString: baseEnv().DATABASE_URL }) });
   return globalForPrisma.prisma;
 }
