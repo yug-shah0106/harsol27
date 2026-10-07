@@ -3,6 +3,15 @@
 
 node_modules/
 dist/
+.next/
+out/
+coverage/
+test-results/
+playwright-report/
+*.tsbuildinfo
+next-env.d.ts
+src/generated/
+*.pem
 .env
 .env.*
 !.env.example

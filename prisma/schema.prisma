@@ -1,0 +1,357 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Identity (Better Auth tables) ─────────────────────────
+// Field names on User/Session/Account/Verification are what Better Auth expects.
+// Staff (email + password) and members (phone OTP) share the User table; `role` separates them.
+
+enum Role {
+  MEMBER // buyer and/or seller, signs in with phone OTP
+  ADMIN
+  VIEWER
+}
+
+model User {
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  name                String
+  email               String    @unique // lowercase. Phone members get a placeholder address.
+  emailVerified       Boolean   @default(false)
+  image               String?
+  phoneNumber         String?   @unique // E.164
+  phoneNumberVerified Boolean?
+  role                Role      @default(MEMBER)
+  failedLoginCount    Int       @default(0)
+  lockedUntil         DateTime?
+  disabledAt          DateTime? // staff who have left; checked on every request
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  sessions  Session[]
+  accounts  Account[]
+  seller    Seller?
+  inquiries Inquiry[]
+  uploads   Upload[]
+
+  leadStatusChanges   LeadStatusChange[]
+  sellerStatusChanges SellerStatusChange[]
+  subscriptionChanges SubscriptionChange[]
+  auditLogs           AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id @default(uuid(7)) @db.Uuid
+  accountId             String
+  providerId            String
+  userId                String    @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String? // argon2id hash, staff only
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+/// Fixed-window counters for every public form, login and OTP endpoint.
+/// Postgres rather than memory so limits survive restarts and deploys.
+model RateLimit {
+  key     String   @id // e.g. "staff-login:ip:203.0.113.4"
+  count   Int
+  resetAt DateTime
+}
+
+// ───────────────────────── Industries & leads ─────────────────────────
+
+model Industry {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  nameKey   String   @unique // lower(trim(name)): case-insensitive uniqueness
+  slug      String   @unique // fixed at creation so URLs never break on rename
+  sortOrder Int
+  isActive  Boolean  @default(true) // never hard-deleted
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads    Lead[]
+  products Product[]
+
+  @@index([isActive, sortOrder])
+}
+
+enum BusinessCategory {
+  MANUFACTURING
+  WHOLESALE
+  RETAIL
+  SERVICES
+  TRADING
+  OTHERS
+}
+
+/// ⚠ Status names to be confirmed by the client before Phase 2.
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+model Lead {
+  id               String           @id @default(uuid(7)) @db.Uuid
+  fullName         String
+  phone            String // E.164
+  email            String // lowercase
+  businessCategory BusinessCategory
+  industryId       String           @db.Uuid
+  industry         Industry         @relation(fields: [industryId], references: [id], onDelete: Restrict)
+  status           LeadStatus       @default(NEW)
+  sourceIp         String           @db.Inet // staff-only
+  userAgent        String // staff-only
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  statusChanges LeadStatusChange[]
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([industryId])
+}
+
+model LeadStatusChange {
+  id         String     @id @default(uuid(7)) @db.Uuid
+  leadId     String     @db.Uuid
+  lead       Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus LeadStatus
+  toStatus   LeadStatus
+  note       String?
+  actorId    String     @db.Uuid
+  actor      User       @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt  DateTime   @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+// ───────────────────────── Sellers & subscriptions ─────────────────────────
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model Seller {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  userId       String       @unique @db.Uuid
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  companyName  String
+  slug         String       @unique
+  description  String?
+  city         String
+  state        String // validated against the fixed list of Indian states/UTs
+  address      String?
+  contactName  String
+  contactPhone String // PROTECTED: read only through server/contact-access.ts
+  contactEmail String // PROTECTED
+  status       SellerStatus @default(PENDING)
+  paidUntil    DateTime?    @db.Date // null = never paid → not public
+  // Company-detail columns are added in Phase 3 once the document list is decided.
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  documents     SellerDocument[]
+  statusChanges SellerStatusChange[]
+  subscriptions SubscriptionChange[]
+  reminders     SubscriptionReminder[]
+  products      Product[]
+  inquiries     Inquiry[]
+
+  @@index([status, paidUntil])
+  @@index([state, city])
+}
+
+model SellerDocument {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  sellerId   String   @db.Uuid
+  seller     Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  kind       String // becomes an enum once Phase 3 fixes the list
+  storageKey String   @unique // private bucket; staff view through short-lived signed URLs
+  fileName   String
+  createdAt  DateTime @default(now())
+
+  @@index([sellerId])
+}
+
+model SellerStatusChange {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  sellerId   String       @db.Uuid
+  seller     Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  fromStatus SellerStatus
+  toStatus   SellerStatus
+  reason     String?
+  actorId    String       @db.Uuid // the staff member, or the seller on (re)application
+  actor      User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt  DateTime     @default(now())
+
+  @@index([sellerId, createdAt])
+}
+
+/// Append-only. Seller.paidUntil is updated in the same transaction.
+model SubscriptionChange {
+  id                String    @id @default(uuid(7)) @db.Uuid
+  sellerId          String    @db.Uuid
+  seller            Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  previousPaidUntil DateTime? @db.Date
+  newPaidUntil      DateTime  @db.Date
+  amountPaise       Int? // optional record of the off-site payment
+  paidOn            DateTime? @db.Date
+  reference         String? // receipt number, UPI reference, …
+  note              String?
+  actorId           String    @db.Uuid
+  actor             User      @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt         DateTime  @default(now())
+
+  @@index([sellerId, createdAt])
+}
+
+/// One row per (seller, paid-until date, reminder). A retried job sees the row and skips.
+model SubscriptionReminder {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  sellerId   String    @db.Uuid
+  seller     Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  paidUntil  DateTime  @db.Date
+  daysBefore Int // schedule decided in Phase 5
+  sentAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([sellerId, paidUntil, daysBefore])
+}
+
+// ───────────────────────── Products & inquiries ─────────────────────────
+
+model Product {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  sellerId       String    @db.Uuid
+  seller         Seller    @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  industryId     String    @db.Uuid
+  industry       Industry  @relation(fields: [industryId], references: [id], onDelete: Restrict)
+  name           String
+  slug           String    @unique
+  description    String
+  specifications Json      @default("[]") // [{ label, value }], shape enforced by zod
+  isHidden       Boolean   @default(false) // seller-controlled
+  removedAt      DateTime? // staff-controlled; who and why live in AuditLog
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  // Phase 4 adds a generated tsvector column + GIN index and a pg_trgm index in SQL.
+
+  photos    ProductPhoto[]
+  inquiries Inquiry[]
+
+  @@index([sellerId])
+  @@index([industryId])
+}
+
+model ProductPhoto {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  productId  String   @db.Uuid
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storageKey String   @unique
+  width      Int
+  height     Int
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+
+  @@index([productId, sortOrder])
+}
+
+enum UploadPurpose {
+  PRODUCT_PHOTO
+  SELLER_DOCUMENT
+}
+
+/// Every signed upload URL we issue. A file can only be attached by the user it was signed for;
+/// unclaimed files are deleted by a nightly job.
+model Upload {
+  key         String        @id
+  userId      String        @db.Uuid
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose     UploadPurpose
+  contentType String
+  sizeBytes   Int
+  claimedAt   DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([claimedAt, createdAt])
+}
+
+model Inquiry {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  buyerId    String   @db.Uuid
+  buyer      User     @relation(fields: [buyerId], references: [id], onDelete: Restrict)
+  sellerId   String   @db.Uuid
+  seller     Seller   @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  productId  String?  @db.Uuid
+  product    Product? @relation(fields: [productId], references: [id], onDelete: Restrict)
+  message    String
+  buyerName  String // snapshot, so the seller's record never changes underneath them
+  buyerPhone String
+  sourceIp   String   @db.Inet
+  userAgent  String
+  createdAt  DateTime @default(now())
+
+  @@index([buyerId, sellerId]) // contact-unlock lookup
+  @@index([buyerId, createdAt]) // daily cap
+  @@index([sellerId, createdAt(sort: Desc)])
+}
+
+// ───────────────────────── Other staff actions ─────────────────────────
+
+/// Product remove/restore and industry changes. Lead, seller and subscription decisions
+/// have their own typed history tables above.
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  actorId    String   @db.Uuid
+  actor      User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action     String // PRODUCT_REMOVED, INDUSTRY_RENAMED, …
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
