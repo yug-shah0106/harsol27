@@ -15,7 +15,8 @@ RUN DATABASE_URL=postgresql://build:build@localhost:5432/build pnpm install --fr
 # ── Build. No secrets exist at this stage; the app validates them at start-up instead. ──
 FROM deps AS build
 COPY . .
-RUN pnpm build
+# public/ may be empty, and git does not track empty folders; make sure it exists for the runtime COPY.
+RUN mkdir -p public && pnpm build
 
 # ── Tools: migrations and the staff CLI, run as one-off containers ────
 FROM build AS tools
