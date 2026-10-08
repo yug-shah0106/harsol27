@@ -88,6 +88,20 @@ model Verification {
   @@index([identifier])
 }
 
+/// Phone one-time codes. Only an HMAC of the code is stored; a code is single-use and dies after
+/// its expiry or too many wrong guesses. Better Auth's own verification table is not used for these.
+model OtpChallenge {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  phone      String // E.164
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
 /// Fixed-window counters for every public form, login and OTP endpoint.
 /// Postgres rather than memory so limits survive restarts and deploys.
 model RateLimit {
@@ -204,23 +218,32 @@ model Seller {
   @@index([state, city])
 }
 
-model SellerDocument {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  sellerId   String   @db.Uuid
-  seller     Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  kind       String // becomes an enum once Phase 3 fixes the list
-  storageKey String   @unique // private bucket; staff view through short-lived signed URLs
-  fileName   String
-  createdAt  DateTime @default(now())
+enum SellerDocumentKind {
+  GST_CERTIFICATE
+  PAN_CARD
+  BUSINESS_REGISTRATION // Udyam or other business registration certificate
+  ADDRESS_PROOF // e.g. electricity bill
+}
 
-  @@index([sellerId])
+model SellerDocument {
+  id          String             @id @default(uuid(7)) @db.Uuid
+  sellerId    String             @db.Uuid
+  seller      Seller             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  kind        SellerDocumentKind
+  storageKey  String             @unique // private bucket; staff view through short-lived signed URLs
+  fileName    String
+  contentType String
+  sizeBytes   Int
+  createdAt   DateTime           @default(now())
+
+  @@unique([sellerId, kind]) // one current document of each kind
 }
 
 model SellerStatusChange {
   id         String       @id @default(uuid(7)) @db.Uuid
   sellerId   String       @db.Uuid
   seller     Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  fromStatus SellerStatus
+  fromStatus SellerStatus? // null for the first application
   toStatus   SellerStatus
   reason     String?
   actorId    String       @db.Uuid // the staff member, or the seller on (re)application
@@ -311,6 +334,7 @@ model Upload {
   userId      String        @db.Uuid
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   purpose     UploadPurpose
+  fileName    String // as chosen by the uploader; display only
   contentType String
   sizeBytes   Int
   claimedAt   DateTime?

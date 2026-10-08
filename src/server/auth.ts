@@ -2,9 +2,16 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { phoneNumber } from "better-auth/plugins";
 import { db } from "./db";
 import { env } from "./env";
+import { checkOtp } from "./otp";
 import { hashPassword, PASSWORD_MAX_LENGTH, STAFF_PASSWORD_MIN_LENGTH, verifyPassword } from "./password";
+
+/** Placeholder address for phone-only members (Better Auth requires a unique email). Never deliverable. */
+export function memberPlaceholderEmail(phone: string): string {
+  return `${phone.replace(/\D/g, "")}@phone.harsol27.invalid`;
+}
 
 /**
  * Better Auth is used as a library only: its HTTP handler is deliberately NOT mounted under
@@ -43,7 +50,18 @@ function createAuth() {
       database: { generateId: false }, // Postgres/Prisma assign UUIDv7 ids
       ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     },
-    plugins: [nextCookies()], // must stay last: lets server actions set the session cookie
+    plugins: [
+      phoneNumber({
+        // Codes are issued, hashed and sent by our own otp.ts / sms.ts (Better Auth would store them
+        // in plain text). The plugin is used only to verify through checkOtp and create the session.
+        sendOTP: () => {
+          throw new Error("Phone codes are sent by server/member-auth.ts, not by Better Auth.");
+        },
+        verifyOTP: ({ phoneNumber: phone, code }) => checkOtp(phone, code),
+        signUpOnVerification: { getTempEmail: memberPlaceholderEmail, getTempName: (phone) => phone },
+      }),
+      nextCookies(), // must stay last: lets server actions set the session cookie
+    ],
   });
 }
 

@@ -5,15 +5,17 @@ import { db } from "@/server/db";
 export default async function AdminHomePage() {
   // Layouts don't re-run on every navigation, so each page checks access itself.
   const staff = await requireStaff();
-  const [newLeads, totalLeads, activeIndustries] = await Promise.all([
+  const [newLeads, totalLeads, pendingSellers, activeIndustries] = await Promise.all([
     db().lead.count({ where: { status: "NEW" } }),
     db().lead.count(),
+    db().seller.count({ where: { status: "PENDING" } }),
     db().industry.count({ where: { isActive: true } }),
   ]);
 
   const tiles = [
     { label: "New leads", value: newLeads, href: "/admin/leads?status=NEW" },
     { label: "All leads", value: totalLeads, href: "/admin/leads" },
+    { label: "Seller applications to review", value: pendingSellers, href: "/admin/sellers?status=PENDING" },
     { label: "Active industries", value: activeIndustries, href: "/admin/industries" },
   ] as const;
 
@@ -27,7 +29,7 @@ export default async function AdminHomePage() {
             : "You have view-only access: you can see everything in the admin area but cannot change anything."}
         </p>
       </div>
-      <ul className="grid gap-4 sm:grid-cols-3">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map((tile) => (
           <li key={tile.label}>
             <Link href={tile.href} className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 no-underline hover:border-primary">

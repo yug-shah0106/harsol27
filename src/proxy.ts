@@ -1,5 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+/** Origin browsers upload documents to (R2 / local S3), allowed in connect-src. Nothing else is. */
+function storageOrigin(): string {
+  const endpoint = process.env.S3_PUBLIC_ENDPOINT ?? process.env.S3_ENDPOINT;
+  try {
+    return endpoint ? ` ${new URL(endpoint).origin}` : "";
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Per-request nonce-based Content Security Policy. Next.js reads the nonce from the request's CSP
  * header and attaches it to its own scripts, so no inline script without the nonce can run.
@@ -13,7 +23,7 @@ export function proxy(request: NextRequest) {
     `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' blob: data:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src 'self'${storageOrigin()}`,
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

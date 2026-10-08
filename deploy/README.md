@@ -21,13 +21,22 @@ this stack is what will run there.
    docker compose -f deploy/compose.yml --profile ngrok up -d --build
    ```
 
-4. Load the starting list of industries (safe to re-run; never overwrites admin edits):
+4. Prepare document storage (creates the bucket if needed and allows uploads from `APP_URL` only):
+
+   ```bash
+   docker compose -f deploy/compose.yml run --rm tools tsx scripts/storage-setup.ts
+   ```
+
+   Without an R2 bucket yet, add `--profile local-s3` to every `up` command and use the local values
+   shown in `deploy/.env.example`. That only works from the machine running Docker.
+
+5. Load the starting list of industries (safe to re-run; never overwrites admin edits):
 
    ```bash
    docker compose -f deploy/compose.yml run --rm tools tsx prisma/seed.ts
    ```
 
-5. Create the first admin. You will be asked for the password twice; it is never echoed:
+6. Create the first admin. You will be asked for the password twice; it is never echoed:
 
    ```bash
    docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts create --email you@company.com --name "Your Name" --role ADMIN
@@ -49,6 +58,14 @@ docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts create 
 docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts set-password --email …   # also unlocks + signs out
 docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts disable      --email …   # blocks + signs out
 docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts enable       --email …
+```
+
+## Phone sign-in codes while SMS is not connected
+
+With `SMS_PROVIDER=console` codes are not texted; they are written to the app log:
+
+```bash
+docker compose -f deploy/compose.yml logs app | grep "console SMS"
 ```
 
 ## Checks

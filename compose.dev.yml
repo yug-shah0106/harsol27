@@ -1,0 +1,16 @@
+# Local services for development and tests only (`pnpm dev:services`). Never used in production.
+# S3-compatible storage standing in for Cloudflare R2; credentials in dev/s3.json are local-only.
+name: harsol27-dev
+
+services:
+  s3:
+    image: chrislusf/seaweedfs:4.48
+    command: ["server", "-s3", "-s3.config=/etc/s3.json", "-dir=/data"]
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - ./dev/s3.json:/etc/s3.json:ro
+      - s3data:/data
+
+volumes:
+  s3data:

@@ -13,7 +13,7 @@ export type LeadForEmail = {
 
 const categoryLabel = (value: string) => BUSINESS_CATEGORIES.find((c) => c.value === value)?.label ?? value;
 
-function layout(bodyHtml: string): string {
+export function emailLayout(bodyHtml: string): string {
   return `<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;color:#1f1a17;line-height:1.5;max-width:560px;margin:0 auto;padding:24px">${bodyHtml}<p style="color:#5e5650;font-size:13px;margin-top:32px">Harsol27</p></body></html>`;
 }
 
@@ -42,7 +42,7 @@ export function leadConfirmationEmail(lead: LeadForEmail): Email {
       "",
       "If you did not fill in this form, you can ignore this email.",
     ].join("\n"),
-    html: layout(
+    html: emailLayout(
       `<p>Hello ${escapeHtml(lead.fullName)},</p><p>Thank you for your interest in Harsol27. We have received your details and our team will contact you.</p>${detailsTable(rows)}<p style="color:#5e5650">If you did not fill in this form, you can ignore this email.</p>`,
     ),
     idempotencyKey: `lead-confirmation/${lead.id}`,
@@ -64,7 +64,7 @@ export function leadTeamAlertEmail(lead: LeadForEmail, to: string[], appUrl: str
     to,
     subject: `New lead: ${lead.fullName} (${lead.industryName})`,
     text: [...rows.map(([k, v]) => `${k}: ${v}`), "", `Open in admin: ${link}`].join("\n"),
-    html: layout(`<p><strong>New lead</strong></p>${detailsTable(rows)}<p><a href="${escapeHtml(link)}">Open in admin</a></p>`),
+    html: emailLayout(`<p><strong>New lead</strong></p>${detailsTable(rows)}<p><a href="${escapeHtml(link)}">Open in admin</a></p>`),
     idempotencyKey: `lead-team-alert/${lead.id}`,
   };
 }

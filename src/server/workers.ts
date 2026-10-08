@@ -1,10 +1,11 @@
 import type { Job, JobResult, PgBoss } from "pg-boss";
 import { db } from "./db";
 import { sendEmail, type Email, type EmailConfig } from "./email";
-import { QUEUES, type LeadJob } from "./jobs";
+import { QUEUES, type LeadJob, type SellerChangeJob } from "./jobs";
 import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./lead-emails";
 import { logError, logInfo } from "./log";
-import { purgeExpiredRequestMetadata } from "./retention";
+import { purgeExpiredRequestMetadata, purgeStaleOtpChallenges, purgeUnclaimedUploads } from "./retention";
+import { sellerApplicationAlertEmail, sellerDecisionEmail, type SellerChangeForEmail } from "./seller-emails";
 
 export type WorkerConfig = { email: EmailConfig; teamAlertEmails: string[]; appUrl: string };
 
@@ -13,18 +14,33 @@ export type WorkerConfig = { email: EmailConfig; teamAlertEmails: string[]; appU
 // own and never makes the others in its batch send again.
 const WORK_OPTIONS = { batchSize: 10, perJobResults: true } as const;
 
-async function loadLead(leadId: string): Promise<LeadForEmail | null> {
+async function loadLead({ leadId }: LeadJob): Promise<LeadForEmail | null> {
   const lead = await db().lead.findUnique({ where: { id: leadId }, include: { industry: { select: { name: true } } } });
   return lead && { ...lead, industryName: lead.industry.name };
 }
 
-function leadEmailHandler(config: WorkerConfig, build: (lead: LeadForEmail) => Email) {
-  return async (jobs: Job<LeadJob>[]): Promise<JobResult[]> =>
+function loadSellerChange({ changeId }: SellerChangeJob): Promise<SellerChangeForEmail | null> {
+  return db().sellerStatusChange.findUnique({
+    where: { id: changeId },
+    select: {
+      id: true,
+      fromStatus: true,
+      toStatus: true,
+      reason: true,
+      seller: { select: { id: true, companyName: true, contactName: true, contactEmail: true, city: true, state: true } },
+    },
+  });
+}
+
+/** Loads the record a job points at and sends the email built from it. A deleted record needs no email. */
+function emailHandler<T extends object, R>(config: WorkerConfig, load: (data: T) => Promise<R | null>, build: (record: R) => Email | null) {
+  return async (jobs: Job<T>[]): Promise<JobResult[]> =>
     Promise.all(
       jobs.map(async (job): Promise<JobResult> => {
         try {
-          const lead = await loadLead(job.data.leadId);
-          if (lead) await sendEmail(config.email, build(lead)); // a deleted lead needs no email
+          const record = await load(job.data);
+          const email = record && build(record);
+          if (email) await sendEmail(config.email, email);
           return { id: job.id, status: "completed" };
         } catch (error) {
           logError(error, { queue: job.name, jobId: job.id, retry: job.retryCount });
@@ -36,16 +52,27 @@ function leadEmailHandler(config: WorkerConfig, build: (lead: LeadForEmail) => E
 
 /** Attaches a handler to every queue. A failed job is retried by pg-boss with backoff. */
 export async function registerWorkers(boss: PgBoss, config: WorkerConfig): Promise<void> {
-  await boss.work<LeadJob>(QUEUES.leadConfirmation, WORK_OPTIONS, leadEmailHandler(config, leadConfirmationEmail));
-  await boss.work<LeadJob>(
-    QUEUES.leadTeamAlert,
+  const { teamAlertEmails: team, appUrl } = config;
+  await boss.work<LeadJob>(QUEUES.leadConfirmation, WORK_OPTIONS, emailHandler(config, loadLead, leadConfirmationEmail));
+  await boss.work<LeadJob>(QUEUES.leadTeamAlert, WORK_OPTIONS, emailHandler(config, loadLead, (lead) => leadTeamAlertEmail(lead, team, appUrl)));
+  await boss.work<SellerChangeJob>(
+    QUEUES.sellerApplicationAlert,
     WORK_OPTIONS,
-    leadEmailHandler(config, (lead) => leadTeamAlertEmail(lead, config.teamAlertEmails, config.appUrl)),
+    emailHandler(config, loadSellerChange, (change) => sellerApplicationAlertEmail(change, team, appUrl)),
+  );
+  await boss.work<SellerChangeJob>(
+    QUEUES.sellerDecision,
+    WORK_OPTIONS,
+    emailHandler(config, loadSellerChange, (change) => sellerDecisionEmail(change, appUrl)),
   );
 
-  // Nightly at 03:15 India time. Idempotent, so a missed or repeated run is harmless.
+  // Nightly at 03:15 India time. Every step is idempotent, so a missed or repeated run is harmless.
   await boss.schedule(QUEUES.dataRetention, "15 3 * * *", null, { tz: "Asia/Kolkata" });
   await boss.work(QUEUES.dataRetention, async () => {
-    logInfo("request metadata purged", await purgeExpiredRequestMetadata());
+    logInfo("retention run", {
+      requestMetadata: await purgeExpiredRequestMetadata(),
+      otpChallenges: await purgeStaleOtpChallenges(),
+      unclaimedUploads: await purgeUnclaimedUploads(),
+    });
   });
 }

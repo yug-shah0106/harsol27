@@ -11,17 +11,21 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev && prisma generate",
+    "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "staff": "tsx scripts/staff.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:seed": "prisma db seed",
-    "worker": "NODE_OPTIONS=--conditions=react-server tsx src/worker.ts"
+    "worker": "NODE_OPTIONS=--conditions=react-server tsx src/worker.ts",
+    "db:generate": "prisma generate",
+    "dev:services": "docker compose -f compose.dev.yml up -d",
+    "storage:setup": "tsx scripts/storage-setup.ts"
   },
   "dependencies": {
     "@node-rs/argon2": "2.2.2",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "aws4fetch": "1.0.20",
     "better-auth": "1.7.7",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
