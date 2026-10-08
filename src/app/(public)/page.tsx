@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { listActiveIndustries } from "@/server/industries";
 
@@ -36,11 +37,12 @@ export default async function HomePage() {
             From khakhra makers to steel fabricators, Harsol27 lists approved manufacturers, wholesalers and traders,
             and puts you in direct touch with them.
           </p>
+          <SearchForm compact />
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="lg">
-              <Link href="/get-started">Get started</Link>
+            <Button asChild variant="outline">
+              <Link href="/industries">Browse by industry</Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
+            <Button asChild variant="outline">
               <a href="#how-it-works">How it works</a>
             </Button>
           </div>
@@ -55,8 +57,10 @@ export default async function HomePage() {
           <p className="mt-2 text-muted-foreground">Sellers choose their main industry and list their own products within it.</p>
           <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {industries.map((industry) => (
-              <li key={industry.id} className="rounded-lg border border-border bg-card px-4 py-3 font-medium">
-                {industry.name}
+              <li key={industry.id}>
+                <Link href={`/industries/${industry.slug}`} className="block h-full rounded-lg border border-border bg-card px-4 py-3 font-medium no-underline hover:border-primary">
+                  {industry.name}
+                </Link>
               </li>
             ))}
           </ul>
@@ -88,10 +92,10 @@ export default async function HomePage() {
       <section aria-labelledby="cta-heading" className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="flex flex-col items-start gap-4 rounded-xl bg-primary px-6 py-10 text-primary-foreground sm:px-10">
           <h2 id="cta-heading" className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Grow your business with Harsol27
+            Sell on Harsol27
           </h2>
           <p className="max-w-2xl">
-            Share a few details about your business and our team will get in touch to help you get started.
+            Share a few details about your business and our team will get in touch, or apply as a seller right away.
           </p>
           <Button asChild size="lg" variant="secondary">
             <Link href="/get-started">Get started</Link>

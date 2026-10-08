@@ -56,3 +56,46 @@ export function sellerDecisionEmail(change: SellerChangeForEmail, appUrl: string
     idempotencyKey: `seller-decision/${change.id}`,
   };
 }
+
+export type InquiryForEmail = {
+  id: string;
+  buyerName: string;
+  buyerPhone: string;
+  message: string;
+  product: { name: string } | null;
+  seller: { companyName: string; contactName: string; contactEmail: string };
+};
+
+/** To the seller: a buyer sent an inquiry. Includes the buyer's phone so the seller can call back. */
+export function newInquiryEmail(inquiry: InquiryForEmail, appUrl: string): Email {
+  const about = inquiry.product ? `about ${inquiry.product.name}` : "for your business";
+  const link = `${appUrl}/seller/inquiries`;
+  const lines: [string, string][] = [
+    ["From", inquiry.buyerName],
+    ["Phone", inquiry.buyerPhone],
+    ...(inquiry.product ? [["Product", inquiry.product.name] as [string, string]] : []),
+  ];
+  return {
+    to: inquiry.seller.contactEmail,
+    subject: `New inquiry ${about} · Harsol27`,
+    text: [
+      `Hello ${inquiry.seller.contactName},`,
+      "",
+      `You have a new inquiry ${about}.`,
+      ...lines.map(([k, v]) => `${k}: ${v}`),
+      "",
+      inquiry.message,
+      "",
+      `All your inquiries: ${link}`,
+    ].join("\n"),
+    html: emailLayout(
+      `<p>Hello ${escapeHtml(inquiry.seller.contactName)},</p><p>You have a new inquiry ${escapeHtml(about)}.</p>` +
+        `<table style="border-collapse:collapse">${lines
+          .map(([k, v]) => `<tr><td style="padding:4px 16px 4px 0;color:#5e5650">${escapeHtml(k)}</td><td style="padding:4px 0">${escapeHtml(v)}</td></tr>`)
+          .join("")}</table>` +
+        `<p style="white-space:pre-line;border-left:3px solid #ddd5c8;padding-left:12px">${escapeHtml(inquiry.message)}</p>` +
+        `<p><a href="${escapeHtml(link)}">See all your inquiries</a></p>`,
+    ),
+    idempotencyKey: `inquiry/${inquiry.id}`,
+  };
+}

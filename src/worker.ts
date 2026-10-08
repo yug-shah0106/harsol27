@@ -12,12 +12,14 @@ import { registerWorkers } from "./server/workers";
 async function main() {
   const config = workerEnv();
   const boss = await getBoss("worker");
-  await registerWorkers(boss, {
-    email: { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM },
-    teamAlertEmails: config.TEAM_ALERT_EMAILS,
-    appUrl: config.BETTER_AUTH_URL,
-  });
-  logInfo("worker started", { queues: Object.values(QUEUES) });
+  // Optional, for tests: WORKER_QUEUES=product-photo runs only those queues.
+  const only = process.env.WORKER_QUEUES ? new Set(process.env.WORKER_QUEUES.split(",").map((q) => q.trim())) : undefined;
+  await registerWorkers(
+    boss,
+    { email: { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM }, teamAlertEmails: config.TEAM_ALERT_EMAILS, appUrl: config.BETTER_AUTH_URL },
+    only,
+  );
+  logInfo("worker started", { queues: only ? [...only] : Object.values(QUEUES) });
 
   const shutdown = async (signal: string) => {
     logInfo("worker stopping", { signal });

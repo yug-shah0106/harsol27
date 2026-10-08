@@ -66,3 +66,28 @@ export async function deleteObject(key: string): Promise<void> {
   const response = await aws().fetch(serverUrl(key), { method: "DELETE", signal: AbortSignal.timeout(10_000) });
   if (!response.ok && response.status !== 404) throw new Error(`Storage DELETE failed (HTTP ${response.status})`);
 }
+
+/** A whole object (only for files we already capped in size, e.g. a photo original). */
+export async function getObjectBytes(key: string): Promise<Uint8Array> {
+  const response = await aws().fetch(serverUrl(key), { signal: AbortSignal.timeout(60_000) });
+  if (!response.ok) throw new Error(`Storage read failed (HTTP ${response.status})`);
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+/** The storage response for an object, to stream on to the browser. Null if it does not exist. */
+export async function getObjectStream(key: string): Promise<Response | null> {
+  const response = await aws().fetch(serverUrl(key), { signal: AbortSignal.timeout(30_000) });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Storage read failed (HTTP ${response.status})`);
+  return response;
+}
+
+export async function putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
+  const response = await aws().fetch(serverUrl(key), {
+    method: "PUT",
+    body: Buffer.from(body),
+    headers: { "Content-Type": contentType },
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!response.ok) throw new Error(`Storage write failed (HTTP ${response.status})`);
+}

@@ -20,6 +20,16 @@ export default async function AccountPage() {
         <p className="text-muted-foreground">Signed in with {member.phone}</p>
       </div>
 
+      <section aria-labelledby="buying-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
+        <h2 id="buying-heading" className="text-lg font-semibold">
+          Buying
+        </h2>
+        <p className="text-muted-foreground">Sellers you have contacted, with their phone numbers and emails.</p>
+        <Button asChild variant="outline" className="w-fit">
+          <Link href="/account/inquiries">My inquiries</Link>
+        </Button>
+      </section>
+
       <section aria-labelledby="seller-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
         <h2 id="seller-heading" className="text-lg font-semibold">
           Selling on Harsol27

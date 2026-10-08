@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SELLER_DOCUMENTS } from "@/lib/seller-schema";
 import { decisionsFor, SELLER_DECISIONS, SELLER_STATUS_LABELS } from "@/lib/seller-status";
 import { requireStaff } from "@/server/authz";
+import { getSellerContact } from "@/server/contact-access";
 import { getSellerForStaff } from "@/server/sellers";
 import { canWrite } from "@/server/staff-policy";
 import { formatIst } from "../../leads/format";
@@ -22,11 +23,12 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
   const seller = await getSellerForStaff((await params).id);
   if (!seller) notFound();
   const decisions = decisionsFor(seller.status);
+  const contact = await getSellerContact({ kind: "staff" }, seller.id);
 
   const details: [string, React.ReactNode][] = [
     ["Contact person", seller.contactName],
-    ["Contact phone", <a key="p" href={`tel:${seller.contactPhone}`} className="text-primary underline">{seller.contactPhone}</a>],
-    ["Contact email", <a key="e" href={`mailto:${seller.contactEmail}`} className="text-primary underline">{seller.contactEmail}</a>],
+    ["Contact phone", contact ? <a key="p" href={`tel:${contact.phone}`} className="text-primary underline">{contact.phone}</a> : "—"],
+    ["Contact email", contact ? <a key="e" href={`mailto:${contact.email}`} className="text-primary underline">{contact.email}</a> : "—"],
     ["Signed in with", seller.user.phoneNumber ?? "—"],
     ["Address", `${seller.address ?? ""}, ${seller.city}, ${seller.state}`],
     ["About", seller.description || "—"],

@@ -70,7 +70,11 @@ describe("seller application", () => {
     const member = await newMember();
     await submitApplication(member, await applicationForm(member, await allDocs(member)));
 
-    const seller = await db().seller.findUniqueOrThrow({ where: { userId: member.id }, include: { documents: true, statusChanges: true } });
+    const seller = await db().seller.findUniqueOrThrow({
+      where: { userId: member.id },
+      include: { documents: true, statusChanges: true },
+      omit: { contactPhone: false, contactEmail: false }, // tests may read contact details directly
+    });
     expect(seller).toMatchObject({ status: "PENDING", contactPhone: "+919825012345", contactEmail: "sales@patelkhakhra.example", slug: `patel-khakhra-${run}` });
     expect(seller.documents.map((d) => d.kind).sort()).toEqual([...SELLER_DOCUMENT_KINDS].sort());
     expect(seller.statusChanges).toEqual([expect.objectContaining({ fromStatus: null, toStatus: "PENDING", actorId: member.id })]);

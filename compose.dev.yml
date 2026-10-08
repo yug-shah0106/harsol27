@@ -1,8 +1,27 @@
 # Local services for development and tests only (`pnpm dev:services`). Never used in production.
-# S3-compatible storage standing in for Cloudflare R2; credentials in dev/s3.json are local-only.
+# PostgreSQL, and S3-compatible storage standing in for Cloudflare R2. All credentials here and in
+# dev/ are local-only placeholders.
 name: harsol27-dev
 
 services:
+  # PostgreSQL 18, same as CI and the deploy stack. Creates harsol27_dev and harsol27_test.
+  db:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: harsol27_dev
+      POSTGRES_USER: harsol27
+      POSTGRES_PASSWORD: local-dev-password
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - ./dev/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U harsol27 -d harsol27_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   s3:
     image: chrislusf/seaweedfs:4.48
     command: ["server", "-s3", "-s3.config=/etc/s3.json", "-dir=/data"]
@@ -13,4 +32,5 @@ services:
       - s3data:/data
 
 volumes:
+  pgdata:
   s3data:

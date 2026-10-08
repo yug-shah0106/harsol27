@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { requireMember } from "@/server/authz";
+import { getSellerContact } from "@/server/contact-access";
 import { getMySeller } from "@/server/sellers";
 import { ApplicationForm, type ApplicationDefaults } from "./application-form";
 
@@ -11,12 +12,14 @@ export default async function ApplyPage() {
   const seller = await getMySeller(member.id);
   if (seller && seller.status !== "REJECTED") redirect("/seller");
 
+  const contact = seller && (await getSellerContact({ kind: "member", id: member.id }, seller.id));
+
   const defaults: ApplicationDefaults = seller
     ? {
         companyName: seller.companyName,
         contactName: seller.contactName,
-        contactPhone: seller.contactPhone,
-        contactEmail: seller.contactEmail,
+        contactPhone: contact?.phone ?? member.phone,
+        contactEmail: contact?.email ?? "",
         address: seller.address ?? "",
         city: seller.city,
         state: seller.state,

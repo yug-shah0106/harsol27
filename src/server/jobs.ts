@@ -10,11 +10,15 @@ export const QUEUES = {
   dataRetention: "data-retention",
   sellerApplicationAlert: "seller-application-alert",
   sellerDecision: "seller-decision",
+  productPhoto: "product-photo",
+  inquiryNotification: "inquiry-notification",
 } as const;
 
 export type LeadJob = { leadId: string };
 /** Seller emails point at one status-history row, so each application or decision is emailed once. */
 export type SellerChangeJob = { changeId: string };
+export type PhotoJob = { photoId: string };
+export type InquiryJob = { inquiryId: string };
 
 // Retries with exponential backoff, capped at one hour between attempts (about a day in total).
 const QUEUE_OPTIONS = { retryLimit: 12, retryDelay: 30, retryBackoff: true, retryDelayMax: 3600 };

@@ -1,22 +1,23 @@
 import Link from "next/link";
 import { requireStaff } from "@/server/authz";
 import { db } from "@/server/db";
+import { countRecentInquiries } from "@/server/inquiries";
 
 export default async function AdminHomePage() {
   // Layouts don't re-run on every navigation, so each page checks access itself.
   const staff = await requireStaff();
-  const [newLeads, totalLeads, pendingSellers, activeIndustries] = await Promise.all([
+  const [newLeads, totalLeads, pendingSellers, inquiriesThisWeek] = await Promise.all([
     db().lead.count({ where: { status: "NEW" } }),
     db().lead.count(),
     db().seller.count({ where: { status: "PENDING" } }),
-    db().industry.count({ where: { isActive: true } }),
+    countRecentInquiries(7),
   ]);
 
   const tiles = [
     { label: "New leads", value: newLeads, href: "/admin/leads?status=NEW" },
     { label: "All leads", value: totalLeads, href: "/admin/leads" },
     { label: "Seller applications to review", value: pendingSellers, href: "/admin/sellers?status=PENDING" },
-    { label: "Active industries", value: activeIndustries, href: "/admin/industries" },
+    { label: "Inquiries in the last 7 days", value: inquiriesThisWeek, href: "/admin/inquiries" },
   ] as const;
 
   return (

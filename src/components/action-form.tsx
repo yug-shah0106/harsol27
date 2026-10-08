@@ -6,16 +6,18 @@ import { FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import type { ActionResult } from "@/server/errors";
 
-type Action = (prev: ActionResult | null, formData: FormData) => Promise<ActionResult>;
 
-/** A form bound to a server action that shows the action's error (or success message) beneath it. */
-export function ActionForm({
+/**
+ * A form bound to a server action that shows the action's error, or its success message, beneath it.
+ * An action may return its own message as `data` (when one form can do different things).
+ */
+export function ActionForm<T extends string | undefined>({
   action,
   children,
   className,
   successMessage,
 }: {
-  action: Action;
+  action: (prev: ActionResult<T> | null, formData: FormData) => Promise<ActionResult<T>>;
   children: React.ReactNode;
   className?: string;
   successMessage?: string;
@@ -25,7 +27,7 @@ export function ActionForm({
     <form action={formAction} className={className}>
       {children}
       {state && !state.ok && <FormAlert kind="error">{state.error}</FormAlert>}
-      {state?.ok && successMessage && <FormAlert kind="success">{successMessage}</FormAlert>}
+      {state?.ok && (state.data ?? successMessage) && <FormAlert kind="success">{state.data ?? successMessage}</FormAlert>}
     </form>
   );
 }

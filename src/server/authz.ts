@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { safeReturnPath } from "@/lib/return-path";
 import { auth } from "./auth";
+import type { Viewer } from "./contact-access";
 import { UserFacingError } from "./errors";
 import { canWrite, staffFromSession, type StaffUser } from "./staff-policy";
 
@@ -31,6 +32,13 @@ export async function requireMember(returnTo: string): Promise<Member> {
   const member = await getMember();
   if (!member) redirect(`/sign-in?next=${encodeURIComponent(safeReturnPath(returnTo))}`);
   return member;
+}
+
+/** Who is looking: staff, a signed-in member, or nobody. Used by contact-access.ts. */
+export async function getViewer(): Promise<Viewer> {
+  if (await getStaff()) return { kind: "staff" };
+  const member = await getMember();
+  return member ? { kind: "member", id: member.id } : null;
 }
 
 /** For staff pages and actions. Anyone who is not active staff is sent to the sign-in page. */

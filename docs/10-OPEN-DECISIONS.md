@@ -186,3 +186,9 @@ Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); I
 - MSG91 dropped; SMS provider to be chosen later. Phone sign-in is built with a console sender that
   writes codes to the server log.
 - Team alert address: harsol27helpdesk@gmail.com. Lead IP and browser details kept 30 days.
+
+### 2026-10-08, before Phase 4
+
+- No daily inquiry cap per buyer (only short-burst limits against automated harvesting).
+- Up to 50 photos per product, 10 MB each; served as resized WebP, originals deleted.
+- New-inquiry notifications to sellers by email only.

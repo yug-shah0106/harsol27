@@ -37,8 +37,8 @@ Tick an item and note the date when it is done.
 ## Decisions due in later phases
 
 - [ ] Phase 3 follow-up: should staff also record **GSTIN / PAN numbers** as text, for searching?
-- [ ] Phase 4: the **daily inquiry cap** per buyer; product **photo count and size limits**.
-- [ ] Phase 5: **one subscription plan or several**; when **renewal reminders** are sent (days before expiry).
+- [ ] Phase 5 (needed before any seller is visible: products only show while paid-until is set and
+      not passed): **one subscription plan or several**; when **renewal reminders** are sent (days before expiry).
 - [ ] Phase 6: what the **3D scene** shows and who supplies the models; **Web Push** yes/no.
 
 ## Technical follow-ups
@@ -47,7 +47,12 @@ Tick an item and note the date when it is done.
       nonce-based security policy. If the home page misses the 2.5 s load target, consider
       hash-based CSP (Next.js SRI) for public pages.
 - [ ] Review rate-limit values once real traffic exists (lead form: 10 per hour per IP; staff
-      sign-in: 10 per 15 minutes per IP, account locks after 5 wrong passwords).
+      sign-in: 10 per 15 minutes per IP, account locks after 5 wrong passwords; inquiries: no daily
+      cap, but 20 per 10 minutes per buyer and 60 per hour per network, against automated harvesting).
+- [ ] Search finds every word anywhere in a listing but is not typo-tolerant ("khakra" will not find
+      "khakhra"). If buyers need it, add similarity matching with the trigram indexes already in place.
+- [ ] Product photos of public listings are cached for a year by browsers (and later the CDN). If a
+      seller hides a product, copies already cached elsewhere can still be seen by URL.
 - [ ] Neon (managed Postgres) could replace the self-run database when moving to AWS: use a new,
       empty database, not the existing `neondb`.
 
@@ -58,3 +63,5 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
 - [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
       certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-08: no daily inquiry cap; up to 50 photos per product, 10 MB each; seller inquiry
+      notifications by email only.

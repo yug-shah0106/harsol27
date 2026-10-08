@@ -47,6 +47,7 @@ export async function completeSignIn(page: Page, mobile: { local: string; e164: 
   await setKnownCode(mobile.e164, "246810");
   await page.getByLabel("6-digit code").fill("246810");
   await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).not.toHaveURL(/\/sign-in/); // signed in and sent on
 }
 
 export const PDF_FILE = (name: string) => ({ name, mimeType: "application/pdf", buffer: Buffer.from(`%PDF-1.4\n% ${name}\n`) });
@@ -55,3 +56,21 @@ export const PNG_FILE = (name: string) => ({
   mimeType: "image/png",
   buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]),
 });
+
+/**
+ * Turns a signed-in member into an approved, paid-up seller directly in the database (approval and
+ * subscriptions have their own tests; this keeps the marketplace tests focused).
+ */
+export async function makeApprovedSeller(e164: string, company: string): Promise<{ contactPhone: string; contactEmail: string }> {
+  const contactPhone = `+9179${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
+  const contactEmail = `sales.${Date.now()}@seller.example.test`;
+  await withDb((db) =>
+    db.query(
+      `INSERT INTO "Seller" ("id","userId","companyName","slug","city","state","contactName","contactPhone","contactEmail","status","paidUntil","createdAt","updatedAt")
+       SELECT gen_random_uuid(), "id", $2, $3, 'Rajkot', 'Gujarat', 'Kiran Patel', $4, $5, 'APPROVED', current_date + 30, now(), now()
+       FROM "User" WHERE "phoneNumber" = $1`,
+      [e164, company, company.toLowerCase().replace(/[^a-z0-9]+/g, "-"), contactPhone, contactEmail],
+    ),
+  );
+  return { contactPhone, contactEmail };
+}
