@@ -3,10 +3,11 @@ import type { Job, JobResult, PgBoss } from "pg-boss";
 // cannot load in the worker process.
 import { db } from "./db";
 import { sendEmail, type Email, type EmailConfig } from "./email";
-import { addDays, daysUntil, dueReminder, EXPIRED_NOTICE_LATEST_DAYS, EXPIRING_SOON_DAYS, REMINDER_DAYS } from "@/lib/subscription";
+import { addDays, daysUntil, dueReminder, EXPIRED_NOTICE_LATEST_DAYS, EXPIRING_SOON_DAYS, REMINDER_DAYS, toDateInput } from "@/lib/subscription";
 import { enqueueInTransaction, getBoss, QUEUES, type InquiryJob, type LeadJob, type PhotoJob, type ReminderJob, type SellerChangeJob } from "./jobs";
 import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./lead-emails";
 import { logError, logInfo } from "./log";
+import { getOpsStatus, opsAlertEmail } from "./ops";
 import { purgeExpiredRequestMetadata, purgeStaleOtpChallenges, purgeUnclaimedUploads } from "./retention";
 import { processPhoto } from "./photo-processing";
 import {
@@ -185,6 +186,12 @@ export async function registerWorkers(boss: PgBoss, config: WorkerConfig, only?:
   if (wanted(QUEUES.subscriptionSummary)) {
     await boss.schedule(QUEUES.subscriptionSummary, "30 9 * * 1", {}, { tz: "Asia/Kolkata" });
     await boss.work<object>(QUEUES.subscriptionSummary, WORK_OPTIONS, emailHandler(config, loadSubscriptionSummary, (summary) => subscriptionSummaryEmail(summary, team, appUrl)));
+  }
+
+  // Daily at 09:15 India time (after the nightly backup and the reminders): email the team only if something needs attention.
+  if (wanted(QUEUES.opsCheck)) {
+    await boss.schedule(QUEUES.opsCheck, "15 9 * * *", {}, { tz: "Asia/Kolkata" });
+    await boss.work<object>(QUEUES.opsCheck, WORK_OPTIONS, emailHandler(config, () => getOpsStatus(), (status) => opsAlertEmail(status, team, toDateInput(indiaToday()))));
   }
 
   // Photos are processed one batch of 2 at a time per worker: resizing is CPU- and memory-heavy.

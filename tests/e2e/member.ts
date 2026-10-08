@@ -121,3 +121,17 @@ export async function makeLead(fullName: string): Promise<string> {
 export async function setSellerStatus(e164: string, status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"): Promise<void> {
   await withDb((db) => db.query(`UPDATE "Seller" SET "status" = $2 WHERE "userId" = (SELECT "id" FROM "User" WHERE "phoneNumber" = $1)`, [e164, status]));
 }
+
+/** Replaces the backup history with one run that ended just now (ok or failed), or with none. */
+export async function setLastBackup(ok: boolean | null): Promise<void> {
+  await withDb(async (db) => {
+    await db.query(`DELETE FROM "BackupRun"`);
+    if (ok !== null) {
+      await db.query(
+        `INSERT INTO "BackupRun" ("id","startedAt","finishedAt","ok","fileName","restoreChecked") VALUES (gen_random_uuid(), timezone('UTC', now()), timezone('UTC', now()), $1, 'e2e.dump', $1)`,
+        [ok],
+      );
+    }
+  });
+}
+

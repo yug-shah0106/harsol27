@@ -90,3 +90,8 @@ jobs:
           target: tools
           push: false
           cache-from: type=gha
+      - name: Build backup image and check its scripts
+        run: |
+          docker build -t harsol27-backup deploy/backup
+          docker run --rm --entrypoint sh harsol27-backup -c 'for f in /backup/*.sh; do sh -n "$f" || exit 1; done; pg_dump --version; curl --version | head -1'
+

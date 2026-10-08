@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { newPage } from "./helpers";
-import { completeSignIn, randomMobile } from "./member";
+import { completeSignIn, randomMobile, setLastBackup } from "./member";
 import { signInAs, STAFF } from "./staff";
 
 test("pages carry a nonce-based CSP that changes per request, plus security headers", async ({ request }) => {
@@ -67,3 +67,16 @@ test("server actions refuse the same form posted from another site", async ({ re
   expect((await post("http://localhost:3217")).status()).toBe(200); // the site itself: the action runs
   expect((await post("https://evil.example")).status()).toBe(500); // another site: refused before it runs
 });
+
+test("the full health check (for an uptime monitor) needs the worker and a recent backup, and reveals nothing else", async ({ request }) => {
+  await setLastBackup(null);
+  const degraded = await request.get("/api/health/full");
+  expect(degraded.status()).toBe(503);
+  expect(await degraded.json()).toEqual({ status: "degraded" });
+
+  await setLastBackup(true); // the worker started by the test setup is already checking in
+  await expect.poll(async () => (await request.get("/api/health/full")).status(), { timeout: 15_000 }).toBe(200);
+  expect(await (await request.get("/api/health/full")).json()).toEqual({ status: "ok" });
+  expect((await request.get("/api/health/full")).headers()["cache-control"]).toBe("no-store");
+});
+
