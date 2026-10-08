@@ -40,9 +40,6 @@ pnpm worker                   # in a second terminal: emails, photo processing, 
 
 Phone sign-in codes are not texted yet (`SMS_PROVIDER=console`): they appear in the `pnpm dev` output.
 
-```bash
-```
-
 Checks (the same ones CI runs):
 
 ```bash

@@ -16,7 +16,7 @@
     "staff": "tsx scripts/staff.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:seed": "prisma db seed",
-    "worker": "NODE_OPTIONS=--conditions=react-server tsx src/worker.ts",
+    "worker": "NODE_OPTIONS=--conditions=react-server tsx --env-file-if-exists=.env src/worker.ts",
     "db:generate": "prisma generate",
     "dev:services": "docker compose -f compose.dev.yml up -d",
     "storage:setup": "tsx scripts/storage-setup.ts"
