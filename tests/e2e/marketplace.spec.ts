@@ -1,16 +1,9 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { expectAccessible, watchCsp } from "./helpers";
+import { expectAccessible, newPage, watchCsp } from "./helpers";
 import { completeSignIn, makeApprovedSeller, randomMobile } from "./member";
-import { signInAs, STAFF, uniqueIp } from "./staff";
+import { signInAs, STAFF } from "./staff";
 
-/** A visitor with their own client IP; the header goes to the app only (storage CORS is strict). */
-async function newPage(browser: Browser): Promise<Page> {
-  const context = await browser.newContext();
-  const ip = uniqueIp();
-  await context.route(/^http:\/\/localhost:3217\//, (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }));
-  return context.newPage();
-}
 
 const photo = async (color: string) => ({
   name: `${color.slice(1)}.jpg`,

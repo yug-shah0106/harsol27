@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "./db";
 import { getBoss } from "./jobs";
@@ -49,4 +50,18 @@ describe("email pipeline: form → queue → worker → Resend", () => {
     expect(mine).toContainEqual({ to: email, subject: "We have received your details · Harsol27", key: `lead-confirmation/${lead.id}` });
     expect(mine).toContainEqual({ to: ["team@example.test"], subject: `New lead: Worker Test (Worker ${run})`, key: `lead-team-alert/${lead.id}` });
   }, 20_000);
+});
+
+describe("worker process", () => {
+  // The worker runs outside Next.js (see src/worker.ts). A module that imports Next.js runtime code
+  // (e.g. errors.ts → next/navigation) crashes it at start; tests run under plain Node would not notice.
+  it("loads its code the way the worker does", () => {
+    const result = spawnSync(
+      process.execPath,
+      ["--conditions=react-server", "--import", "tsx", "--input-type=module", "-e", "await import('./src/server/workers.ts')"],
+      { encoding: "utf8", timeout: 30_000 },
+    );
+    expect(result.stderr).not.toMatch(/Error/);
+    expect(result.status).toBe(0);
+  }, 35_000);
 });

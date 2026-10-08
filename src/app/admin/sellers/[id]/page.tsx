@@ -7,12 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SELLER_DOCUMENTS } from "@/lib/seller-schema";
 import { decisionsFor, SELLER_DECISIONS, SELLER_STATUS_LABELS } from "@/lib/seller-status";
+import { EXPIRED_NOTICE, formatDay, formatRupees, subscriptionState, suggestPaidUntil, toDateInput } from "@/lib/subscription";
 import { requireStaff } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
 import { getSellerForStaff } from "@/server/sellers";
 import { canWrite } from "@/server/staff-policy";
+import { getSubscriptionForStaff } from "@/server/subscriptions";
+import { indiaToday } from "@/server/visibility";
 import { formatIst } from "../../leads/format";
 import { decideSellerAction } from "../actions";
+import { PaymentForm } from "./payment-form";
 
 export const metadata: Metadata = { title: "Seller" };
 
@@ -24,6 +28,9 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
   if (!seller) notFound();
   const decisions = decisionsFor(seller.status);
   const contact = await getSellerContact({ kind: "staff" }, seller.id);
+  const [payments, reminders] = await getSubscriptionForStaff(seller.id);
+  const today = indiaToday();
+  const subscription = subscriptionState(seller.paidUntil, today);
 
   const details: [string, React.ReactNode][] = [
     ["Contact person", seller.contactName],
@@ -115,6 +122,65 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
       ) : (
         <p className="rounded-lg border border-border bg-secondary p-3 text-sm">You have view-only access.</p>
       )}
+
+      <section id="subscription" aria-labelledby="subscription-heading" className="flex flex-col gap-4">
+        <h2 id="subscription-heading" className="text-lg font-semibold">
+          Subscription
+        </h2>
+        <p className="rounded-xl border border-border bg-card p-4">
+          {subscription.kind === "none" ? (
+            <>No payment recorded yet. Products are not shown to buyers until one is.</>
+          ) : subscription.kind === "expired" ? (
+            <>
+              <strong>Expired:</strong> paid until {formatDay(seller.paidUntil!)} ({subscription.daysAgo} {subscription.daysAgo === 1 ? "day" : "days"} ago).
+              Products are hidden from buyers.
+            </>
+          ) : (
+            <>
+              Paid until <strong>{formatDay(seller.paidUntil!)}</strong> (
+              {subscription.daysLeft === 0 ? "last day today" : `${subscription.daysLeft} ${subscription.daysLeft === 1 ? "day" : "days"} left`}).
+            </>
+          )}
+          {seller.status !== "APPROVED" && " Products are only shown while the seller is approved."}
+        </p>
+        {canWrite(staff) && (
+          <div className="max-w-xl">
+            <PaymentForm sellerId={seller.id} currentPaidUntil={seller.paidUntil ? toDateInput(seller.paidUntil) : ""} suggested={toDateInput(suggestPaidUntil(seller.paidUntil, today))} />
+          </div>
+        )}
+        {payments.length > 0 && (
+          <ol aria-label="Payment history" className="flex flex-col gap-3 border-l-2 border-border pl-4">
+            {payments.map((p) => (
+              <li key={p.id}>
+                <p className="font-medium">
+                  Paid until {p.previousPaidUntil ? formatDay(p.previousPaidUntil) : "(none)"} → {formatDay(p.newPaidUntil)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {formatIst(p.createdAt)} IST · by {p.actor.name}
+                </p>
+                {(p.amountPaise !== null || p.paidOn || p.reference) && (
+                  <p className="mt-1">
+                    {[p.amountPaise !== null && formatRupees(p.amountPaise), p.paidOn && `paid on ${formatDay(p.paidOn)}`, p.reference && `ref. ${p.reference}`].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+                {p.note && <p className="mt-1 whitespace-pre-line">Note: {p.note}</p>}
+              </li>
+            ))}
+          </ol>
+        )}
+        {reminders.length > 0 && (
+          <div className="text-sm">
+            <p className="font-medium">Reminder emails sent</p>
+            <ul className="mt-1 list-disc pl-5 text-muted-foreground">
+              {reminders.map((r) => (
+                <li key={r.id}>
+                  {r.daysBefore === EXPIRED_NOTICE ? "Listings hidden" : `${r.daysBefore} ${r.daysBefore === 1 ? "day" : "days"} before`} {formatDay(r.paidUntil)} · {formatIst(r.sentAt!)} IST
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <section aria-labelledby="history-heading" className="flex flex-col gap-3">
         <h2 id="history-heading" className="text-lg font-semibold">

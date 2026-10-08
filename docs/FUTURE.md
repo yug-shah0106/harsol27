@@ -8,7 +8,8 @@ Tick an item and note the date when it is done.
 - [ ] **Production domain name.** Decide and register; point it at the hosting (Phase 8).
 - [ ] **Verified email sending domain** in Resend (SPF, DKIM, DMARC on the domain's DNS). Until then
       emails go through Resend's test sender, which only delivers to the Resend account's own address,
-      so lead confirmations to visitors are **not delivered**. Then set `EMAIL_FROM` to an address on it.
+      so lead confirmations to visitors and every seller email (decisions, inquiries, renewal
+      reminders) are **not delivered**. Then set `EMAIL_FROM` to an address on it.
 - [ ] **Hosting on AWS**: choose the service and region, then backups with a tested restore, uptime
       monitoring, error tracking, and Cloudflare in front (switch `CLIENT_IP_HEADER` to `cf-connecting-ip`).
 - [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
@@ -37,9 +38,11 @@ Tick an item and note the date when it is done.
 ## Decisions due in later phases
 
 - [ ] Phase 3 follow-up: should staff also record **GSTIN / PAN numbers** as text, for searching?
-- [ ] Phase 5 (needed before any seller is visible: products only show while paid-until is set and
-      not passed): **one subscription plan or several**; when **renewal reminders** are sent (days before expiry).
 - [ ] Phase 6: what the **3D scene** shows and who supplies the models; **Web Push** yes/no.
+
+- [ ] **How sellers pay and renew**: the price and payment details to show sellers (on their
+      Subscription page and in reminder emails). Today they are told to reply to a reminder or contact
+      the team; replies go to the team alert address (`TEAM_ALERT_EMAILS`).
 
 ## Technical follow-ups
 
@@ -63,5 +66,7 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
 - [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
       certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-08: one yearly plan; reminders 30, 7 and 1 days before paid-until plus an expiry notice;
+      weekly renewal list to the team (Phase 5).
 - [x] 2026-10-08: no daily inquiry cap; up to 50 photos per product, 10 MB each; seller inquiry
       notifications by email only.

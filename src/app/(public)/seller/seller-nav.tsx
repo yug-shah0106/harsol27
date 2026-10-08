@@ -7,6 +7,7 @@ const LINKS = [
   { href: "/seller", label: "Overview", exact: true },
   { href: "/seller/products", label: "Products" },
   { href: "/seller/inquiries", label: "Inquiries" },
+  { href: "/seller/subscription", label: "Subscription" },
 ] as const;
 
 export function SellerNav() {
