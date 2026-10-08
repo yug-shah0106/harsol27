@@ -92,14 +92,11 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Decorative bandhani-style dot pattern for the hero (aria-hidden; pure CSS, no image request). */
-.bandhani {
-  background-image:
-    radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent) 2px, transparent 2.5px),
-    radial-gradient(circle, color-mix(in srgb, var(--primary) 18%, transparent) 1.5px, transparent 2px);
-  background-size: 28px 28px, 28px 28px;
-  background-position: 0 0, 14px 14px;
-  mask-image: linear-gradient(to left, black, transparent 75%);
+/* The hero's sky behind the kites: pale morning blue, warming towards the horizon, with a soft sun. */
+.kite-sky {
+  background:
+    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 55%, transparent) 0, transparent 22%),
+    linear-gradient(to bottom, #dce6f3 0%, #e9eef5 45%, #f8eedd 100%);
 }
 
 @layer base {

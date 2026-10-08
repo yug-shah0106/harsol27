@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { HeroSky } from "@/components/hero/hero-sky";
+import { KitePoster } from "@/components/hero/kite-poster";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { listActiveIndustries } from "@/server/industries";
@@ -18,15 +20,14 @@ const STEPS = [
   },
 ];
 
-// The 3D hero arrives in Phase 6; until then the hero is text plus a decorative pattern.
 export default async function HomePage() {
   const industries = await listActiveIndustries();
 
   return (
     <>
-      <section aria-labelledby="hero-heading" className="relative overflow-hidden border-b border-border">
-        <div aria-hidden="true" className="bandhani absolute inset-0 opacity-60" />
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-16 sm:px-6 sm:py-24">
+      <section aria-labelledby="hero-heading" className="border-b border-border">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-20 lg:grid-cols-[1.15fr_1fr]">
+          <div className="flex flex-col gap-6">
           <p className="w-fit rounded-full bg-accent px-3 py-1 text-sm font-semibold text-accent-foreground">
             B2B marketplace for Gujarat
           </p>
@@ -45,6 +46,11 @@ export default async function HomePage() {
             <Button asChild variant="outline">
               <a href="#how-it-works">How it works</a>
             </Button>
+          </div>
+          </div>
+          {/* Kites at Uttarayan: a static picture first, then live 3D (see components/hero). */}
+          <div className="mx-auto w-full max-w-md lg:max-w-none">
+            <HeroSky poster={<KitePoster />} />
           </div>
         </div>
       </section>

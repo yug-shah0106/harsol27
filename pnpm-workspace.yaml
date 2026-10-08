@@ -1,5 +1,6 @@
 allowBuilds:
   sharp: false
+  '@swc/core': false # a dependency of @serwist/turbopack it does not call; its install script is not needed
   unrs-resolver: false
   '@prisma/engines': true
   prisma: true

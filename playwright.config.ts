@@ -12,8 +12,10 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   globalSetup: "./tests/e2e/global-setup.ts",
-  use: { baseURL, trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Service workers off by default: requests they make bypass the per-test IP routing. The PWA test turns them on.
+  use: { baseURL, trace: "retain-on-failure", serviceWorkers: "block" },
+  // Software WebGL, so the home page's 3D scene also runs on CI machines without a GPU.
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions: { args: ["--enable-unsafe-swiftshader"] } } }],
   webServer: {
     command: `pnpm start --port ${PORT}`,
     url: `${baseURL}/api/health`,
