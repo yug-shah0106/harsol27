@@ -202,3 +202,15 @@ Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); I
 - A weekly summary to the team (Mondays, 09:30 India time): sellers expiring in the next 30 days and
   those expired in the last 30, with phone numbers, as a call list.
 - No grace period: listings are shown up to and including the paid-until date (unchanged from G).
+
+### 2026-10-08, before Phase 6
+
+- 3D scene left to the vendor ("surprise me"): **Uttarayan**, Gujarat's kite festival. Kites in the
+  brand colours drift over old-city rooftops in the home page hero. They are generated in code, so
+  there are no model files (the brief's compressed glTF is unnecessary: the scene downloads only the
+  3D library). A static picture of the same scene is part of the page and is all that slow devices,
+  browsers without WebGL and visitors who prefer reduced motion see.
+- No Web Push; email remains the only notification channel.
+- The PWA saves only its offline page. Pages are never stored on the device, so nothing from an
+  account, seller or admin page can be read offline or by the next user of a shared phone. An
+  "Install the app" link appears in the footer when the browser supports it (steps on iPhone).

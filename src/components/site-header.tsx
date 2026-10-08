@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallApp } from "@/components/install-app";
 import { Button } from "@/components/ui/button";
 import { getMember } from "@/server/authz";
 
@@ -50,7 +51,10 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-card">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27</p>
+        <div className="flex flex-col gap-2">
+          <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27</p>
+          <InstallApp />
+        </div>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
           <Link href="/about" className="hover:underline">About</Link>
           <Link href="/terms" className="hover:underline">Terms</Link>

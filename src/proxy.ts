@@ -24,6 +24,8 @@ export function proxy(request: NextRequest) {
     "img-src 'self' blob: data:",
     "font-src 'self'",
     `connect-src 'self'${storageOrigin()}`,
+    "worker-src 'self'", // the service worker, /serwist/sw.js
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

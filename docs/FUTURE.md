@@ -30,7 +30,8 @@ Tick an item and note the date when it is done.
 
 ## Brand and content
 
-- [ ] **Logo**. Currently a text wordmark "Harsol27". Replace in `src/components/site-header.tsx` and the favicon.
+- [ ] **Logo**. Currently a text wordmark "Harsol27" and a placeholder kite icon. Replace the wordmark in
+      `src/components/site-header.tsx`; redraw the icon in `scripts/make-icons.ts` and run it (favicon, app icons).
 - [ ] **Review the 18 starting industries** (editable in Admin → Industries).
 - [ ] **More languages** (e.g. Gujarati). English only for now. Will need translated copy, a Gujarati
       font (e.g. Noto Sans Gujarati) and a language switcher.
@@ -38,7 +39,6 @@ Tick an item and note the date when it is done.
 ## Decisions due in later phases
 
 - [ ] Phase 3 follow-up: should staff also record **GSTIN / PAN numbers** as text, for searching?
-- [ ] Phase 6: what the **3D scene** shows and who supplies the models; **Web Push** yes/no.
 
 - [ ] **How sellers pay and renew**: the price and payment details to show sellers (on their
       Subscription page and in reminder emails). Today they are told to reply to a reminder or contact
@@ -46,9 +46,14 @@ Tick an item and note the date when it is done.
 
 ## Technical follow-ups
 
-- [ ] Revisit page caching in Phase 6: every page is rendered per request because of the strict
-      nonce-based security policy. If the home page misses the 2.5 s load target, consider
-      hash-based CSP (Next.js SRI) for public pages.
+- [ ] Measure the home page on the real server (Phase 8). Under slow-4G phone emulation on a local
+      machine its main content appears in about 0.8 s (target 2.5 s). Every page is rendered per
+      request because of the nonce-based security policy; if the target is missed in production,
+      consider hash-based CSP (Next.js SRI) for public pages.
+- [ ] The 3D library is about 237 KB compressed (budget 260 KB, checked by `tests/e2e/home-3d.spec.ts`),
+      loaded only after the page on capable devices. Brotli at Cloudflare would shrink it further.
+- [ ] **Web Push** is not built (email only, 2026-10-08). Revisit if sellers want instant alerts; on
+      iPhone it only works once the app is installed to the home screen.
 - [ ] Review rate-limit values once real traffic exists (lead form: 10 per hour per IP; staff
       sign-in: 10 per 15 minutes per IP, account locks after 5 wrong passwords; inquiries: no daily
       cap, but 20 per 10 minutes per buyer and 60 per hour per network, against automated harvesting).
@@ -66,6 +71,8 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
 - [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
       certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-08: 3D scene left to us: Uttarayan kites, generated in code (no model files). No Web
+      Push; the app is installable, with an offline page (Phase 6).
 - [x] 2026-10-08: one yearly plan; reminders 30, 7 and 1 days before paid-until plus an expiry notice;
       weekly renewal list to the team (Phase 5).
 - [x] 2026-10-08: no daily inquiry cap; up to 50 photos per product, 10 MB each; seller inquiry
