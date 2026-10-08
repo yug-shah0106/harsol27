@@ -18,3 +18,7 @@ minimumReleaseAgeExclude:
   - '@next/swc-win32-x64-msvc@16.4.0'
   - eslint-config-next@16.4.0
   - next@16.4.0
+overrides:
+  # An optional Better Auth peer we never use (Postgres only); pinned past GHSA-rgwj-5xj2-c3m3 and its
+  # mysql_clear_password advisory so the production audit stays clean.
+  mysql2: ^3.24.5

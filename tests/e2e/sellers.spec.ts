@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible, newPage, watchCsp } from "./helpers";
+import { expectAccessible, newPage, unique, watchCsp } from "./helpers";
 import { completeSignIn, PDF_FILE, PNG_FILE, randomMobile, requestCode } from "./member";
 import { signInAs, STAFF } from "./staff";
 
@@ -48,7 +48,7 @@ test("seller journey: apply with documents → rejected with reason → resubmit
   // ── The seller applies ──
   const seller = await newPage(browser);
   const csp = watchCsp(seller);
-  const company = `E2E Khakhra House ${Date.now()}`;
+  const company = `E2E Khakhra House ${unique()}`;
   await seller.goto("/sign-in?next=/seller/apply");
   await completeSignIn(seller, randomMobile());
   await expect(seller).toHaveURL(/\/seller\/apply$/);

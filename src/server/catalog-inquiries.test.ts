@@ -8,7 +8,7 @@ import { getBoss, QUEUES } from "./jobs";
 import { INQUIRY_RULES, listInquiries, sendInquiry } from "./inquiries";
 
 const run = crypto.randomUUID().slice(0, 6);
-let industry: { id: string; slug: string };
+let industry: { id: string; slug: string; name: string };
 let visibleSeller: { id: string; slug: string };
 let sellerOwnerId: string;
 let product: { id: string; slug: string; name: string };
@@ -56,6 +56,14 @@ describe("search", () => {
     expect((await search({ q: run, industry: industry.slug, state: "Gujarat", city: "morbi" })).total).toBe(1);
     expect((await search({ q: run, state: "Kerala" })).total).toBe(0);
     expect((await search({ q: `Morbi Tiles ${run}` })).total).toBe(1);
+  });
+
+  it("matches a word in the industry's name, but never through a seller who is not public", async () => {
+    const industryWord = industry.name.split(" ")[1]!; // the factory's unique id part
+    expect((await search({ q: `${industryWord} vitrified` })).items.map((p) => p.id)).toEqual([product.id]);
+    const { seller: suspended } = await makeSeller({ status: "SUSPENDED" });
+    await db().seller.update({ where: { id: suspended.id }, data: { companyName: `Hidden Ceramics ${run}` } });
+    expect((await search({ q: `Hidden Ceramics ${run}` })).total).toBe(0);
   });
 
   it("returns only public-safe fields", async () => {

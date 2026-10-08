@@ -26,6 +26,7 @@ export default defineConfig({
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "",
       CLIENT_IP_HEADER: "x-forwarded-for",
       SMS_PROVIDER: "console",
+      ALLOW_CONSOLE_SMS: "true", // a production build under test; codes are read from the test database
       S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://127.0.0.1:8333",
       S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test",
       S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? "local-dev-access-key",

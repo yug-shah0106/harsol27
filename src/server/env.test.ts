@@ -27,6 +27,15 @@ describe("envSchema", () => {
     expect(envSchema.safeParse({ ...valid, S3_BUCKET: "Bad_Bucket" }).success).toBe(false);
   });
 
+  it("refuses to log sign-in codes in production unless a staging server allows it explicitly", () => {
+    const production = { ...valid, NODE_ENV: "production" };
+    const refused = envSchema.safeParse(production);
+    expect(refused.success).toBe(false);
+    expect(refused.error?.issues[0]?.path).toEqual(["SMS_PROVIDER"]);
+    expect(envSchema.safeParse({ ...production, ALLOW_CONSOLE_SMS: "true" }).success).toBe(true);
+    expect(envSchema.safeParse({ ...valid, NODE_ENV: "development" }).success).toBe(true);
+  });
+
   it("requires every secret to be present", () => {
     for (const key of Object.keys(valid)) {
       const rest = Object.fromEntries(Object.entries(valid).filter(([k]) => k !== key));

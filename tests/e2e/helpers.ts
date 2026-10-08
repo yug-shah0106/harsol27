@@ -2,6 +2,9 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Browser, type Page } from "@playwright/test";
 import { uniqueIp } from "./staff";
 
+/** A suffix for test names that stays unique even when copies of a test run in parallel. */
+export const unique = () => `${Date.now()}${Math.random().toString(36).slice(2, 6)}`;
+
 /**
  * A fresh visitor with their own client IP (so per-IP rate limits never leak between tests). The IP
  * header is added only to requests to the app: sent to storage, it would fail the bucket's strict CORS

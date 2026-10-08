@@ -47,6 +47,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Audit the packages the live app uses (high or critical fails the build)
+        run: pnpm audit --prod --audit-level high
       - name: Start S3-compatible storage (SeaweedFS, as in compose.dev.yml)
         run: |
           docker run -d --name s3 -p 127.0.0.1:8333:8333 -v "$PWD/dev/s3.json:/etc/s3.json:ro" \

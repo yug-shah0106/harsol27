@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { formatDay, fromDateInput, toDateInput } from "../../src/lib/subscription";
 import { indiaToday } from "../../src/server/visibility";
-import { expectAccessible, newPage, watchCsp } from "./helpers";
+import { expectAccessible, newPage, unique, watchCsp } from "./helpers";
 import { completeSignIn, makeApprovedSeller, randomMobile } from "./member";
 import { signInAs, STAFF } from "./staff";
 
 test("subscriptions: an admin records a payment and the seller sees it; a viewer cannot record", async ({ browser }) => {
-  const company = `Desai Brass ${Date.now()}`;
+  const company = `Desai Brass ${unique()}`;
 
   // ── An approved seller with no payment yet ──
   const seller = await newPage(browser);
@@ -23,6 +23,7 @@ test("subscriptions: an admin records a payment and the seller sees it; a viewer
   await signInAs(admin, STAFF.admin);
   await admin.getByRole("link", { name: "Subscriptions", exact: true }).click();
   await admin.getByRole("link", { name: /^No payment yet/ }).click();
+  await expect(admin).toHaveURL(/view=unpaid/); // the tab has loaded, so its search form is the one we fill
   await admin.getByLabel("Search company").fill(company);
   await admin.getByRole("button", { name: "Search" }).click();
   await expectAccessible(admin);

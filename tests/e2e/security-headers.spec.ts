@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { newPage } from "./helpers";
+import { completeSignIn, randomMobile } from "./member";
+import { signInAs, STAFF } from "./staff";
 
 test("pages carry a nonce-based CSP that changes per request, plus security headers", async ({ request }) => {
   const first = await request.get("/staff/sign-in");
@@ -33,4 +36,34 @@ test("health check reports ok without leaking details", async ({ request }) => {
   expect(res.status()).toBe(200);
   expect(await res.json()).toEqual({ status: "ok" });
   expect(res.headers()["cache-control"]).toContain("no-store");
+});
+
+test("session cookies cannot be read by scripts or sent from other sites; staff sessions end with the browser", async ({ browser }) => {
+  const sessionCookie = async (page: Awaited<ReturnType<typeof newPage>>) =>
+    (await page.context().cookies()).find((c) => c.name.startsWith("harsol27") && c.name.endsWith("session_token"));
+
+  const member = await newPage(browser);
+  await member.goto("/sign-in");
+  await completeSignIn(member, randomMobile());
+  const memberCookie = await sessionCookie(member);
+  expect(memberCookie).toMatchObject({ httpOnly: true, sameSite: "Lax", path: "/" });
+  expect(memberCookie!.expires).toBeGreaterThan(Date.now() / 1000 + 6 * 86_400); // 7-day buyer session
+
+  const staff = await newPage(browser);
+  await signInAs(staff, STAFF.viewer);
+  const staffCookie = await sessionCookie(staff);
+  expect(staffCookie).toMatchObject({ httpOnly: true, sameSite: "Lax", expires: -1 }); // browser-session only
+  expect(await staff.evaluate(() => document.cookie)).not.toContain("session_token");
+});
+
+test("server actions refuse the same form posted from another site", async ({ request }) => {
+  // The lead form's real action fields, as a browser without JavaScript would post them.
+  const html = await (await request.get("/get-started")).text();
+  const fields: Record<string, string> = { fullName: "Cross Site" };
+  for (const [, name, value] of html.matchAll(/name="(\$ACTION[^"]*)"(?: value="([^"]*)")?/g)) fields[name!] = (value ?? "").replaceAll("&quot;", '"');
+  expect(Object.keys(fields).some((k) => k.startsWith("$ACTION_1:"))).toBe(true);
+
+  const post = (origin: string) => request.post("/get-started", { headers: { Origin: origin }, multipart: fields });
+  expect((await post("http://localhost:3217")).status()).toBe(200); // the site itself: the action runs
+  expect((await post("https://evil.example")).status()).toBe(500); // another site: refused before it runs
 });

@@ -33,23 +33,40 @@ const cardSelect = {
 export type ProductCard = Prisma.ProductGetPayload<{ select: typeof cardSelect }>;
 
 /**
+ * One word's condition: in the product's name or description, its industry's name, or its seller's
+ * company name (case-insensitive). Matching industries and sellers are looked up first, so the
+ * product query only tests Product's own columns and can use their indexes. (Testing the joined
+ * names inside the OR made Postgres read every product: ~350 ms per search at 100,000 products.)
+ */
+async function wordCondition(word: string, now: Date): Promise<Prisma.ProductWhereInput> {
+  const contains = { contains: word, mode: "insensitive" as const };
+  // ponytail: the seller ids go into the query as a list; past ~30,000 matching sellers, switch to a
+  // raw `"sellerId" = ANY(ARRAY(SELECT …))` (scripts/search-benchmark.ts measures it).
+  const [industries, sellers] = await Promise.all([
+    db().industry.findMany({ where: { isActive: true, name: contains }, select: { id: true } }),
+    db().seller.findMany({ where: { AND: [publicSellerWhere(now), { companyName: contains }] }, select: { id: true } }),
+  ]);
+  return {
+    OR: [
+      { name: contains },
+      { description: contains },
+      ...(industries.length ? [{ industryId: { in: industries.map((i) => i.id) } }] : []),
+      ...(sellers.length ? [{ sellerId: { in: sellers.map((s) => s.id) } }] : []),
+    ],
+  };
+}
+
+/**
  * Keyword + industry + location search over visible products. Every word must appear somewhere in
- * the product name, description, industry or seller name (case-insensitive; trigram indexes keep
- * "contains" fast). Newest listings first.
+ * the product name, description, industry or seller name (trigram indexes keep "contains" fast).
+ * Newest listings first.
  */
 export async function searchProducts(params: SearchParams, now = new Date()) {
   const words = (params.q ?? "").split(/\s+/).filter(Boolean).slice(0, 8);
   const where: Prisma.ProductWhereInput = {
     AND: [
       publicProductWhere(now),
-      ...words.map((word) => ({
-        OR: [
-          { name: { contains: word, mode: "insensitive" as const } },
-          { description: { contains: word, mode: "insensitive" as const } },
-          { industry: { name: { contains: word, mode: "insensitive" as const } } },
-          { seller: { companyName: { contains: word, mode: "insensitive" as const } } },
-        ],
-      })),
+      ...(await Promise.all(words.map((word) => wordCondition(word, now)))),
       ...(params.industry ? [{ industry: { slug: params.industry } }] : []),
       ...(params.state ? [{ seller: { state: params.state } }] : []),
       ...(params.city ? [{ seller: { city: { contains: params.city, mode: "insensitive" as const } } }] : []),

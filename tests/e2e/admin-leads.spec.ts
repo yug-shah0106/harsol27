@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible, fillLeadForm } from "./helpers";
+import { expectAccessible, fillLeadForm, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
 async function submitLead(page: Page, name: string, email: string) {
@@ -11,9 +11,9 @@ async function submitLead(page: Page, name: string, email: string) {
 
 test("admin finds a new lead, sees staff-only details, and changes its status with history", async ({ browser }) => {
   const ip = uniqueIp();
-  const name = `Lead Admin Journey ${Date.now()}`;
+  const name = `Lead Admin Journey ${unique()}`;
   const visitor = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": ip } })).newPage();
-  await submitLead(visitor, name, `journey.${Date.now()}@example.test`);
+  await submitLead(visitor, name, `journey.${unique()}@example.test`);
   await visitor.close();
 
   const page = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
@@ -45,9 +45,9 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
 });
 
 test("a viewer can read leads but gets no controls to change them", async ({ browser }) => {
-  const name = `Lead Viewer Journey ${Date.now()}`;
+  const name = `Lead Viewer Journey ${unique()}`;
   const visitor = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
-  await submitLead(visitor, name, `viewer.${Date.now()}@example.test`);
+  await submitLead(visitor, name, `viewer.${unique()}@example.test`);
   await visitor.close();
 
   const page = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();

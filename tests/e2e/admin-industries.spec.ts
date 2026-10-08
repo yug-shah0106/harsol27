@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible } from "./helpers";
+import { expectAccessible, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
 test.beforeEach(async ({ context }) => {
@@ -7,7 +7,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 test("admin adds, renames and deactivates an industry, and the lead form follows", async ({ page, browser }) => {
-  const name = `E2E Industry ${Date.now()}`;
+  const name = `E2E Industry ${unique()}`;
   const renamed = `${name} Renamed`;
   await signInAs(page, STAFF.admin);
   await page.goto("/admin/industries");
