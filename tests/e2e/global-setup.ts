@@ -13,10 +13,14 @@ export default async function globalSetup() {
 
   const client = new Client({ connectionString: url });
   await client.connect();
-  await client.query(`TRUNCATE "User", "RateLimit", "Lead", "Industry" CASCADE`);
+  await client.query(`TRUNCATE "User", "RateLimit", "Lead", "Industry", "OtpChallenge" CASCADE`);
   await client.end();
 
   execFileSync("pnpm", ["exec", "tsx", "prisma/seed.ts"], { env, stdio: "inherit" });
+  execFileSync("pnpm", ["exec", "tsx", "scripts/storage-setup.ts"], {
+    env: { ...env, S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test", BETTER_AUTH_URL: "http://localhost:3217" },
+    stdio: "inherit",
+  });
 
   for (const staff of Object.values(STAFF)) {
     // Random per run, shared with the test workers through the environment.

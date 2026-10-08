@@ -1,9 +1,9 @@
 import "server-only";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { slugify } from "@/lib/slug";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
+import { uniqueSlug } from "./slugs";
 import type { StaffUser } from "./staff-policy";
 
 export const industryNameSchema = z
@@ -38,13 +38,10 @@ function isUniqueViolation(error: unknown): boolean {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
 }
 
-async function uniqueSlug(tx: Prisma.TransactionClient, name: string): Promise<string> {
-  const base = slugify(name) || "industry";
-  const taken = new Set(
-    (await tx.industry.findMany({ where: { slug: { startsWith: base } }, select: { slug: true } })).map((r) => r.slug),
+function industrySlug(tx: Prisma.TransactionClient, name: string): Promise<string> {
+  return uniqueSlug(name, "industry", async (prefix) =>
+    (await tx.industry.findMany({ where: { slug: { startsWith: prefix } }, select: { slug: true } })).map((r) => r.slug),
   );
-  if (!taken.has(base)) return base;
-  for (let n = 2; ; n++) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
 }
 
 export async function createIndustry(rawName: unknown, actor: StaffUser): Promise<void> {
@@ -55,7 +52,7 @@ export async function createIndustry(rawName: unknown, actor: StaffUser): Promis
       if (await tx.industry.findUnique({ where: { nameKey }, select: { id: true } })) throw new UserFacingError(DUPLICATE, { name: DUPLICATE });
       const { _max } = await tx.industry.aggregate({ _max: { sortOrder: true } });
       const industry = await tx.industry.create({
-        data: { name, nameKey, slug: await uniqueSlug(tx, name), sortOrder: (_max.sortOrder ?? 0) + 1 },
+        data: { name, nameKey, slug: await industrySlug(tx, name), sortOrder: (_max.sortOrder ?? 0) + 1 },
       });
       await tx.auditLog.create({
         data: { actorId: actor.id, action: "INDUSTRY_CREATED", entityType: "Industry", entityId: industry.id, details: { name } },

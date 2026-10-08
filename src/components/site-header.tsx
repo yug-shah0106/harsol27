@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getMember } from "@/server/authz";
 
 export function SkipLink() {
   return (
@@ -20,7 +21,8 @@ export function Wordmark() {
   );
 }
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const member = await getMember();
   return (
     <header className="border-b border-border bg-card">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -28,6 +30,9 @@ export function SiteHeader() {
         <nav aria-label="Main" className="flex items-center gap-1 sm:gap-4">
           <Link href="/about" className="rounded-md px-2 py-2 text-sm font-medium hover:underline">
             About
+          </Link>
+          <Link href={member ? "/account" : "/sign-in"} className="rounded-md px-2 py-2 text-sm font-medium hover:underline">
+            {member ? "Your account" : "Sign in"}
           </Link>
           <Button asChild>
             <Link href="/get-started">Get started</Link>

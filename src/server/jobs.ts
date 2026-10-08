@@ -8,9 +8,13 @@ export const QUEUES = {
   leadConfirmation: "lead-confirmation",
   leadTeamAlert: "lead-team-alert",
   dataRetention: "data-retention",
+  sellerApplicationAlert: "seller-application-alert",
+  sellerDecision: "seller-decision",
 } as const;
 
 export type LeadJob = { leadId: string };
+/** Seller emails point at one status-history row, so each application or decision is emailed once. */
+export type SellerChangeJob = { changeId: string };
 
 // Retries with exponential backoff, capped at one hour between attempts (about a day in total).
 const QUEUE_OPTIONS = { retryLimit: 12, retryDelay: 30, retryBackoff: true, retryDelayMax: 3600 };
@@ -38,6 +42,11 @@ export function getBoss(role: "web" | "worker" = "web"): Promise<PgBoss> {
     throw error;
   });
   return boss;
+}
+
+/** Queue a job inside the caller's transaction: committed together with the data it refers to. */
+export async function enqueueInTransaction(instance: PgBoss, tx: Prisma.TransactionClient, queue: string, data: object): Promise<void> {
+  await instance.send(queue, data, { db: fromPrisma(tx) });
 }
 
 /**

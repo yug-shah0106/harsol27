@@ -178,3 +178,11 @@ Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); I
 - Industries are broad (e.g. Food Products, Steel & Metal Products); sellers describe their own
   products inside one. A starting list of 18 is seeded and fully editable in the admin area.
 - Neon database not used for now (the existing `neondb` holds another project's tables).
+
+### 2026-10-08, before Phase 3
+
+- Seller documents: GST certificate (optional, for businesses under the GST threshold), PAN card,
+  Udyam/business registration certificate, address proof (e.g. electricity bill). 5 MB per document.
+- MSG91 dropped; SMS provider to be chosen later. Phone sign-in is built with a console sender that
+  writes codes to the server log.
+- Team alert address: harsol27helpdesk@gmail.com. Lead IP and browser details kept 30 days.

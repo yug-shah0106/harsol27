@@ -42,6 +42,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Start S3-compatible storage (SeaweedFS, as in compose.dev.yml)
+        run: |
+          docker run -d --name s3 -p 127.0.0.1:8333:8333 -v "$PWD/dev/s3.json:/etc/s3.json:ro" \
+            chrislusf/seaweedfs:4.48 server -s3 -s3.config=/etc/s3.json -dir=/data
+          for i in $(seq 1 60); do curl -s -o /dev/null http://127.0.0.1:8333/ && exit 0; sleep 1; done
+          echo "storage did not start" && docker logs s3 && exit 1
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test

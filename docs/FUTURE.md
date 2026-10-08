@@ -14,6 +14,14 @@ Tick an item and note the date when it is done.
 - [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
 - [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
 - [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
+- [ ] **SMS provider for one-time codes**: MSG91 is dropped (2026-10-08); a provider is still to be
+      chosen. Indian SMS needs DLT entity and template registration, which takes days. Then add its
+      sender in `src/server/sms.ts`. Until then codes are only written to the server log
+      (`SMS_PROVIDER=console`), so **real users cannot sign in**.
+- [ ] **Document storage on Cloudflare R2**: create a private bucket and an R2 API token, put them in
+      `deploy/.env` (`S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`), then run
+      `scripts/storage-setup.ts` once. Staging over ngrok needs this too: browsers outside your machine
+      cannot reach the local storage server.
 
 ## Staging
 
@@ -28,8 +36,7 @@ Tick an item and note the date when it is done.
 
 ## Decisions due in later phases
 
-- [ ] Phase 3: which **documents sellers must upload**; **MSG91 account and DLT template approval**
-      (takes days; needed before any SMS one-time code can be sent).
+- [ ] Phase 3 follow-up: should staff also record **GSTIN / PAN numbers** as text, for searching?
 - [ ] Phase 4: the **daily inquiry cap** per buyer; product **photo count and size limits**.
 - [ ] Phase 5: **one subscription plan or several**; when **renewal reminders** are sent (days before expiry).
 - [ ] Phase 6: what the **3D scene** shows and who supplies the models; **Web Push** yes/no.
@@ -49,3 +56,5 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: team alert email set (`harsol27helpdesk@gmail.com`).
 - [x] 2026-10-08: IP address and browser details on leads deleted automatically after 30 days.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
+- [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
+      certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
