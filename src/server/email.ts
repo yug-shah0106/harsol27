@@ -3,6 +3,8 @@ export type Email = {
   subject: string;
   text: string;
   html: string;
+  /** Where the recipient's reply goes (e.g. a renewal reminder → the team). */
+  replyTo?: string[];
   /** Same key → Resend sends at most once within 24 h, so a retried job cannot double-send. */
   idempotencyKey: string;
 };
@@ -18,7 +20,7 @@ export async function sendEmail(config: EmailConfig, email: Email): Promise<void
       "Content-Type": "application/json",
       "Idempotency-Key": email.idempotencyKey,
     },
-    body: JSON.stringify({ from: config.from, to: email.to, subject: email.subject, text: email.text, html: email.html }),
+    body: JSON.stringify({ from: config.from, to: email.to, reply_to: email.replyTo, subject: email.subject, text: email.text, html: email.html }),
     signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {

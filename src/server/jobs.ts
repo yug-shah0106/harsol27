@@ -12,6 +12,9 @@ export const QUEUES = {
   sellerDecision: "seller-decision",
   productPhoto: "product-photo",
   inquiryNotification: "inquiry-notification",
+  subscriptionReminders: "subscription-reminders", // daily: finds the reminders due and queues one email each
+  subscriptionReminderEmail: "subscription-reminder-email",
+  subscriptionSummary: "subscription-summary", // weekly, to the team
 } as const;
 
 export type LeadJob = { leadId: string };
@@ -19,6 +22,8 @@ export type LeadJob = { leadId: string };
 export type SellerChangeJob = { changeId: string };
 export type PhotoJob = { photoId: string };
 export type InquiryJob = { inquiryId: string };
+/** Points at one SubscriptionReminder row, which exists once per seller, paid-until date and reminder. */
+export type ReminderJob = { reminderId: string };
 
 // Retries with exponential backoff, capped at one hour between attempts (about a day in total).
 const QUEUE_OPTIONS = { retryLimit: 12, retryDelay: 30, retryBackoff: true, retryDelayMax: 3600 };

@@ -10,11 +10,12 @@ Delivered as a single responsive web application, installable as a PWA on Androi
 
 ## Status
 
-**Phases 1–4 built:** foundation (schema, staff sign-in with Admin/Viewer roles, Docker, CI), public
+**Phases 1–5 built:** foundation (schema, staff sign-in with Admin/Viewer roles, Docker, CI), public
 pages (design system, home, About/Terms/Privacy, lead form with emails, leads and industries admin),
 accounts and sellers (phone sign-in, seller application with documents, admin approval with
 history), and the marketplace (products with photos, search, browse by industry, inquiries that
-unlock seller contacts, seller and admin dashboards). Deferred work is tracked in [docs/FUTURE.md](./docs/FUTURE.md). The brief of 2026-10-07 supersedes `docs/`
+unlock seller contacts, seller and admin dashboards), and subscriptions (staff record yearly payments
+and paid-until dates; reminder emails to sellers; a weekly renewal list to the team). Deferred work is tracked in [docs/FUTURE.md](./docs/FUTURE.md). The brief of 2026-10-07 supersedes `docs/`
 where they disagree; `docs/` is kept for history.
 
 ## Local development
@@ -30,7 +31,7 @@ pnpm db:migrate               # apply migrations to the dev database
 pnpm db:seed                  # starting list of industries
 pnpm staff create --email you@example.com --name "You" --role ADMIN
 pnpm dev                      # http://localhost:3000
-pnpm worker                   # in a second terminal: sends queued emails
+pnpm worker                   # in a second terminal: emails, photo processing, scheduled jobs
 ```
 
 Phone sign-in codes are not texted yet (`SMS_PROVIDER=console`): they appear in the `pnpm dev` output.

@@ -192,3 +192,13 @@ Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); I
 - No daily inquiry cap per buyer (only short-burst limits against automated harvesting).
 - Up to 50 photos per product, 10 MB each; served as resized WebP, originals deleted.
 - New-inquiry notifications to sellers by email only.
+
+### 2026-10-08, before Phase 5
+
+- One yearly subscription plan. No prices are stored; staff record what was paid (optional amount,
+  payment date, receipt/UPI reference) together with the new paid-until date.
+- Reminder emails to the seller 30, 7 and 1 days before the paid-until date, and one on the day
+  listings are hidden. Replies go to the team address.
+- A weekly summary to the team (Mondays, 09:30 India time): sellers expiring in the next 30 days and
+  those expired in the last 30, with phone numbers, as a call list.
+- No grace period: listings are shown up to and including the paid-until date (unchanged from G).

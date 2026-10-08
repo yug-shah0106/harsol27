@@ -10,8 +10,9 @@ import { requireMember } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
 import { getMySeller } from "@/server/sellers";
 import { indiaToday } from "@/server/visibility";
-import { formatIst } from "@/app/admin/leads/format";
+import { subscriptionState } from "@/lib/subscription";
 import { SellerNav } from "./seller-nav";
+import { SubscriptionStatus } from "./subscription-status";
 
 export const metadata: Metadata = { title: "Your seller account", robots: { index: false } };
 
@@ -31,7 +32,6 @@ export default async function SellerPage() {
   const latestReason = (seller.status === "REJECTED" || seller.status === "SUSPENDED") && seller.statusChanges[0]?.reason;
 
   const approved = seller.status === "APPROVED";
-  const subscriptionActive = !!seller.paidUntil && seller.paidUntil >= indiaToday();
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
@@ -51,21 +51,16 @@ export default async function SellerPage() {
           <h2 id="subscription-heading" className="text-lg font-semibold">
             Subscription
           </h2>
-          {subscriptionActive ? (
-            <p>
-              Active until <strong>{formatIst(seller.paidUntil!).split(",")[0]}</strong>. Your listed products are visible to buyers.
-            </p>
-          ) : (
-            <p>
-              <strong>Not active.</strong> Your products are not visible to buyers until your yearly subscription is recorded by the Harsol27 team.
-            </p>
-          )}
+          <SubscriptionStatus state={subscriptionState(seller.paidUntil, indiaToday())} paidUntil={seller.paidUntil} />
           <div className="flex flex-wrap gap-2 pt-1">
             <Button asChild>
               <Link href="/seller/products">Manage products</Link>
             </Button>
             <Button asChild variant="outline">
               <Link href="/seller/inquiries">Inquiries received</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/seller/subscription">Subscription details</Link>
             </Button>
           </div>
         </section>

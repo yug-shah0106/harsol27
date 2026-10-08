@@ -1,7 +1,7 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
-import { expectAccessible, watchCsp } from "./helpers";
+import { expect, test } from "@playwright/test";
+import { expectAccessible, newPage, watchCsp } from "./helpers";
 import { completeSignIn, PDF_FILE, PNG_FILE, randomMobile, requestCode } from "./member";
-import { signInAs, STAFF, uniqueIp } from "./staff";
+import { signInAs, STAFF } from "./staff";
 
 const DOCUMENTS = [
   ["GST certificate", "gst.pdf"],
@@ -10,19 +10,6 @@ const DOCUMENTS = [
   ["Address proof (for example an electricity bill)", "bill.pdf"],
 ] as const;
 
-/**
- * A fresh visitor with their own client IP (so per-IP rate limits never leak between tests). The IP
- * header is added only to requests to the app: sent to storage, it would fail the bucket's strict CORS
- * rule, which allows nothing but Content-Type. Real browsers never send this header.
- */
-async function newPage(browser: Browser): Promise<Page> {
-  const context = await browser.newContext();
-  const ip = uniqueIp();
-  await context.route(/^http:\/\/localhost:3217\//, (route) =>
-    route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }),
-  );
-  return context.newPage();
-}
 
 test("phone sign-in: protected pages send you to sign in and bring you back", async ({ browser }) => {
   const page = await newPage(browser);

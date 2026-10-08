@@ -1,5 +1,18 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
+import { uniqueIp } from "./staff";
+
+/**
+ * A fresh visitor with their own client IP (so per-IP rate limits never leak between tests). The IP
+ * header is added only to requests to the app: sent to storage, it would fail the bucket's strict CORS
+ * rule, which allows nothing but Content-Type. Real browsers never send this header.
+ */
+export async function newPage(browser: Browser): Promise<Page> {
+  const context = await browser.newContext();
+  const ip = uniqueIp();
+  await context.route(/^http:\/\/localhost:3217\//, (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }));
+  return context.newPage();
+}
 
 /** Fails on any WCAG 2.1 A/AA violation axe can detect automatically on the current page. */
 export async function expectAccessible(page: Page) {

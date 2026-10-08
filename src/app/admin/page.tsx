@@ -2,15 +2,17 @@ import Link from "next/link";
 import { requireStaff } from "@/server/authz";
 import { db } from "@/server/db";
 import { countRecentInquiries } from "@/server/inquiries";
+import { countSubscriptionViews } from "@/server/subscriptions";
 
 export default async function AdminHomePage() {
   // Layouts don't re-run on every navigation, so each page checks access itself.
   const staff = await requireStaff();
-  const [newLeads, totalLeads, pendingSellers, inquiriesThisWeek] = await Promise.all([
+  const [newLeads, totalLeads, pendingSellers, inquiriesThisWeek, subscriptions] = await Promise.all([
     db().lead.count({ where: { status: "NEW" } }),
     db().lead.count(),
     db().seller.count({ where: { status: "PENDING" } }),
     countRecentInquiries(7),
+    countSubscriptionViews(),
   ]);
 
   const tiles = [
@@ -18,6 +20,8 @@ export default async function AdminHomePage() {
     { label: "All leads", value: totalLeads, href: "/admin/leads" },
     { label: "Seller applications to review", value: pendingSellers, href: "/admin/sellers?status=PENDING" },
     { label: "Inquiries in the last 7 days", value: inquiriesThisWeek, href: "/admin/inquiries" },
+    { label: "Subscriptions expiring in 30 days", value: subscriptions.expiring, href: "/admin/subscriptions?view=expiring" },
+    { label: "Approved sellers with no payment yet", value: subscriptions.unpaid, href: "/admin/subscriptions?view=unpaid" },
   ] as const;
 
   return (
@@ -30,7 +34,7 @@ export default async function AdminHomePage() {
             : "You have view-only access: you can see everything in the admin area but cannot change anything."}
         </p>
       </div>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tiles.map((tile) => (
           <li key={tile.label}>
             <Link href={tile.href} className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 no-underline hover:border-primary">
