@@ -216,6 +216,7 @@ model Seller {
 
   @@index([status, paidUntil])
   @@index([state, city])
+  @@index([companyName(ops: raw("gin_trgm_ops"))], type: Gin, map: "Seller_companyName_trgm_idx") // search by company name
 }
 
 enum SellerDocumentKind {
@@ -240,15 +241,15 @@ model SellerDocument {
 }
 
 model SellerStatusChange {
-  id         String       @id @default(uuid(7)) @db.Uuid
-  sellerId   String       @db.Uuid
-  seller     Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  id         String        @id @default(uuid(7)) @db.Uuid
+  sellerId   String        @db.Uuid
+  seller     Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   fromStatus SellerStatus? // null for the first application
   toStatus   SellerStatus
   reason     String?
-  actorId    String       @db.Uuid // the staff member, or the seller on (re)application
-  actor      User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
-  createdAt  DateTime     @default(now())
+  actorId    String        @db.Uuid // the staff member, or the seller on (re)application
+  actor      User          @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt  DateTime      @default(now())
 
   @@index([sellerId, createdAt])
 }
@@ -287,21 +288,21 @@ model SubscriptionReminder {
 // ───────────────────────── Products & inquiries ─────────────────────────
 
 model Product {
-  id             String    @id @default(uuid(7)) @db.Uuid
-  sellerId       String    @db.Uuid
-  seller         Seller    @relation(fields: [sellerId], references: [id], onDelete: Restrict)
-  industryId     String    @db.Uuid
-  industry       Industry  @relation(fields: [industryId], references: [id], onDelete: Restrict)
+  id             String         @id @default(uuid(7)) @db.Uuid
+  sellerId       String         @db.Uuid
+  seller         Seller         @relation(fields: [sellerId], references: [id], onDelete: Restrict)
+  industryId     String         @db.Uuid
+  industry       Industry       @relation(fields: [industryId], references: [id], onDelete: Restrict)
   name           String
-  slug           String    @unique
+  slug           String         @unique
   description    String
-  specifications Json      @default("[]") // [{ label, value }], shape enforced by zod
-  isHidden       Boolean   @default(false) // seller-controlled
+  specifications Json           @default("[]") // [{ label, value }], shape enforced by zod
+  isHidden       Boolean        @default(false) // seller-controlled
   removedAt      DateTime? // staff-controlled; who and why live in AuditLog
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  photos    ProductPhoto[]
-  inquiries Inquiry[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  photos         ProductPhoto[]
+  inquiries      Inquiry[]
 
   @@index([sellerId])
   @@index([industryId])

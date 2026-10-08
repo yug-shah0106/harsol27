@@ -15,6 +15,10 @@ Tick an item and note the date when it is done.
 - [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
 - [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
 - [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
+- [ ] **Remove `ALLOW_CONSOLE_SMS`** from the server settings once the SMS provider works. A production
+      build refuses to start with the log-only code sender unless this is set (Phase 7).
+- [ ] **Manual accessibility pass** with a keyboard and a screen reader (NVDA or VoiceOver) over the
+      main journeys. The automated checks cover every page but find only part of the real problems.
 - [ ] **SMS provider for one-time codes**: MSG91 is dropped (2026-10-08); a provider is still to be
       chosen. Indian SMS needs DLT entity and template registration, which takes days. Then add its
       sender in `src/server/sms.ts`. Until then codes are only written to the server log
@@ -46,6 +50,15 @@ Tick an item and note the date when it is done.
 
 ## Technical follow-ups
 
+- [ ] Rate-limit public pages (search especially) at Cloudflare once it is in front. Searches are fast
+      (5–41 ms at 100,000 products, `docs/12-SECURITY-REVIEW.md`) but not limited per visitor.
+- [ ] Prisma's Postgres adapter triggers a deprecation warning in the `pg` driver (two queries at once
+      on one connection inside a transaction). Harmless on `pg` 8; upgrade Prisma before `pg` 9.
+- [ ] Search passes matching seller ids as a list; past ~30,000 sellers matching one word, switch to the
+      `= ANY(ARRAY(SELECT …))` form (noted in `src/server/catalog.ts`).
+- [ ] Consider automatic dependency update pull requests (GitHub Dependabot). CI already fails on any
+      high or critical advisory in the app's packages.
+
 - [ ] Measure the home page on the real server (Phase 8). Under slow-4G phone emulation on a local
       machine its main content appears in about 0.8 s (target 2.5 s). Every page is rendered per
       request because of the nonce-based security policy; if the target is missed in production,
@@ -71,6 +84,7 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
 - [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
       certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-08: security, testing and performance review (Phase 7): `docs/12-SECURITY-REVIEW.md`.
 - [x] 2026-10-08: 3D scene left to us: Uttarayan kites, generated in code (no model files). No Web
       Push; the app is installable, with an offline page (Phase 6).
 - [x] 2026-10-08: one yearly plan; reminders 30, 7 and 1 days before paid-until plus an expiry notice;

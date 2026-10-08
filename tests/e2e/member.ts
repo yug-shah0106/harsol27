@@ -63,14 +63,61 @@ export const PNG_FILE = (name: string) => ({
  */
 export async function makeApprovedSeller(e164: string, company: string, paidForDays: number | null = 30): Promise<{ contactPhone: string; contactEmail: string }> {
   const contactPhone = `+9179${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
-  const contactEmail = `sales.${Date.now()}@seller.example.test`;
+  const contactEmail = `sales.${Date.now()}.${Math.random().toString(36).slice(2, 7)}@seller.example.test`;
   await withDb((db) =>
     db.query(
       `INSERT INTO "Seller" ("id","userId","companyName","slug","city","state","contactName","contactPhone","contactEmail","status","paidUntil","createdAt","updatedAt")
        SELECT gen_random_uuid(), "id", $2, $3, 'Rajkot', 'Gujarat', 'Kiran Patel', $4, $5, 'APPROVED', current_date + $6::int, now(), now()
        FROM "User" WHERE "phoneNumber" = $1`,
-      [e164, company, company.toLowerCase().replace(/[^a-z0-9]+/g, "-"), contactPhone, contactEmail, paidForDays],
+      [e164, company, `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 7)}`, contactPhone, contactEmail, paidForDays],
     ),
   );
   return { contactPhone, contactEmail };
+}
+
+/** The seller id for a member's phone (after makeApprovedSeller). */
+export async function sellerOf(e164: string): Promise<{ id: string; slug: string }> {
+  const { rows } = await withDb((db) => db.query(`SELECT s."id", s."slug" FROM "Seller" s JOIN "User" u ON u."id" = s."userId" WHERE u."phoneNumber" = $1`, [e164]));
+  return rows[0] as { id: string; slug: string };
+}
+
+/** A listed product (no photos) for a seller, in "Food Products". */
+export async function makeProduct(sellerId: string, name: string): Promise<{ id: string; slug: string }> {
+  const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 7)}`;
+  const { rows } = await withDb((db) =>
+    db.query(
+      `INSERT INTO "Product" ("id","sellerId","industryId","name","slug","description","specifications","createdAt","updatedAt")
+       SELECT gen_random_uuid(), $1, i."id", $2, $3, 'Fresh stock, packed in cartons of 40. Delivery across Gujarat.', '[{"label":"Pack size","value":"200 g"}]', now(), now()
+       FROM "Industry" i WHERE i."slug" = 'food-products' RETURNING "id", "slug"`,
+      [sellerId, name, slug],
+    ),
+  );
+  return rows[0] as { id: string; slug: string };
+}
+
+/** An inquiry from a signed-in buyer (by phone) about a product. */
+export async function makeInquiry(buyerE164: string, sellerId: string, productId: string): Promise<void> {
+  await withDb((db) =>
+    db.query(
+      `INSERT INTO "Inquiry" ("id","buyerId","sellerId","productId","message","buyerName","buyerPhone","sourceIp","createdAt")
+       SELECT gen_random_uuid(), u."id", $2, $3, 'Please quote for 100 cartons.', 'Meera Desai', $1, '203.0.113.7', now() FROM "User" u WHERE u."phoneNumber" = $1`,
+      [buyerE164, sellerId, productId],
+    ),
+  );
+}
+
+/** A new lead, as if submitted through the form. */
+export async function makeLead(fullName: string): Promise<string> {
+  const { rows } = await withDb((db) =>
+    db.query(
+      `INSERT INTO "Lead" ("id","fullName","phone","email","businessCategory","industryId","createdAt","updatedAt")
+       SELECT gen_random_uuid(), $1, '+919876500000', 'lead@example.test', 'MANUFACTURING', i."id", now(), now() FROM "Industry" i WHERE i."slug" = 'food-products' RETURNING "id"`,
+      [fullName],
+    ),
+  );
+  return (rows[0] as { id: string }).id;
+}
+
+export async function setSellerStatus(e164: string, status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"): Promise<void> {
+  await withDb((db) => db.query(`UPDATE "Seller" SET "status" = $2 WHERE "userId" = (SELECT "id" FROM "User" WHERE "phoneNumber" = $1)`, [e164, status]));
 }

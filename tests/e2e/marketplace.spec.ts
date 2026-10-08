@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { expectAccessible, newPage, watchCsp } from "./helpers";
+import { expectAccessible, newPage, unique, watchCsp } from "./helpers";
 import { completeSignIn, makeApprovedSeller, randomMobile } from "./member";
 import { signInAs, STAFF } from "./staff";
 
@@ -13,7 +13,7 @@ const photo = async (color: string) => ({
 
 test("marketplace: a seller lists a product, a buyer finds it, inquires and gets the contact; staff moderate", async ({ browser }) => {
   test.setTimeout(90_000);
-  const stamp = Date.now();
+  const stamp = unique();
   const productName = `Methi Khakhra ${stamp}`;
   const company = `Patel Snacks ${stamp}`;
 

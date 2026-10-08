@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible, fillLeadForm, watchCsp } from "./helpers";
+import { expectAccessible, fillLeadForm, unique, watchCsp } from "./helpers";
 import { uniqueIp } from "./staff";
 
 test.beforeEach(async ({ context }) => {
@@ -54,7 +54,7 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
   await fillLeadForm(page, {
     name: "Public Journey",
     phone: "98250 12345",
-    email: `public.${Date.now()}@example.test`,
+    email: `public.${unique()}@example.test`,
     category: "Manufacturing",
     industry: "Food Products",
   });

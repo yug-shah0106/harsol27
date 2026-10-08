@@ -34,6 +34,17 @@ const schema = baseSchema.extend(storageSchema.shape).extend({
    * staging only, until an SMS provider is chosen (see docs/FUTURE.md). Must never be used with real users.
    */
   SMS_PROVIDER: z.enum(["console"]),
+  /** Staging only: lets a production build run with the console sender. Never set at launch. */
+  ALLOW_CONSOLE_SMS: z.enum(["true", "false"]).default("false"),
+}).superRefine((config, ctx) => {
+  // Anyone who can read the server log could sign in as anyone: refuse unless explicitly allowed.
+  if (config.NODE_ENV === "production" && config.SMS_PROVIDER === "console" && config.ALLOW_CONSOLE_SMS !== "true") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["SMS_PROVIDER"],
+      message: '"console" writes sign-in codes to the server log. Connect an SMS provider, or set ALLOW_CONSOLE_SMS=true on a staging server only.',
+    });
+  }
 });
 
 /** What the background worker needs: it sends email, so it gets the email settings and no auth secret. */
