@@ -81,7 +81,7 @@ These are in `docs/FUTURE.md`:
 - rotate the secrets that were shared in chat
 - verify the email domain
 - put Cloudflare in front, which also rate-limits public pages such as search
-- backups with a tested restore
+- an off-site backup bucket and an uptime monitor account (backups, restore and monitoring were built in Phase 8; see `docs/13-GO-LIVE-CHECKLIST.md`)
 - a manual keyboard and screen-reader pass
 
 Development-only tools still carry one advisory (`braces`, inside the `shadcn` command-line tool).

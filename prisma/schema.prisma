@@ -390,3 +390,27 @@ model AuditLog {
 
   @@index([entityType, entityId, createdAt])
 }
+
+// ───────────────────────── Operations ─────────────────────────
+
+/// One row per database backup, written by the backup service (deploy/backup/backup.sh).
+/// The daily ops check and /api/health/full read it, so a failing backup is noticed.
+model BackupRun {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  startedAt      DateTime
+  finishedAt     DateTime @default(now())
+  ok             Boolean
+  fileName       String?
+  sizeBytes      BigInt?
+  offsite        Boolean  @default(false) // also copied to off-site storage
+  restoreChecked Boolean  @default(false) // restored into a scratch database successfully
+  error          String?
+
+  @@index([ok, finishedAt])
+}
+
+/// "I am alive" from long-running processes (the worker), updated every minute.
+model ServiceHeartbeat {
+  name   String   @id
+  beatAt DateTime
+}

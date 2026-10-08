@@ -5,13 +5,17 @@ Tick an item and note the date when it is done.
 
 ## Before launch (blocking)
 
+The complete list, with owners and how each is verified, is `docs/13-GO-LIVE-CHECKLIST.md`; the
+automatic part runs with `scripts/preflight.ts`.
+
 - [ ] **Production domain name.** Decide and register; point it at the hosting (Phase 8).
 - [ ] **Verified email sending domain** in Resend (SPF, DKIM, DMARC on the domain's DNS). Until then
       emails go through Resend's test sender, which only delivers to the Resend account's own address,
       so lead confirmations to visitors and every seller email (decisions, inquiries, renewal
       reminders) are **not delivered**. Then set `EMAIL_FROM` to an address on it.
-- [ ] **Hosting on AWS**: choose the service and region, then backups with a tested restore, uptime
-      monitoring, error tracking, and Cloudflare in front (switch `CLIENT_IP_HEADER` to `cf-connecting-ip`).
+- [ ] **Hosting on AWS**: choose the service and region, and put Cloudflare in front (switch
+      `CLIENT_IP_HEADER` to `cf-connecting-ip`). Backups, restore and monitoring are built (Phase 8);
+      they need a second R2 bucket for off-site copies and an uptime monitor account.
 - [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
 - [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
 - [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
@@ -50,6 +54,9 @@ Tick an item and note the date when it is done.
 
 ## Technical follow-ups
 
+- [ ] Error tracking with stack traces across releases (e.g. Sentry). Today errors are JSON lines in
+      the app log with a reference number shown to the user; enough for one server, not for many.
+
 - [ ] Rate-limit public pages (search especially) at Cloudflare once it is in front. Searches are fast
       (5–41 ms at 100,000 products, `docs/12-SECURITY-REVIEW.md`) but not limited per visitor.
 - [ ] Prisma's Postgres adapter triggers a deprecation warning in the `pg` driver (two queries at once
@@ -84,6 +91,9 @@ Tick an item and note the date when it is done.
 - [x] 2026-10-08: old `client/` and `server/` folders removed.
 - [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
       certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-09: launch readiness (Phase 8): nightly test-restored backups with off-site copies and a
+      one-command restore, monitoring and daily alert email, deploy and rollback script, go-live check
+      and checklist (`docs/13-GO-LIVE-CHECKLIST.md`, `deploy/README.md`).
 - [x] 2026-10-08: security, testing and performance review (Phase 7): `docs/12-SECURITY-REVIEW.md`.
 - [x] 2026-10-08: 3D scene left to us: Uttarayan kites, generated in code (no model files). No Web
       Push; the app is installable, with an offline page (Phase 6).

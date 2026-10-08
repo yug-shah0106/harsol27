@@ -5,6 +5,11 @@
 # Settings come from deploy/.env (see deploy/.env.example), never from the developer .env.
 name: harsol27
 
+# Every service's log is capped (5 × 10 MB) so logs can never fill the disk.
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
 x-app-env: &app-env
   DATABASE_URL: postgresql://harsol27:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/.env}@db:5432/harsol27
   BETTER_AUTH_URL: ${APP_URL:?set APP_URL in deploy/.env}
@@ -21,6 +26,7 @@ x-app-env: &app-env
 
 services:
   db:
+    logging: *logging
     image: postgres:18.6-alpine
     restart: unless-stopped
     environment:
@@ -37,6 +43,7 @@ services:
 
   # Applies pending migrations, then exits. The app only starts after it succeeds.
   migrate:
+    logging: *logging
     build: { context: .., target: tools }
     image: harsol27-tools
     environment: *app-env
@@ -45,6 +52,7 @@ services:
     restart: "no"
 
   app:
+    logging: *logging
     build: { context: .., target: runner }
     image: harsol27-app
     restart: unless-stopped
@@ -56,6 +64,7 @@ services:
 
   # Background jobs (emails, with retries). Same image as the tools; never exposed to the network.
   worker:
+    logging: *logging
     image: harsol27-tools
     restart: unless-stopped
     command: ["tsx", "src/worker.ts"]
@@ -74,16 +83,49 @@ services:
     depends_on:
       migrate: { condition: service_completed_successfully }
 
+  # Nightly database backups (deploy/backup): dump, test-restore into a scratch database, optional
+  # off-site copy, 14 days kept on this server. Restore: see deploy/README.md.
+  backup:
+    logging: *logging
+    build: { context: ./backup }
+    image: harsol27-backup
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: harsol27
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: harsol27
+      BACKUP_AT_UTC: ${BACKUP_AT_UTC:-21:00} # 02:30 India time
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-auto}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+    volumes:
+      - backups:/backups
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
   # One-off admin commands: `docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts …`
+  # and the go-live check: `… run --rm tools tsx scripts/preflight.ts`
   tools:
+    logging: *logging
     image: harsol27-tools
     profiles: [tools]
-    environment: *app-env
+    environment:
+      <<: *app-env
+      NODE_OPTIONS: --conditions=react-server
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      TEAM_ALERT_EMAILS: ${TEAM_ALERT_EMAILS:-}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
     depends_on:
       db: { condition: service_healthy }
 
   # Local stand-in for Cloudflare R2, for running this stack without an R2 bucket. Not for real data.
   s3:
+    logging: *logging
     image: chrislusf/seaweedfs:4.48
     profiles: [local-s3]
     restart: unless-stopped
@@ -95,6 +137,7 @@ services:
       - s3data:/data
 
   ngrok:
+    logging: *logging
     image: ngrok/ngrok:3.39.11-alpine
     profiles: [ngrok]
     restart: unless-stopped
@@ -107,3 +150,4 @@ services:
 volumes:
   pgdata:
   s3data:
+  backups:

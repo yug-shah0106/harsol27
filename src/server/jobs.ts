@@ -15,6 +15,7 @@ export const QUEUES = {
   subscriptionReminders: "subscription-reminders", // daily: finds the reminders due and queues one email each
   subscriptionReminderEmail: "subscription-reminder-email",
   subscriptionSummary: "subscription-summary", // weekly, to the team
+  opsCheck: "ops-check", // daily: backups, worker, failed jobs → email the team if anything is wrong
 } as const;
 
 export type LeadJob = { leadId: string };

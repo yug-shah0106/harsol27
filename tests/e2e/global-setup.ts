@@ -17,7 +17,7 @@ export default async function globalSetup() {
 
   const client = new Client({ connectionString: url });
   await client.connect();
-  await client.query(`TRUNCATE "User", "RateLimit", "Lead", "Industry", "OtpChallenge" CASCADE`);
+  await client.query(`TRUNCATE "User", "RateLimit", "Lead", "Industry", "OtpChallenge", "BackupRun", "ServiceHeartbeat" CASCADE`);
   await client.end();
 
   execFileSync("pnpm", ["exec", "tsx", "prisma/seed.ts"], { env, stdio: "inherit" });
