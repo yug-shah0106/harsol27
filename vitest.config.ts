@@ -14,13 +14,20 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     environment: "node",
+    // Database tests share one test database; run files one at a time so they never interleave.
+    fileParallelism: false,
     globalSetup: ["tests/vitest-global-setup.ts"],
     env: {
       DATABASE_URL: testDatabaseUrl ?? "",
       BETTER_AUTH_URL: "http://localhost:3000",
       BETTER_AUTH_SECRET: "test-secret-test-secret-test-secret-0000",
+      SMS_PROVIDER: "console",
+      S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://127.0.0.1:8333",
+      S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test",
+      S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? "local-dev-access-key",
+      S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY ?? "local-dev-secret-key-not-for-production",
     },
   },
 });

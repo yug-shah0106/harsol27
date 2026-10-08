@@ -1,0 +1,67 @@
+# Things to address later
+
+A running list of everything deliberately deferred. Updated at the end of every phase.
+Tick an item and note the date when it is done.
+
+## Before launch (blocking)
+
+- [ ] **Production domain name.** Decide and register; point it at the hosting (Phase 8).
+- [ ] **Verified email sending domain** in Resend (SPF, DKIM, DMARC on the domain's DNS). Until then
+      emails go through Resend's test sender, which only delivers to the Resend account's own address,
+      so lead confirmations to visitors are **not delivered**. Then set `EMAIL_FROM` to an address on it.
+- [ ] **Hosting on AWS**: choose the service and region, then backups with a tested restore, uptime
+      monitoring, error tracking, and Cloudflare in front (switch `CLIENT_IP_HEADER` to `cf-connecting-ip`).
+- [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
+- [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
+- [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
+- [ ] **SMS provider for one-time codes**: MSG91 is dropped (2026-10-08); a provider is still to be
+      chosen. Indian SMS needs DLT entity and template registration, which takes days. Then add its
+      sender in `src/server/sms.ts`. Until then codes are only written to the server log
+      (`SMS_PROVIDER=console`), so **real users cannot sign in**.
+- [ ] **Document storage on Cloudflare R2**: create a private bucket and an R2 API token, put them in
+      `deploy/.env` (`S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`), then run
+      `scripts/storage-setup.ts` once. Staging over ngrok needs this too: browsers outside your machine
+      cannot reach the local storage server.
+
+## Staging
+
+- [ ] **ngrok domain** for staging: put it in `deploy/.env` as `APP_URL`, add `NGROK_AUTHTOKEN`.
+
+## Brand and content
+
+- [ ] **Logo**. Currently a text wordmark "Harsol27". Replace in `src/components/site-header.tsx` and the favicon.
+- [ ] **Review the 18 starting industries** (editable in Admin → Industries).
+- [ ] **More languages** (e.g. Gujarati). English only for now. Will need translated copy, a Gujarati
+      font (e.g. Noto Sans Gujarati) and a language switcher.
+
+## Decisions due in later phases
+
+- [ ] Phase 3 follow-up: should staff also record **GSTIN / PAN numbers** as text, for searching?
+- [ ] Phase 5 (needed before any seller is visible: products only show while paid-until is set and
+      not passed): **one subscription plan or several**; when **renewal reminders** are sent (days before expiry).
+- [ ] Phase 6: what the **3D scene** shows and who supplies the models; **Web Push** yes/no.
+
+## Technical follow-ups
+
+- [ ] Revisit page caching in Phase 6: every page is rendered per request because of the strict
+      nonce-based security policy. If the home page misses the 2.5 s load target, consider
+      hash-based CSP (Next.js SRI) for public pages.
+- [ ] Review rate-limit values once real traffic exists (lead form: 10 per hour per IP; staff
+      sign-in: 10 per 15 minutes per IP, account locks after 5 wrong passwords; inquiries: no daily
+      cap, but 20 per 10 minutes per buyer and 60 per hour per network, against automated harvesting).
+- [ ] Search finds every word anywhere in a listing but is not typo-tolerant ("khakra" will not find
+      "khakhra"). If buyers need it, add similarity matching with the trigram indexes already in place.
+- [ ] Product photos of public listings are cached for a year by browsers (and later the CDN). If a
+      seller hides a product, copies already cached elsewhere can still be seen by URL.
+- [ ] Neon (managed Postgres) could replace the self-run database when moving to AWS: use a new,
+      empty database, not the existing `neondb`.
+
+## Done
+
+- [x] 2026-10-08: team alert email set (`harsol27helpdesk@gmail.com`).
+- [x] 2026-10-08: IP address and browser details on leads deleted automatically after 30 days.
+- [x] 2026-10-08: old `client/` and `server/` folders removed.
+- [x] 2026-10-08: seller documents decided: GST certificate, PAN card, Udyam/business registration
+      certificate, address proof (e.g. electricity bill). GST certificate optional; 5 MB per document.
+- [x] 2026-10-08: no daily inquiry cap; up to 50 photos per product, 10 MB each; seller inquiry
+      notifications by email only.

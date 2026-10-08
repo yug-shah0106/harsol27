@@ -1,6 +1,7 @@
 # Deploying Harsol27
 
-One Docker Compose stack: PostgreSQL, a one-shot migration job, and the Next.js app.
+One Docker Compose stack: PostgreSQL, a one-shot migration job, the Next.js app, and a background
+worker that sends emails (with retries).
 Staging is exposed through an ngrok reserved domain. Permanent hosting (AWS) is not decided yet;
 this stack is what will run there.
 
@@ -12,13 +13,30 @@ this stack is what will run there.
    - `BETTER_AUTH_SECRET`: `openssl rand -base64 32`
    - `POSTGRES_PASSWORD`: `openssl rand -hex 24`
    - `NGROK_AUTHTOKEN`: from the ngrok dashboard.
+   - `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_ALERT_EMAILS`: email settings. The site works without them,
+     but the worker will not start, so no confirmation or alert emails go out.
 3. Start everything (migrations run automatically before the app starts):
 
    ```bash
    docker compose -f deploy/compose.yml --profile ngrok up -d --build
    ```
 
-4. Create the first admin. You will be asked for the password twice; it is never echoed:
+4. Prepare document storage (creates the bucket if needed and allows uploads from `APP_URL` only):
+
+   ```bash
+   docker compose -f deploy/compose.yml run --rm tools tsx scripts/storage-setup.ts
+   ```
+
+   Without an R2 bucket yet, add `--profile local-s3` to every `up` command and use the local values
+   shown in `deploy/.env.example`. That only works from the machine running Docker.
+
+5. Load the starting list of industries (safe to re-run; never overwrites admin edits):
+
+   ```bash
+   docker compose -f deploy/compose.yml run --rm tools tsx prisma/seed.ts
+   ```
+
+6. Create the first admin. You will be asked for the password twice; it is never echoed:
 
    ```bash
    docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts create --email you@company.com --name "Your Name" --role ADMIN
@@ -42,10 +60,18 @@ docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts disable
 docker compose -f deploy/compose.yml run --rm tools tsx scripts/staff.ts enable       --email …
 ```
 
+## Phone sign-in codes while SMS is not connected
+
+With `SMS_PROVIDER=console` codes are not texted; they are written to the app log:
+
+```bash
+docker compose -f deploy/compose.yml logs app | grep "console SMS"
+```
+
 ## Checks
 
 - Health: `curl -s http://127.0.0.1:3000/api/health` → `{"status":"ok"}`
-- Logs: `docker compose -f deploy/compose.yml logs -f app`
+- Logs: `docker compose -f deploy/compose.yml logs -f app worker`
 
 ## Not yet covered (later phases)
 

@@ -8,4 +8,9 @@ export default function setup() {
     env: { ...process.env, DATABASE_URL: url },
     stdio: "inherit",
   });
+  // The test bucket (needs `pnpm dev:services` locally; CI starts the same S3 server).
+  execFileSync("pnpm", ["exec", "tsx", "scripts/storage-setup.ts"], {
+    env: { ...process.env, S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test", BETTER_AUTH_URL: "http://localhost:3217" },
+    stdio: "inherit",
+  });
 }

@@ -18,6 +18,12 @@ export async function signIn(page: Page, email: string, password: string) {
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
+/** Signs in as one of the seeded staff accounts and waits until the admin area has loaded. */
+export async function signInAs(page: Page, staff: (typeof STAFF)[keyof typeof STAFF]) {
+  await signIn(page, staff.email, passwordOf(staff));
+  await expect(page).toHaveURL(/\/admin$/);
+}
+
 export async function expectGenericError(page: Page) {
   await expect(page.locator("#sign-in-error")).toContainText(
     "Email or password is incorrect, or the account is temporarily locked.",

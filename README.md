@@ -10,20 +10,32 @@ Delivered as a single responsive web application, installable as a PWA on Androi
 
 ## Status
 
-**Phase 1 (foundation) built:** Next.js app, full Prisma schema, staff sign-in with Admin/Viewer
-roles, Docker Compose stack with ngrok staging, CI. The brief of 2026-10-07 supersedes `docs/`
+**Phases 1–4 built:** foundation (schema, staff sign-in with Admin/Viewer roles, Docker, CI), public
+pages (design system, home, About/Terms/Privacy, lead form with emails, leads and industries admin),
+accounts and sellers (phone sign-in, seller application with documents, admin approval with
+history), and the marketplace (products with photos, search, browse by industry, inquiries that
+unlock seller contacts, seller and admin dashboards). Deferred work is tracked in [docs/FUTURE.md](./docs/FUTURE.md). The brief of 2026-10-07 supersedes `docs/`
 where they disagree; `docs/` is kept for history.
 
 ## Local development
 
-Requires Node 24, pnpm (via `corepack enable`) and PostgreSQL.
+Requires Node 24, pnpm (via `corepack enable`) and Docker (for the local database and file storage).
 
 ```bash
 cp .env.example .env          # fill in; create two databases: dev and test
 pnpm install
+pnpm dev:services             # local PostgreSQL 18 and S3-compatible storage (stands in for R2)
+pnpm storage:setup            # create the dev bucket and its CORS rule
 pnpm db:migrate               # apply migrations to the dev database
+pnpm db:seed                  # starting list of industries
 pnpm staff create --email you@example.com --name "You" --role ADMIN
-pnpm dev                      # http://localhost:3000/staff/sign-in
+pnpm dev                      # http://localhost:3000
+pnpm worker                   # in a second terminal: sends queued emails
+```
+
+Phone sign-in codes are not texted yet (`SMS_PROVIDER=console`): they appear in the `pnpm dev` output.
+
+```bash
 ```
 
 Checks (the same ones CI runs):
@@ -55,7 +67,7 @@ Staging and deployment: [deploy/README.md](./deploy/README.md).
 ## Stack
 
 Next.js 16 (App Router, TypeScript strict) · PostgreSQL + Prisma 7 · Tailwind v4 + shadcn/ui ·
-Better Auth (staff email + password; buyer/seller phone OTP) · Cloudflare R2 · Resend · MSG91 ·
+Better Auth (staff email + password; buyer/seller phone OTP) · Cloudflare R2 · Resend · SMS provider to be chosen ·
 pg-boss · Serwist (PWA) · Playwright + Vitest · Docker Compose.
 
 ## Verify the design tokens

@@ -169,3 +169,26 @@ no grace period after paid-until · raw source IP stored (retention period still
 no OpenAPI deliverable (server actions, no public REST API).
 
 Still open: lead status names (proposed NEW / CONTACTED / CONVERTED / CLOSED); IP retention period.
+
+### 2026-10-07, before Phase 2
+
+- Lead statuses confirmed: NEW / CONTACTED / CONVERTED / CLOSED.
+- No logo yet; palette and fonts left to the vendor (indigo + saffron on ivory, Plus Jakarta Sans).
+- English only for now; other languages (e.g. Gujarati) may be added later.
+- Industries are broad (e.g. Food Products, Steel & Metal Products); sellers describe their own
+  products inside one. A starting list of 18 is seeded and fully editable in the admin area.
+- Neon database not used for now (the existing `neondb` holds another project's tables).
+
+### 2026-10-08, before Phase 3
+
+- Seller documents: GST certificate (optional, for businesses under the GST threshold), PAN card,
+  Udyam/business registration certificate, address proof (e.g. electricity bill). 5 MB per document.
+- MSG91 dropped; SMS provider to be chosen later. Phone sign-in is built with a console sender that
+  writes codes to the server log.
+- Team alert address: harsol27helpdesk@gmail.com. Lead IP and browser details kept 30 days.
+
+### 2026-10-08, before Phase 4
+
+- No daily inquiry cap per buyer (only short-burst limits against automated harvesting).
+- Up to 50 photos per product, 10 MB each; served as resized WebP, originals deleted.
+- New-inquiry notifications to sellers by email only.
