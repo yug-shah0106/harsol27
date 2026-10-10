@@ -43,6 +43,7 @@ test("a seller edits a listing, and reorders and deletes its photos", async ({ b
   await page.getByRole("button", { name: "Move photo 3 up" }).click();
   await expect.poll(() => photos.evaluateAll((imgs) => imgs.map((img) => img.getAttribute("src")))).toEqual([before[0], before[2], before[1]]);
   await page.getByRole("button", { name: "Delete photo 1" }).click();
+  await page.getByRole("dialog", { name: "Delete photo 1?" }).getByRole("button", { name: "Delete photo", exact: true }).click(); // asked to confirm
   await expect(photos).toHaveCount(2);
   expect(await photos.evaluateAll((imgs) => imgs.map((img) => img.getAttribute("src")))).toEqual([before[2], before[1]]);
 
@@ -91,6 +92,7 @@ test("suspending a seller takes their listings off the site; reinstating brings 
   await admin.goto(`/admin/sellers/${seller.id}`);
   await admin.getByLabel(/^Reason/).fill("Documents expired");
   await admin.getByRole("button", { name: "Suspend" }).click();
+  await admin.getByRole("dialog", { name: "Suspend this seller?" }).getByRole("button", { name: "Suspend" }).click();
   await expect(admin.getByText("Decision saved. The seller will be emailed.")).toBeVisible();
 
   expect((await visitor.goto(`/products/${product.slug}`))?.status()).toBe(404);

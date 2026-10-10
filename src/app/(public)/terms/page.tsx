@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Terms of use" };
 // Draft written from what the site actually does. Must be reviewed by the client's legal adviser before launch.
 export default function TermsPage() {
   return (
-    <ProsePage title="Terms of use">
+    <ProsePage title="Terms of use" updated="2026-10-08">
       <DraftNotice />
       <h2>What Harsol27 is</h2>
       <p>

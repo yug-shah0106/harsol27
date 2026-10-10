@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Plus_Jakarta_Sans } from "next/font/google";
+import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { ServiceWorker } from "@/components/service-worker";
+import { THEME_COOKIE } from "@/lib/preferences";
 import "./globals.css";
 
 // Self-hosted at build time by next/font: no request to Google from the visitor's browser.
@@ -20,9 +22,10 @@ export const viewport: Viewport = { themeColor: "#faf7f2" };
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Render every page per request so each response carries a fresh CSP nonce (see src/proxy.ts).
   await connection();
+  const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
 
   return (
-    <html lang="en-IN" className={`${jakarta.variable} ${serif.variable} h-full antialiased`}>
+    <html lang="en-IN" className={`${jakarta.variable} ${serif.variable} h-full antialiased${dark ? " dark" : ""}`}>
       <body className="flex min-h-svh flex-col">
         {children}
         <ServiceWorker />

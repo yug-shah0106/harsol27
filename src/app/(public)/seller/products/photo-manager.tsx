@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ImageOff, LoaderCircle, Trash2 } from "lucide-react
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ActionForm, SubmitButton } from "@/components/action-form";
+import { ConfirmButton } from "@/components/confirm-button";
 import { FormAlert } from "@/components/form-feedback";
 import { ProductPhoto } from "@/components/product-photo";
 import { Label } from "@/components/ui/label";
@@ -133,9 +134,16 @@ export function PhotoManager({ productId, photos }: { productId: string; photos:
                   <ActionForm action={deletePhotoAction}>
                     <input type="hidden" name="productId" value={productId} />
                     <input type="hidden" name="photoId" value={photo.id} />
-                    <SubmitButton variant="ghost" size="icon" aria-label={`Delete photo ${i + 1}`}>
+                    <ConfirmButton
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Delete photo ${i + 1}`}
+                      title={`Delete photo ${i + 1}?`}
+                      description="It is removed from this product for good. To show it again you would upload it again."
+                      confirmLabel="Delete photo"
+                    >
                       <Trash2 aria-hidden="true" />
-                    </SubmitButton>
+                    </ConfirmButton>
                   </ActionForm>
                 </div>
               </div>

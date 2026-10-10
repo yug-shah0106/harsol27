@@ -31,6 +31,20 @@ import { useEffect } from "react";
  *   gsap.matchMedia undoes everything if the setting changes after they have loaded. Pointer effects need a mouse (hover + fine pointer).
  * - Only transform, opacity and filter are animated; hidden items stay focusable and appear when focused.
  */
+// The running Lenis instance, if smooth scrolling is on (scrollToTop goes through it so the two don't fight).
+let smooth: { scrollTo: (target: number) => void } | undefined;
+
+/** Back to the top of the page (smoothly unless reduced motion), then focus the main content for keyboard users. */
+export function scrollToTop() {
+  if (smooth) smooth.scrollTo(0);
+  else window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const main = document.getElementById("main");
+  if (main) {
+    main.tabIndex = -1;
+    main.focus({ preventScroll: true });
+  }
+}
+
 export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
   const pathname = usePathname();
   const search = useSearchParams().toString();
@@ -57,6 +71,7 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
           // Lenis runs on GSAP's ticker, so ScrollTrigger reads the same scroll position every frame.
           // Touch keeps native scrolling (Lenis default). Inner scroll areas opt out (data-lenis-prevent).
           const lenis = new Lenis({ autoRaf: false });
+          smooth = lenis;
           lenis.on("scroll", ScrollTrigger.update);
           const tick = (time: number) => lenis.raf(time * 1000);
           gsap.ticker.add(tick);
@@ -65,6 +80,7 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
             gsap.ticker.remove(tick);
             gsap.ticker.lagSmoothing(500, 33);
             lenis.destroy();
+            smooth = undefined;
           });
         }
 

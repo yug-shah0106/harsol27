@@ -157,6 +157,7 @@ model Lead {
   status           LeadStatus       @default(NEW)
   sourceIp         String?          @db.Inet // staff-only; null if the proxy sent no client IP
   userAgent        String? // staff-only
+  utm              Json? // campaign tags of the link the visitor arrived by (lib/utm.ts), if any
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 

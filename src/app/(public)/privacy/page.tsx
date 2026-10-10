@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Privacy policy" };
 // decided by the client; legal review is required before launch (see docs/FUTURE.md).
 export default function PrivacyPage() {
   return (
-    <ProsePage title="Privacy policy">
+    <ProsePage title="Privacy policy" updated="2026-10-10">
       <DraftNotice />
       <h2>What we collect through the Get started form</h2>
       <ul>
@@ -16,6 +16,10 @@ export default function PrivacyPage() {
         <li>
           The IP address and browser details of the device used to send the form. These are used only to investigate
           abuse such as spam, are visible only to Harsol27 staff, and are deleted automatically after 30 days.
+        </li>
+        <li>
+          If you came to Harsol27 through a link with campaign tags (the <code>utm_</code> parts of a web address, such
+          as <code>utm_source=newsletter</code>), which campaign it was. This helps us see which of our messages work.
         </li>
       </ul>
       <h2>How we use it</h2>
@@ -30,7 +34,8 @@ export default function PrivacyPage() {
       </p>
       <h2>Cookies</h2>
       <p>
-        We use only the cookies needed for signing in. We do not use advertising or tracking cookies.
+        We use only essential cookies: to keep you signed in, and to remember your settings (dark mode, and that you
+        have seen our cookie notice). We do not use advertising or tracking cookies.
       </p>
     </ProsePage>
   );

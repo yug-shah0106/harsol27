@@ -55,9 +55,11 @@ test("seller journey: apply with documents → rejected with reason → resubmit
   expect((await doc.body()).toString()).toContain("pan.pdf");
 
   await admin.getByRole("button", { name: "Reject" }).click();
+  await admin.getByRole("dialog", { name: "Reject this application?" }).getByRole("button", { name: "Reject" }).click();
   await expect(admin.getByRole("region", { name: "Decision" }).getByRole("alert")).toContainText("Please give a reason.");
   await admin.getByLabel(/^Reason/).fill("The PAN card is not readable. Please upload a clearer copy.");
   await admin.getByRole("button", { name: "Reject" }).click();
+  await admin.getByRole("dialog", { name: "Reject this application?" }).getByRole("button", { name: "Reject" }).click();
   await expect(admin.getByRole("status")).toContainText("Decision saved.");
   await expect(admin.getByText("Pending review → Not approved")).toBeVisible();
 

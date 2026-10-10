@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, type BusinessCategoryValue } from "@/lib/lead-schema";
 import { LEAD_STATUSES } from "@/lib/lead-status";
+import { parseUtm } from "@/lib/utm";
 import { clientIpFrom } from "./client-ip";
 import { db } from "./db";
 import { env } from "./env";
@@ -55,7 +56,7 @@ export async function submitLead(form: FormData, headers: Headers): Promise<void
   const boss = await getBoss();
   await db().$transaction(async (tx) => {
     const lead = await tx.lead.create({
-      data: { ...data, sourceIp: ip, userAgent: headers.get("user-agent")?.slice(0, 512) ?? null },
+      data: { ...data, sourceIp: ip, userAgent: headers.get("user-agent")?.slice(0, 512) ?? null, utm: parseUtm(form.get("utm")) ?? undefined },
       select: { id: true },
     });
     await enqueueLeadEmails(boss, tx, lead.id);

@@ -3,6 +3,8 @@ import { choose, expectAccessible, fillLeadForm, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
 async function submitLead(page: Page, name: string, email: string) {
+  await page.goto("/?utm_source=newsletter&utm_campaign=diwali&ignored=1"); // arrives by a campaign link
+  await page.waitForFunction(() => sessionStorage.getItem("harsol27.utm"));
   await page.goto("/get-started");
   await fillLeadForm(page, { name, phone: "98250 54321", email, category: "Trading", industry: "Ceramics & Tiles" });
   await page.getByRole("button", { name: "Submit" }).click();
@@ -30,6 +32,7 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
   await page.getByRole("link", { name }).click();
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
   await expect(page.getByText(ip)).toBeVisible(); // source IP is shown to staff
+  await expect(page.getByText("source: newsletter · campaign: diwali")).toBeVisible(); // the campaign it came from
   await expect(page.getByText("Ceramics & Tiles")).toBeVisible();
 
   await choose(page, "New status", "Contacted");

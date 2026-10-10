@@ -6,6 +6,7 @@ import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import type { ActionResult } from "@/server/errors";
 import { forgotPasswordAction, resetPasswordAction, saveMobileAction, signInAction, signUpAction } from "./actions";
 
@@ -33,12 +34,13 @@ function useFocusFirstError(state: ActionResult<unknown> | null, order: string[]
 
 type AuthFieldProps = { id: string; label: string; hint?: string; error?: string } & React.ComponentProps<typeof Input>;
 
-function AuthField({ id, label, hint, error, ...input }: AuthFieldProps) {
+function AuthField({ id, label, hint, error, type, ...input }: AuthFieldProps) {
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+  const field = { id, className: "h-12", "aria-invalid": !!error, "aria-describedby": describedBy, ...input };
   return (
     <Field data-invalid={!!error}>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Input id={id} className="h-12" aria-invalid={!!error} aria-describedby={describedBy} {...input} />
+      {type === "password" ? <PasswordInput {...field} /> : <Input type={type} {...field} />}
       {hint && (
         <p id={`${id}-hint`} className="text-sm text-muted-foreground">
           {hint}

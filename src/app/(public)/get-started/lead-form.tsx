@@ -7,6 +7,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
 import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema } from "@/lib/lead-schema";
+import { UTM_STORAGE_KEY } from "@/lib/utm";
 import { submitLeadAction } from "./actions";
 
 type Industry = { id: string; name: string };
@@ -56,6 +57,12 @@ export function LeadForm({ industries }: { industries: Industry[] }) {
       return;
     }
     setClientErrors({});
+    // The campaign this visit came from, if any (components/utm-capture.tsx).
+    try {
+      formData.set("utm", sessionStorage.getItem(UTM_STORAGE_KEY) ?? "");
+    } catch {
+      // Storage blocked: no campaign.
+    }
     startTransition(() => formAction(formData));
   }
 
