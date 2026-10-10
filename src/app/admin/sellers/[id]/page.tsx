@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
+import { ConfirmButton } from "@/components/confirm-button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,11 +109,27 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
                   <Textarea id="reason" name="reason" maxLength={1000} rows={3} />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {decisions.map((d) => (
-                    <SubmitButton key={d} name="decision" value={d} variant={d === "reject" || d === "suspend" ? "destructive" : "default"}>
-                      {SELLER_DECISIONS[d].label}
-                    </SubmitButton>
-                  ))}
+                  {decisions.map((d) =>
+                    d === "reject" || d === "suspend" ? (
+                      <ConfirmButton
+                        key={d}
+                        name="decision"
+                        value={d}
+                        title={d === "reject" ? "Reject this application?" : "Suspend this seller?"}
+                        description={
+                          d === "reject"
+                            ? "The seller is emailed your reason and can correct their application and apply again."
+                            : "Their listings leave the site straight away, and they are emailed your reason. You can reinstate them later."
+                        }
+                      >
+                        {SELLER_DECISIONS[d].label}
+                      </ConfirmButton>
+                    ) : (
+                      <SubmitButton key={d} name="decision" value={d}>
+                        {SELLER_DECISIONS[d].label}
+                      </SubmitButton>
+                    ),
+                  )}
                 </div>
               </>
             ) : (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
+import { ConfirmButton } from "@/components/confirm-button";
 import { ProductPhoto } from "@/components/product-photo";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -95,9 +96,15 @@ export default async function AdminProductPage({ params }: PageProps<"/admin/pro
                   <Label htmlFor="reason">Reason for removing (kept in the activity log)</Label>
                   <Textarea id="reason" name="reason" rows={3} maxLength={1000} />
                 </div>
-                <SubmitButton name="intent" value="remove" variant="destructive" className="w-fit">
+                <ConfirmButton
+                  name="intent"
+                  value="remove"
+                  className="w-fit"
+                  title="Remove this listing?"
+                  description="It leaves the site straight away, and shows as “Removed by Harsol27” in the seller’s list. You can restore it later."
+                >
                   Remove listing
-                </SubmitButton>
+                </ConfirmButton>
               </>
             )}
           </ActionForm>

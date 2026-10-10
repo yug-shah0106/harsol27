@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
+import { pickUtm } from "@/lib/utm";
 import { requireStaff } from "@/server/authz";
 import { getLead } from "@/server/leads";
 import { canWrite } from "@/server/staff-policy";
@@ -20,12 +21,14 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
   const lead = await getLead((await params).id);
   if (!lead) notFound();
 
+  const utm = lead.utm && typeof lead.utm === "object" ? pickUtm((key) => (lead.utm as Record<string, unknown>)[key]) : null;
   const details: [string, React.ReactNode][] = [
     ["Phone", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],
     ["Business category", categoryLabel(lead.businessCategory)],
     ["Industry", lead.industry.name],
     ["Received", `${formatIst(lead.createdAt)} IST`],
+    ["Campaign", utm ? Object.entries(utm).map(([key, value]) => `${key.replace("utm_", "")}: ${value}`).join(" · ") : "Not from a campaign link"],
     ["Source IP", lead.sourceIp ?? "Not recorded"],
     ["Browser", lead.userAgent ?? "Not recorded"],
   ];

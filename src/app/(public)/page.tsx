@@ -78,17 +78,17 @@ export default async function HomePage() {
             on the right, behind the headline, fading out towards it so the words stay clear. */}
         <div
           data-parallax="10"
-          className="relative -z-10 mx-auto aspect-square w-full max-w-md lg:absolute lg:-right-[4%] lg:bottom-0 lg:h-full lg:w-auto lg:max-w-none lg:[mask-image:linear-gradient(to_right,transparent_5%,black_45%)]"
+          className="relative -z-10 mx-auto aspect-square w-full max-w-md print:hidden lg:absolute lg:-right-[4%] lg:bottom-0 lg:h-full lg:w-auto lg:max-w-none lg:[mask-image:linear-gradient(to_right,transparent_5%,black_45%)]"
         >
           <div className="size-full animate-in fade-in zoom-in-95 duration-1000 delay-200 ease-out fill-mode-both">
             <HeroSky poster={<KitePoster />} className="relative size-full" />
           </div>
         </div>
-        <Rooftops className="absolute inset-x-0 bottom-0 -z-10 h-20 w-full sm:h-28 lg:h-32" />
+        <Rooftops className="absolute inset-x-0 bottom-0 -z-10 h-20 w-full print:hidden sm:h-28 lg:h-32" />
       </section>
 
       {/* Who is on Harsol27, drifting past (decorative: the hero says it in words). */}
-      <div aria-hidden="true" className="overflow-hidden border-y border-border bg-secondary py-5 text-primary sm:py-7">
+      <div aria-hidden="true" className="overflow-hidden border-y border-border bg-secondary py-5 text-primary print:hidden sm:py-7">
         <div data-marquee className="flex w-max">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex shrink-0 items-center">

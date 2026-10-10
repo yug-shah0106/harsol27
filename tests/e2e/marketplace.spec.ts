@@ -89,6 +89,7 @@ test("marketplace: a seller lists a product, a buyer finds it, inquires and gets
   await expectAccessible(admin);
   await admin.getByLabel(/^Reason for removing/).fill("Test removal");
   await admin.getByRole("button", { name: "Remove listing" }).click();
+  await admin.getByRole("dialog", { name: "Remove this listing?" }).getByRole("button", { name: "Remove listing" }).click();
   await expect(admin.getByRole("region", { name: "Moderation" }).getByRole("status")).toContainText("Listing removed.");
   const productUrl = await admin.getByRole("link", { name: "Product page" }).getAttribute("href");
   const anonymous = await newPage(browser);

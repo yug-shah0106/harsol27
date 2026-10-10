@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Harsol27
-description: Harsol27 is a B2B marketplace that puts buyers in direct touch with approved Gujarati manufacturers, wholesalers and traders. The look is light, sober and premium, with an editorial home page in the spirit of lenis.dev — a linen page ({colors.background}), soft stone, sage and blush sections, olive ({colors.primary}) as the one strong colour for actions and headings, large elegant serif headings with italics for emphasis, no dark backgrounds — and a signature moment: Uttarayan kites flying behind the home page headline.
+description: Harsol27 is a B2B marketplace that puts buyers in direct touch with approved Gujarati manufacturers, wholesalers and traders. The look is light, sober and premium, with an editorial home page in the spirit of lenis.dev — a linen page ({colors.background}), soft stone, sage and blush sections, olive ({colors.primary}) as the one strong colour for actions and headings, large elegant serif headings with italics for emphasis, no dark sections (dark mode only when the visitor chooses it) — and a signature moment: Uttarayan kites flying behind the home page headline.
 
 colors:
   background: "#faf7f2"
@@ -84,8 +84,8 @@ editorial, after lenis.dev: large type, full-width sections and scroll-driven mo
 sober colours. Buyers are owners and purchase managers of Gujarati businesses; many browse on a phone.
 So the design is:
 
-- **Light, always.** A linen page ({colors.background}), white cards, and soft stone, sage and blush
-  sections. No dark backgrounds anywhere.
+- **Light by default.** A linen page ({colors.background}), white cards, and soft stone, sage and blush
+  sections; no dark sections. Dark mode exists only as the visitor's choice (the header's moon button).
 - **One strong colour.** Olive ({colors.primary}) for buttons, links, focus and headings. Everything else is soft.
 - **One soft highlight.** Blush ({colors.accent}): the headline underline, the row hover, the call-to-action section.
 - **Elegant type.** Large serif headings (Instrument Serif), with italics for emphasis ("*call them.*"),
@@ -124,9 +124,15 @@ sage #e6ece2 → #f1f1ea → linen, with a blush sun; rooftops in pale sage #dde
 (front). Kites in olive, champagne #e3c9a0, clay #c98b76, sage #b9c6b0, ivory #fbf8f3 and blush. The
 kite-only colours are not used anywhere else.
 
-Contrast is enforced: `src/lib/brand-contrast.test.ts` reads `:root` and fails CI if a pairing drops below
-WCAG AA (4.5:1 text, 3:1 controls and focus). Light theme only: `dark:` utilities apply only under a
-`.dark` class, which the site never sets.
+**Dark mode** (`.dark` in `globals.css`, on screen only): the same roles in warm charcoal. Page #1b1a17,
+cards #24221f, text #ece7df, secondary text #b3aca2, primary a light olive #a7b89b with dark text on it,
+blush becomes a deep #4b3832, sage #232a22, hairlines #3a3631. The hero turns to dusk (the kites keep
+their light haze). It is never automatic: the header's toggle puts `.dark` on `<html>` and stores
+`theme=dark` in a cookie, and the root layout renders the next page dark, so there is no flash.
+
+Contrast is enforced: `src/lib/brand-contrast.test.ts` reads `:root` and `.dark` and fails CI if a pairing
+drops below WCAG AA (4.5:1 text, 3:1 controls and focus) in either theme. `dark:` utilities apply only
+under the `.dark` class.
 
 ## 3. Typography
 
@@ -198,11 +204,36 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - Thin brand scrollbar: 10px, `input`-coloured thumb, olive on hover.
   - Soft edge shadows while there is more to see.
   - Set `--scroll-bg` to the colour behind it.
-- **Header**: white, bottom hairline, 1152px container.
+- **Header**: sticky (it stays at the top), white at 85% with a blur, bottom hairline, 1152px container.
   - Wordmark on the left.
-  - 14px/500 text links that underline on hover, then an olive pill "Get started" button.
+  - 14px/500 text links that underline on hover, the dark-mode toggle (moon/sun), then an olive pill "Get started" button.
+  - Below 640px the links and the toggle move into a **menu** (a "Menu" button that opens a panel under the
+    header with the links in serif; Escape closes it). "Get started" stays visible.
+  - A 2px olive **reading-progress line** along its bottom edge, driven by the scroll in CSS
+    (`.scroll-progress`, scroll-driven animations; browsers without them don't show it).
 - **Footer**: stone, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px),
-  the copyright in `muted-foreground`, then text links.
+  the copyright in `muted-foreground`, then text links (About, FAQ, Terms, Privacy). 96px of bottom
+  padding keeps the links clear of the floating buttons.
+- **Floating buttons** (bottom right, every public page): an olive pill "Talk to us" (to the Get started
+  form, our only public contact so far; hidden on that page), and above it a round "Back to top" that
+  appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
+- **Cookie notice**: a white card, bottom left (full width on phones), until "OK" (a form post, so it works
+  without JavaScript; remembered for a year). It says what is true: essential cookies only. If analytics or
+  advertising cookies are ever added, it must become a real choice first.
+- **Confirmation dialog** (`confirm-button.tsx`): for actions that can't be undone or that tell someone
+  outside the team (reject or suspend a seller, remove a listing, delete a photo). A native `<dialog>`: a
+  title asking the question, one sentence on what will happen, then "Cancel" (focused first) and the action
+  in red. Only the dialog's button submits.
+- **Password field** (`password-input.tsx`): every password input has an eye button at its right edge
+  ("Show password", `aria-pressed`) that shows and hides what was typed.
+- **Copy button** (`copy-button.tsx`): a small outline pill "Copy" next to a seller's phone and email,
+  turning to "Copied" with a tick; announced to screen readers.
+- **FAQ** (About page): native `<details>`, one per question, between hairlines; a plus that turns into a
+  cross when open. Answers say only what the site does.
+- **Loading**: a thin olive bar sliding along the top of the window while the next page loads
+  (`navigation-progress.tsx`; a still bar with reduced motion). Pages are not streamed behind a loading
+  screen: that would make a missing page answer 200 instead of 404, and break server redirects.
+- **Last updated**: legal pages show "Last updated 10 October 2026" under the title (`ProsePage updated=`).
 - **Admin and seller tabs**: one horizontal row that scrolls sideways on phones.
 - **Icons**: `lucide-react`, 16px (`size-4`), `aria-hidden`, always next to a text label.
 
@@ -283,7 +314,7 @@ Rules:
 - Add motion with the data attributes above, not with one-off animation code.
 
 **Don't**
-- Don't use dark backgrounds. Sections are linen, stone, sage, white or blush.
+- Don't add dark sections. In the light theme sections are linen, stone, sage, white or blush.
 - Don't use inline `style` attributes or `<style>` tags. The site's Content Security Policy blocks them,
   so they silently do nothing. Use Tailwind classes; arbitrary values like `fill-[#c3cdb9]` are fine.
 - Don't use blush as a text colour (it is a background), or bold the serif.
@@ -292,19 +323,25 @@ Rules:
 - Don't hide anything that is on screen at load until a script runs, and never fade the main headline.
 - Don't use native `<select>`. Use `Dropdown`.
 - Don't use colour alone to show status or errors.
-- Don't add a dark theme ad hoc. It needs its own token set and contrast checks first.
+- Don't style dark mode one component at a time. Use the tokens; add a missing one to `.dark` (and the contrast test).
 
 ## 8. Responsive behaviour
 
 - Breakpoints (Tailwind defaults): 640px (`sm`), 768px (`md`), 1024px (`lg`), 1280px (`xl`). Design phone-first.
 - Touch targets: controls are at least 40px tall, and primary and hero actions are 48px.
 - Collapsing:
-  - the header hides "About" below 640px;
+  - below 640px the header's links and dark-mode toggle move into the menu;
   - grids drop columns;
   - admin and seller tabs, and tables, scroll sideways rather than wrap;
   - the hero stacks.
 - Images: product photos are 4:3 with `object-cover` on a stone placeholder. A missing photo shows an icon,
   not an empty box. Photos load lazily, except the first few on a page.
+
+## 8a. Print
+
+`@media print` (end of `globals.css`) plus `print:hidden` on the header's controls, footer, floating
+buttons, cookie notice, marquee and kites: a printed page is the content, ink on white, always in the
+light theme, with anything the scroll animations had not revealed yet shown.
 
 ## 9. Agent prompt guide
 
@@ -314,7 +351,7 @@ Rules:
 - Text: #2e2b27, secondary #645e56
 - Action, links and headings: olive #56664f
 - Fonts: Plus Jakarta Sans for text; Instrument Serif (one weight, italics for emphasis) for headings and the wordmark
-- No dark backgrounds
+- No dark sections; dark mode only when the visitor turns it on
 - Corners: 10px for controls, 14px for cards
 
 **Example prompts:**
@@ -328,7 +365,8 @@ Rules:
 
 ## Known gaps
 
-- **Dark theme:** there is none (light only, by decision).
+- **Dark mode and the kites:** the 3D kites and their static picture keep the light theme's haze in dark mode.
+- **Contact:** "Talk to us" goes to the Get started form because there is no public phone number or email yet.
 - **Unused components:** the shadcn `<Card>` exists but pages use plain bordered `div`s. Follow the pages.
 - **Next.js error overlay:** in `pnpm dev`, its inline styles are blocked by the CSP. This doesn't affect the live site.
 - **Unwritten guidelines:** there are none yet for illustrations, product photography or email design.

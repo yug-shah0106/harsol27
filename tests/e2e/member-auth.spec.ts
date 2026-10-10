@@ -35,7 +35,7 @@ test("create account: a mistake is shown on its field, and an email can only be 
   await page.getByLabel("Your name").fill("Meera Desai");
   await page.getByLabel("Email").fill(emailFor(mobile));
   await page.getByLabel("Mobile number").fill("12345");
-  await page.getByLabel("Password").fill(MEMBER_PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(MEMBER_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
 
   const field = page.getByLabel("Mobile number");
@@ -56,7 +56,7 @@ test("create account: a mistake is shown on its field, and an email can only be 
   await page.getByLabel("Your name").fill("Someone Else");
   await page.getByLabel("Email").fill(emailFor(mobile).toUpperCase()); // same address, any case
   await page.getByLabel("Mobile number").fill(randomMobile().local);
-  await page.getByLabel("Password").fill("another-password-1");
+  await page.getByLabel("Password", { exact: true }).fill("another-password-1");
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page.getByText("An account with this email already exists").first()).toBeVisible(SLOW);
   await expect(page.getByLabel("Email")).toBeFocused();
@@ -121,7 +121,7 @@ test("forgot password: the emailed link sets a new password once, and ends other
 
   await page.goto(`/reset-password?token=${token}`);
   await expectAccessible(page);
-  await page.getByLabel("New password").fill("a-brand-new-password");
+  await page.getByLabel("New password", { exact: true }).fill("a-brand-new-password");
   await page.getByRole("button", { name: "Set new password" }).click();
   await expect(page).toHaveURL(/\/sign-in\?reset=1$/, SLOW);
   await expect(page.getByRole("status")).toContainText("Your password has been changed", SLOW);
@@ -134,7 +134,7 @@ test("forgot password: the emailed link sets a new password once, and ends other
 
   // The link works once.
   await page.goto(`/reset-password?token=${token}`);
-  await page.getByLabel("New password").fill("yet-another-password");
+  await page.getByLabel("New password", { exact: true }).fill("yet-another-password");
   await page.getByRole("button", { name: "Set new password" }).click();
   await expect(page.getByRole("main").getByRole("alert")).toContainText("This reset link has expired or was already used", SLOW);
 });

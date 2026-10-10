@@ -14,7 +14,7 @@ export function passwordOf(staff: (typeof STAFF)[keyof typeof STAFF]): string {
 export async function signIn(page: Page, email: string, password: string) {
   await page.goto("/staff/sign-in");
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 

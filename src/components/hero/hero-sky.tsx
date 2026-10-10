@@ -44,8 +44,8 @@ const DETAILS = "M268,70h22v-14h-22Z M672,66Q695,18 718,66Z M695,42V30l11,4-11,4
 export function Rooftops({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 1000 140" preserveAspectRatio="xMidYMax slice" className={className} aria-hidden="true" focusable="false">
-      <path d={roofs(BACK_ROOFS)} className="fill-[#dde3d6]" />
-      <path d={roofs(FRONT_ROOFS) + DETAILS} className="fill-[#c3cdb9]" />
+      <path d={roofs(BACK_ROOFS)} className="fill-[#dde3d6] dark:fill-[#2a3027]" />
+      <path d={roofs(FRONT_ROOFS) + DETAILS} className="fill-[#c3cdb9] dark:fill-[#353d31]" />
     </svg>
   );
 }

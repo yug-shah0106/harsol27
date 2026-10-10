@@ -32,7 +32,7 @@ export async function completeSignIn(page: Page, mobile: { local: string; e164: 
   await page.getByLabel("Your name").fill("Meera Desai");
   await page.getByLabel("Email").fill(emailFor(mobile));
   await page.getByLabel("Mobile number").fill(mobile.local);
-  await page.getByLabel("Password").fill(MEMBER_PASSWORD);
+  await page.getByLabel("Password", { exact: true }).fill(MEMBER_PASSWORD);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).not.toHaveURL(/\/(sign-in|sign-up)/, { timeout: 20_000 }); // signed in and sent on (password hashing is slow by design)
 }
@@ -40,7 +40,7 @@ export async function completeSignIn(page: Page, mobile: { local: string; e164: 
 /** Signs an existing member in with email and password (the page must be on /sign-in). */
 export async function signInMember(page: Page, email: string, password = MEMBER_PASSWORD) {
   await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
+  await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Continue" }).click();
 }
 

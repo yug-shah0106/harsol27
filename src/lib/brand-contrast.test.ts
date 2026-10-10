@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 
 // Reads the real tokens from globals.css, so a palette edit that breaks WCAG AA fails CI.
 const css = readFileSync(path.join(import.meta.dirname, "../app/globals.css"), "utf8");
-const root = css.slice(css.indexOf(":root {"), css.indexOf("}", css.indexOf(":root {")));
-const tokens = Object.fromEntries([...root.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1], m[2]]));
+const block = (selector: string) => css.slice(css.indexOf(selector), css.indexOf("}", css.indexOf(selector)));
+const read = (text: string) => Object.fromEntries([...text.matchAll(/--([\w-]+):\s*(#[0-9a-f]{6})/gi)].map((m) => [m[1]!, m[2]!]));
+const themes: Record<string, Record<string, string>> = { light: read(block(":root {")), dark: read(block(".dark {")) };
 
 function luminance(hex: string): number {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -20,9 +21,9 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-const token = (name: string) => {
-  const value = tokens[name];
-  if (!value) throw new Error(`token --${name} missing from :root`);
+const token = (theme: string, name: string) => {
+  const value = themes[theme]![name];
+  if (!value) throw new Error(`token --${name} missing from the ${theme} theme`);
   return value;
 };
 
@@ -52,8 +53,8 @@ const pairs: [string, string, number][] = [
   ["ring", "card", 3],
 ];
 
-describe("brand palette meets WCAG 2.1 AA", () => {
+describe.each(Object.keys(themes))("brand palette (%s) meets WCAG 2.1 AA", (theme) => {
   it.each(pairs)("--%s on --%s ≥ %s:1", (fg, bg, min) => {
-    expect(contrast(token(fg), token(bg))).toBeGreaterThanOrEqual(min);
+    expect(contrast(token(theme, fg), token(theme, bg))).toBeGreaterThanOrEqual(min);
   });
 });

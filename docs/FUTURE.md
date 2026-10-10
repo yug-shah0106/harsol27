@@ -22,6 +22,9 @@ automatic part runs with `scripts/preflight.ts`.
       mobile shared with sellers on inquiries, password stored as a hash), sign-in with Google, inquiries
       and seller applications.
 - [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
+- [ ] **Public contact for "Talk to us"**: a phone, WhatsApp number or email for the floating button. Until
+      then it opens the Get started form. (The Privacy draft now also mentions campaign tags and the
+      dark-mode and cookie-notice cookies: include them in the legal review.)
 - [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
 - [ ] **Manual accessibility pass** with a keyboard and a screen reader (NVDA or VoiceOver) over the
       main journeys. The automated checks cover every page but find only part of the real problems.
