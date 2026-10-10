@@ -23,7 +23,7 @@ export default async function IndustryPage({ params, searchParams }: PageProps<"
         <Link href="/industries" className="w-fit text-sm text-primary underline">
           ← All industries
         </Link>
-        <h1 className="text-3xl font-extrabold tracking-tight">{industry.name}</h1>
+        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl animate-in slide-in-from-bottom-2 duration-500 ease-out">{industry.name}</h1>
       </div>
       <SearchForm values={search} action={`/industries/${industry.slug}`} />
       <p aria-live="polite" className="text-muted-foreground">

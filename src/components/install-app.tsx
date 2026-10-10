@@ -34,7 +34,7 @@ export function InstallApp() {
     return (
       <button
         type="button"
-        className="w-fit font-medium text-primary underline"
+        className="w-fit font-medium underline"
         onClick={async () => {
           await offer.prompt();
           await offer.userChoice;

@@ -21,25 +21,25 @@ export type Kite = {
 };
 
 export const PALETTE = {
-  indigo: "#1f3a68",
-  saffron: "#f6b44a",
-  rani: "#c2185b",
-  leaf: "#2e7d4f",
+  olive: "#56664f",
+  champagne: "#e3c9a0",
+  clay: "#c98b76",
+  sage: "#b9c6b0",
   ivory: "#fbf8f3",
-  vermilion: "#d9472b",
+  blush: "#f1d9ce",
 } as const;
-const { indigo, saffron, rani, leaf, ivory, vermilion } = PALETTE;
+const { olive, champagne, clay, sage, ivory, blush } = PALETTE;
 
 export const KITES: readonly Kite[] = [
-  { position: [-1.55, 1.25, 1.2], size: 1.1, tilt: 0.3, colors: [indigo, saffron], phase: 0, anchor: 0 },
-  { position: [1.55, 1.95, -1.2], size: 1.0, tilt: -0.32, colors: [saffron, rani], phase: 1.3, anchor: 0 },
-  { position: [0.55, -0.7, 2.4], size: 0.85, tilt: 0.14, colors: [ivory, indigo], phase: 2.1, anchor: 2 },
-  { position: [-2.75, -1.05, -2], size: 0.95, tilt: -0.2, colors: [leaf, saffron], phase: 3.4, anchor: 1 },
-  { position: [2.6, -0.45, -0.2], size: 0.85, tilt: 0.42, colors: [rani, ivory], phase: 4.2, anchor: 0 },
-  { position: [-0.45, 3.25, -4.5], size: 0.9, tilt: -0.1, colors: [vermilion, saffron], phase: 5, anchor: 1 },
-  { position: [3.7, 3.7, -7], size: 1.0, tilt: 0.24, colors: [indigo, leaf], phase: 0.7, anchor: 0 },
-  { position: [-3.9, 3.5, -6], size: 1.0, tilt: -0.36, colors: [saffron, indigo], phase: 2.8, anchor: 1 },
-  { position: [1.25, 0.95, -8], size: 1.0, tilt: 0.06, colors: [ivory, vermilion], phase: 3.9, anchor: 2 },
+  { position: [-1.55, 1.25, 1.2], size: 1.1, tilt: 0.3, colors: [olive, champagne], phase: 0, anchor: 0 },
+  { position: [1.55, 1.95, -1.2], size: 1.0, tilt: -0.32, colors: [champagne, clay], phase: 1.3, anchor: 0 },
+  { position: [0.55, -0.7, 2.4], size: 0.85, tilt: 0.14, colors: [ivory, olive], phase: 2.1, anchor: 2 },
+  { position: [-2.75, -1.05, -2], size: 0.95, tilt: -0.2, colors: [sage, champagne], phase: 3.4, anchor: 1 },
+  { position: [2.6, -0.45, -0.2], size: 0.85, tilt: 0.42, colors: [clay, ivory], phase: 4.2, anchor: 0 },
+  { position: [-0.45, 3.25, -4.5], size: 0.9, tilt: -0.1, colors: [blush, champagne], phase: 5, anchor: 1 },
+  { position: [3.7, 3.7, -7], size: 1.0, tilt: 0.24, colors: [olive, sage], phase: 0.7, anchor: 0 },
+  { position: [-3.9, 3.5, -6], size: 1.0, tilt: -0.36, colors: [champagne, olive], phase: 2.8, anchor: 1 },
+  { position: [1.25, 0.95, -8], size: 1.0, tilt: 0.06, colors: [ivory, blush], phase: 3.9, anchor: 2 },
 ];
 
 /** Where the strings end: flyers on rooftops below and in front of the frame. */
@@ -72,7 +72,7 @@ export const STRING_COLOR = "#6b5a4e";
 export const STRING_POINTS = 16;
 
 export const CAMERA = { z: 10, fov: 38 } as const;
-export const FOG = { color: "#e9eef5", near: 9, far: 24 } as const; // distant kites fade into the sky
+export const FOG = { color: "#f1f1ea", near: 9, far: 24 } as const; // distant kites fade into the sky
 export const LIGHT = { ambient: 2.1, sun: 1.7, sunPosition: [4, 6, 8] as Vec3 } as const;
 
 /** Where a kite is, and how it is turned, `t` seconds into the animation. t = 0 is the static picture. */

@@ -13,7 +13,7 @@ export default async function GetStartedPage() {
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-12 sm:px-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">Get started with Harsol27</h1>
+        <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl animate-in slide-in-from-bottom-2 duration-500 ease-out">Get started with Harsol27</h1>
         <p className="text-muted-foreground">
           Share a few details about your business. Our team will contact you to help you get started.
         </p>

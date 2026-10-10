@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Motion } from "@/components/motion";
 import { SkipLink, Wordmark } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { requireStaff } from "@/server/authz";
@@ -32,6 +34,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         {children}
       </main>
+      <Suspense fallback={null}>
+        <Motion smoothScroll={false} />
+      </Suspense>
     </div>
   );
 }

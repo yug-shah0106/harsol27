@@ -16,8 +16,8 @@ export function SkipLink() {
 
 export function Wordmark() {
   return (
-    <Link href="/" className="text-xl font-extrabold tracking-tight text-primary no-underline">
-      Harsol<span className="text-foreground">27</span>
+    <Link href="/" className="font-display text-2xl leading-none tracking-tight text-primary no-underline sm:text-[1.7rem]">
+      Harsol<span className="text-foreground italic">27</span>
     </Link>
   );
 }
@@ -26,7 +26,7 @@ export async function SiteHeader() {
   const member = await getMember();
   return (
     <header className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6">
         <Wordmark />
         <nav aria-label="Main" className="flex items-center gap-1 sm:gap-4">
           <Link href="/search" className="rounded-md px-2 py-2 text-sm font-medium hover:underline">
@@ -35,10 +35,10 @@ export async function SiteHeader() {
           <Link href="/about" className="hidden rounded-md px-2 py-2 text-sm font-medium hover:underline sm:inline">
             About
           </Link>
-          <Link href={member ? "/account" : "/sign-in"} className="rounded-md px-2 py-2 text-sm font-medium hover:underline">
+          <Link href={member ? "/account" : "/sign-in"} className="rounded-md px-2 py-2 text-sm font-medium whitespace-nowrap hover:underline">
             {member ? "Your account" : "Sign in"}
           </Link>
-          <Button asChild>
+          <Button asChild data-magnet className="rounded-full">
             <Link href="/get-started">Get started</Link>
           </Button>
         </nav>
@@ -49,8 +49,8 @@ export async function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-border bg-card">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <footer className="mt-auto border-t border-border bg-secondary">
+      <div className="flex flex-col gap-4 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-10">
         <div className="flex flex-col gap-2">
           <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27</p>
           <InstallApp />

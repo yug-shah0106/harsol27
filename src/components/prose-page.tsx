@@ -2,8 +2,8 @@
 export function ProsePage({ title, lead, children }: { title: string; lead?: string; children: React.ReactNode }) {
   return (
     <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
-      <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h1>
-      {lead && <p className="mt-3 text-lg text-muted-foreground">{lead}</p>}
+      <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl">{title}</h1>
+      {lead && <p className="mt-4 text-lg text-muted-foreground">{lead}</p>}
       <div className="mt-8 flex flex-col gap-4 leading-relaxed [&_h2]:mt-6 [&_h2]:text-xl [&_h2]:font-bold [&_li]:ml-5 [&_li]:list-disc [&_ul]:flex [&_ul]:flex-col [&_ul]:gap-1">
         {children}
       </div>

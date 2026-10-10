@@ -41,7 +41,7 @@ Every command below is run from the repository root on the server.
    ```
 
 7. **Uptime monitor:** in a free monitor (for example UptimeRobot or Better Stack), check
-   `https://<your domain>/api/health/full` every 5 minutes and alert the team by email and phone.
+   `https://harsol27.com/api/health/full` every 5 minutes and alert the team by email and phone.
    See "Monitoring" below for what it covers.
 8. **Go-live check:** `docker compose -f deploy/compose.yml run --rm tools tsx scripts/preflight.ts`.
    It lists everything that still blocks launch (see `docs/13-GO-LIVE-CHECKLIST.md`).
