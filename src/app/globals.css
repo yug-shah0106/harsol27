@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* The site has one (light) theme. Without this, the shadcn components' dark: styles followed the
+   device's dark mode and half-applied (grey inputs on a light page). Now they need a .dark class. */
+@custom-variant dark (&:is(.dark *));
+
 /*
  * Harsol27 design tokens. Every colour is a hex value in :root so the WCAG contrast test
  * (src/lib/brand-contrast.test.ts) can read and check them. Components use only these tokens.
