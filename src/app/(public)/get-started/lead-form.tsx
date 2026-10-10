@@ -5,7 +5,7 @@ import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema } from "@/lib/lead-schema";
 import { submitLeadAction } from "./actions";
 
@@ -91,31 +91,33 @@ export function LeadForm({ industries }: { industries: Industry[] }) {
 
         <Field data-invalid={!!errors.businessCategory}>
           <FieldLabel htmlFor="businessCategory">Business category</FieldLabel>
-          <NativeSelect id="businessCategory" name="businessCategory" required defaultValue="" className="w-full" aria-invalid={!!errors.businessCategory} aria-describedby={describe("businessCategory")} onChange={clear("businessCategory")}>
-            <NativeSelectOption value="" disabled>
-              Choose a category
-            </NativeSelectOption>
-            {BUSINESS_CATEGORIES.map((c) => (
-              <NativeSelectOption key={c.value} value={c.value}>
-                {c.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="businessCategory"
+            name="businessCategory"
+            required
+            placeholder="Choose a category"
+            className="w-full"
+            aria-invalid={!!errors.businessCategory}
+            aria-describedby={describe("businessCategory")}
+            onValueChange={clear("businessCategory")}
+            options={BUSINESS_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+          />
           <FieldMessage id="businessCategory-error" message={errors.businessCategory} />
         </Field>
 
         <Field data-invalid={!!errors.industryId}>
           <FieldLabel htmlFor="industryId">Industry</FieldLabel>
-          <NativeSelect id="industryId" name="industryId" required defaultValue="" className="w-full" aria-invalid={!!errors.industryId} aria-describedby={describe("industryId")} onChange={clear("industryId")}>
-            <NativeSelectOption value="" disabled>
-              Choose an industry
-            </NativeSelectOption>
-            {industries.map((i) => (
-              <NativeSelectOption key={i.id} value={i.id}>
-                {i.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="industryId"
+            name="industryId"
+            required
+            placeholder="Choose an industry"
+            className="w-full"
+            aria-invalid={!!errors.industryId}
+            aria-describedby={describe("industryId")}
+            onValueChange={clear("industryId")}
+            options={industries.map((i) => ({ value: i.id, label: i.name }))}
+          />
           <FieldMessage id="industryId-error" message={errors.industryId} />
         </Field>
       </FieldGroup>

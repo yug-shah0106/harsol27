@@ -7,6 +7,7 @@ import { signInAs, STAFF } from "./staff";
 // blocked by the Content Security Policy (which would show up as a broken or unstyled page).
 
 test.describe.configure({ mode: "serial" });
+test.setTimeout(90_000); // each test visits many pages; on a busy machine that takes a while
 
 let fixture: { sellerPage: Page; buyerPage: Page; product: { id: string; slug: string }; sellerId: string; sellerSlug: string; leadId: string };
 

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { requireStaff } from "@/server/authz";
 import { listProductsForStaff, staffProductParamsSchema } from "@/server/products";
@@ -28,12 +28,18 @@ export default async function AdminProductsPage({ searchParams }: PageProps<"/ad
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="state">Status</Label>
-          <NativeSelect id="state" name="state" defaultValue={params.state ?? ""} className="w-full sm:w-48">
-            <NativeSelectOption value="">Any</NativeSelectOption>
-            <NativeSelectOption value="listed">Listed</NativeSelectOption>
-            <NativeSelectOption value="hidden">Hidden by seller</NativeSelectOption>
-            <NativeSelectOption value="removed">Removed by staff</NativeSelectOption>
-          </NativeSelect>
+          <Dropdown
+            id="state"
+            name="state"
+            defaultValue={params.state ?? ""}
+            className="w-full sm:w-48"
+            options={[
+              { value: "", label: "Any" },
+              { value: "listed", label: "Listed" },
+              { value: "hidden", label: "Hidden by seller" },
+              { value: "removed", label: "Removed by staff" },
+            ]}
+          />
         </div>
         <Button type="submit">Apply</Button>
       </form>

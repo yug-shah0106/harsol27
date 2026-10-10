@@ -32,10 +32,17 @@ export function watchCsp(page: Page): string[] {
   return violations;
 }
 
+/** Picks an option in one of our dropdowns (components/ui/dropdown.tsx), as a person would: open it, click the option. */
+export async function choose(page: Page, label: string, option: string) {
+  await page.getByRole("combobox", { name: label, exact: true }).click();
+  await page.getByRole("listbox").getByRole("option", { name: option, exact: true }).click();
+  await expect(page.getByRole("combobox", { name: label, exact: true })).toHaveText(option);
+}
+
 export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string }) {
   await page.getByLabel("Full name").fill(values.name);
   await page.getByLabel("Phone number").fill(values.phone);
   await page.getByLabel("Email").fill(values.email);
-  await page.getByLabel("Business category").selectOption({ label: values.category });
-  await page.getByLabel("Industry").selectOption({ label: values.industry });
+  await choose(page, "Business category", values.category);
+  await choose(page, "Industry", values.industry);
 }

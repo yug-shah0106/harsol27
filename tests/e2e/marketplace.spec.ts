@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import sharp from "sharp";
-import { expectAccessible, newPage, unique, watchCsp } from "./helpers";
+import { choose, expectAccessible, newPage, unique, watchCsp } from "./helpers";
 import { completeSignIn, makeApprovedSeller, randomMobile } from "./member";
 import { signInAs, STAFF } from "./staff";
 
@@ -32,7 +32,7 @@ test("marketplace: a seller lists a product, a buyer finds it, inquires and gets
   await seller.getByRole("button", { name: "Create product and add photos" }).click();
   await expect(seller.getByText("Enter a product name of at least 3 characters.")).toBeVisible();
   await seller.getByLabel("Product name").fill(productName);
-  await seller.getByLabel("Industry").selectOption({ label: "Food Products" });
+  await choose(seller, "Industry", "Food Products");
   await seller.getByLabel("Description").fill("Hand-roasted methi khakhra in 200 g pouches. Cartons of 40. Made fresh in Rajkot.");
   await seller.getByLabel("Detail 1 name").fill("Pack size");
   await seller.getByLabel("Detail 1 value").fill("200 g");

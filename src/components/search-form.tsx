@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { INDIAN_STATES } from "@/lib/seller-schema";
 
 type Values = { q?: string; industry?: string; state?: string; city?: string };
@@ -32,26 +32,24 @@ export function SearchForm({ values = {}, industries, action = "/search", compac
       {industries && (
         <div className="flex flex-col gap-1">
           <Label htmlFor="industry">Industry</Label>
-          <NativeSelect id="industry" name="industry" defaultValue={values.industry ?? ""} className="w-full">
-            <NativeSelectOption value="">All industries</NativeSelectOption>
-            {industries.map((i) => (
-              <NativeSelectOption key={i.slug} value={i.slug}>
-                {i.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="industry"
+            name="industry"
+            defaultValue={values.industry ?? ""}
+            className="w-full"
+            options={[{ value: "", label: "All industries" }, ...industries.map((i) => ({ value: i.slug, label: i.name }))]}
+          />
         </div>
       )}
       <div className="flex flex-col gap-1">
         <Label htmlFor="state">State</Label>
-        <NativeSelect id="state" name="state" defaultValue={values.state ?? ""} className="w-full">
-          <NativeSelectOption value="">Anywhere</NativeSelectOption>
-          {INDIAN_STATES.map((s) => (
-            <NativeSelectOption key={s} value={s}>
-              {s}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
+        <Dropdown
+          id="state"
+          name="state"
+          defaultValue={values.state ?? ""}
+          className="w-full"
+          options={[{ value: "", label: "Anywhere" }, ...INDIAN_STATES.map((s) => ({ value: s, label: s }))]}
+        />
       </div>
       <div className="flex flex-col gap-1">
         <Label htmlFor="city">City</Label>

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectAccessible, fillLeadForm, unique } from "./helpers";
+import { choose, expectAccessible, fillLeadForm, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
 async function submitLead(page: Page, name: string, email: string) {
@@ -21,7 +21,7 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
   await page.getByRole("navigation", { name: "Admin" }).getByRole("link", { name: "Leads" }).click();
 
   await page.getByLabel("Search name, email or phone").fill(name);
-  await page.getByLabel("Status").selectOption("NEW");
+  await choose(page, "Status", "New");
   await page.getByRole("button", { name: "Apply" }).click();
   await expect(page).toHaveURL(/status=NEW/);
   await expect(page.getByText("1 lead")).toBeVisible();
@@ -32,7 +32,7 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
   await expect(page.getByText(ip)).toBeVisible(); // source IP is shown to staff
   await expect(page.getByText("Ceramics & Tiles")).toBeVisible();
 
-  await page.getByLabel("New status").selectOption({ label: "Contacted" });
+  await choose(page, "New status", "Contacted");
   await page.getByLabel("Note (optional)").fill("Spoke on the phone");
   await page.getByRole("button", { name: "Save status" }).click();
   await expect(page.getByRole("status")).toContainText("Status updated.");

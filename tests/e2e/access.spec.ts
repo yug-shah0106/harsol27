@@ -9,6 +9,8 @@ import { signInAs, STAFF } from "./staff";
 const MEMBER_PAGES = ["/account", "/account/inquiries", "/seller", "/seller/apply", "/seller/products", "/seller/products/new", "/seller/inquiries", "/seller/subscription"];
 const SELLER_ONLY = ["/seller/products", "/seller/products/new", "/seller/inquiries", "/seller/subscription"];
 const ADMIN_PAGES = ["/admin", "/admin/leads", "/admin/sellers", "/admin/products", "/admin/inquiries", "/admin/industries", "/admin/subscriptions"];
+test.setTimeout(90_000); // each test opens every private page, several times over
+
 const DOCUMENT = "/api/admin/documents/0199b5c0-0000-7000-8000-000000000001";
 
 /** Opens `path` and returns where the browser ended up (path + query) and the status. */

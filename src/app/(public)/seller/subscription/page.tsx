@@ -40,7 +40,7 @@ export default async function SellerSubscriptionPage() {
           <p className="text-muted-foreground">None yet.</p>
         ) : (
           <div className="rounded-xl border border-border bg-card">
-            <Table>
+            <Table scrollLabel="Payments recorded">
               <TableHeader>
                 <TableRow>
                   <TableHead scope="col">Recorded</TableHead>

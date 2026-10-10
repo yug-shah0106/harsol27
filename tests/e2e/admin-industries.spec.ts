@@ -31,12 +31,18 @@ test("admin adds, renames and deactivates an industry, and the lead form follows
 
   const visitor = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
   await visitor.goto("/get-started");
-  await expect(visitor.getByLabel("Industry").getByRole("option", { name: renamed })).toHaveCount(1);
+  const industryOptions = async () => {
+    await visitor.getByRole("combobox", { name: "Industry", exact: true }).click();
+    const count = await visitor.getByRole("listbox").getByRole("option", { name: renamed, exact: true }).count();
+    await visitor.keyboard.press("Escape");
+    return count;
+  };
+  await expect.poll(industryOptions).toBe(1);
 
   await renamedRow.getByRole("button", { name: `Deactivate ${renamed}` }).click();
   await expect(renamedRow.getByText("Inactive")).toBeVisible();
   await visitor.reload();
-  await expect(visitor.getByLabel("Industry").getByRole("option", { name: renamed })).toHaveCount(0);
+  await expect.poll(industryOptions).toBe(0);
   await visitor.close();
 });
 

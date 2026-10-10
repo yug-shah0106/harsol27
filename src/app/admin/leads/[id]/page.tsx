@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
 import { requireStaff } from "@/server/authz";
@@ -60,16 +60,14 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
             <input type="hidden" name="leadId" value={lead.id} />
             <div className="flex flex-col gap-1">
               <Label htmlFor="new-status">New status</Label>
-              <NativeSelect id="new-status" name="status" required defaultValue="" className="w-full">
-                <NativeSelectOption value="" disabled>
-                  Choose a status
-                </NativeSelectOption>
-                {LEAD_STATUSES.filter((s) => s !== lead.status).map((s) => (
-                  <NativeSelectOption key={s} value={s}>
-                    {LEAD_STATUS_LABELS[s]}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+              <Dropdown
+                id="new-status"
+                name="status"
+                required
+                placeholder="Choose a status"
+                className="w-full"
+                options={LEAD_STATUSES.filter((s) => s !== lead.status).map((s) => ({ value: s, label: LEAD_STATUS_LABELS[s] }))}
+              />
             </div>
             <div className="flex flex-col gap-1">
               <Label htmlFor="note">Note (optional)</Label>

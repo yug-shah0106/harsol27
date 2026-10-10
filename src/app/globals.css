@@ -2,6 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* The site has one (light) theme. Without this, the shadcn components' dark: styles followed the
+   device's dark mode and half-applied (grey inputs on a light page). Now they need a .dark class. */
+@custom-variant dark (&:is(.dark *));
+
 /*
  * Harsol27 design tokens. Every colour is a hex value in :root so the WCAG contrast test
  * (src/lib/brand-contrast.test.ts) can read and check them. Components use only these tokens.
@@ -97,6 +101,78 @@
   background:
     radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 55%, transparent) 0, transparent 22%),
     linear-gradient(to bottom, #dce6f3 0%, #e9eef5 45%, #f8eedd 100%);
+}
+
+/*
+ * Scrollbars: our own look everywhere (the page and every <ScrollArea>), thin, rounded, in the brand
+ * colours. Only the look changes: scrolling stays the browser's, so keyboard, touch, trackpad,
+ * find-in-page and screen readers all behave as usual. The thumb uses --input (at least 3:1 against
+ * the page, like form borders). Chrome, Edge and Safari use the ::-webkit rules; Firefox the standard
+ * properties (Chrome ignores the ::-webkit rules once those are set, hence the @supports).
+ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--input);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--input) transparent;
+  }
+}
+
+/* In the components layer, so a page's own classes (e.g. [--scroll-bg:var(--card)]) win over these defaults. */
+@layer components {
+  /*
+   * <ScrollArea> (components/ui/scroll-area.tsx): soft shadows at an edge while there is more to
+   * scroll that way, pure CSS. The "local" covers move with the content and hide each shadow once
+   * its end is reached. --scroll-bg must match the background behind the area.
+   */
+  .scroll-area {
+    --scroll-bg: var(--background);
+    --scroll-shadow: color-mix(in srgb, var(--foreground) 16%, transparent);
+  }
+  /* Under a row of tabs or a table, a slimmer bar is enough. */
+  .scroll-area[data-orientation="horizontal"]::-webkit-scrollbar {
+    height: 8px;
+  }
+  /* A scroll area clips what sticks out of it, so focus outlines inside it are drawn inward. */
+  .scroll-area :focus-visible {
+    outline-offset: -3px;
+  }
+  .scroll-area[data-orientation="horizontal"] {
+    overscroll-behavior-x: contain; /* a sideways swipe scrolls the area, not the browser history */
+    background:
+      linear-gradient(to right, var(--scroll-bg) 40%, transparent) left center / 2.5rem 100% no-repeat local,
+      linear-gradient(to left, var(--scroll-bg) 40%, transparent) right center / 2.5rem 100% no-repeat local,
+      radial-gradient(farthest-side at 0 50%, var(--scroll-shadow), transparent) left center / 0.75rem 100% no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--scroll-shadow), transparent) right center / 0.75rem 100% no-repeat scroll,
+      var(--scroll-bg);
+  }
+  .scroll-area[data-orientation="vertical"] {
+    overscroll-behavior-y: contain;
+    background:
+      linear-gradient(to bottom, var(--scroll-bg) 40%, transparent) center top / 100% 2.5rem no-repeat local,
+      linear-gradient(to top, var(--scroll-bg) 40%, transparent) center bottom / 100% 2.5rem no-repeat local,
+      radial-gradient(farthest-side at 50% 0, var(--scroll-shadow), transparent) center top / 100% 0.75rem no-repeat scroll,
+      radial-gradient(farthest-side at 50% 100%, var(--scroll-shadow), transparent) center bottom / 100% 0.75rem no-repeat scroll,
+      var(--scroll-bg);
+  }
 }
 
 @layer base {

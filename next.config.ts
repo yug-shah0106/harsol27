@@ -13,6 +13,11 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  // `pnpm dev` only: lets pages opened through a Cloudflare quick tunnel (sharing the local site)
+  // reach the dev server's live-reload socket. Without it those pages never hydrate. No effect in production.
+  allowedDevOrigins: ["*.trycloudflare.com"],
+  // The dev badge needs inline styles, which our CSP blocks, so it showed as a bare box over the logo.
+  devIndicators: false,
   // cacheComponents/PPR are off: the nonce-based CSP in src/proxy.ts needs every page rendered per request.
   experimental: {
     serverActions: { bodySizeLimit: "100kb" }, // files go straight to R2, never through actions

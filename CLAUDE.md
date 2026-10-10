@@ -1,3 +1,9 @@
+## Design
+
+For any UI work, follow `DESIGN.md` (the Harsol27 design system: colours, type, components, do's and
+don'ts). The code is the source of truth (`src/app/globals.css`, `src/components/ui/`); if you change
+the design on purpose, update `DESIGN.md` in the same change.
+
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 
