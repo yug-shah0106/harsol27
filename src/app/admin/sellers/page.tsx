@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SELLER_STATUS_LABELS, type SellerStatusValue } from "@/lib/seller-status";
 import { requireStaff } from "@/server/authz";
@@ -38,14 +38,13 @@ export default async function SellersPage({ searchParams }: PageProps<"/admin/se
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="status">Status</Label>
-          <NativeSelect id="status" name="status" defaultValue={params.status ?? ""} className="w-full sm:w-48">
-            <NativeSelectOption value="">Any</NativeSelectOption>
-            {(Object.keys(SELLER_STATUS_LABELS) as SellerStatusValue[]).map((s) => (
-              <NativeSelectOption key={s} value={s}>
-                {SELLER_STATUS_LABELS[s]}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="status"
+            name="status"
+            defaultValue={params.status ?? ""}
+            className="w-full sm:w-48"
+            options={[{ value: "", label: "Any" }, ...(Object.keys(SELLER_STATUS_LABELS) as SellerStatusValue[]).map((s) => ({ value: s, label: SELLER_STATUS_LABELS[s] }))]}
+          />
         </div>
         <Button type="submit">Apply</Button>
       </form>

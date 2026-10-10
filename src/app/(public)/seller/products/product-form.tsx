@@ -6,7 +6,7 @@ import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { MAX_SPECIFICATIONS } from "@/lib/product-schema";
 import { createProductAction, updateProductAction } from "./actions";
@@ -48,16 +48,16 @@ export function ProductForm({ productId, values, industries }: { productId?: str
         </Field>
         <Field data-invalid={!!errors.industryId}>
           <FieldLabel htmlFor="industryId">Industry</FieldLabel>
-          <NativeSelect id="industryId" name="industryId" defaultValue={values.industryId} className="w-full" aria-invalid={!!errors.industryId} aria-describedby={errors.industryId ? "industryId-error" : undefined}>
-            <NativeSelectOption value="" disabled>
-              Choose an industry
-            </NativeSelectOption>
-            {industries.map((i) => (
-              <NativeSelectOption key={i.id} value={i.id}>
-                {i.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="industryId"
+            name="industryId"
+            defaultValue={values.industryId}
+            placeholder="Choose an industry"
+            className="w-full"
+            aria-invalid={!!errors.industryId}
+            aria-describedby={errors.industryId ? "industryId-error" : undefined}
+            options={industries.map((i) => ({ value: i.id, label: i.name }))}
+          />
           <FieldMessage id="industryId-error" message={errors.industryId} />
         </Field>
         <Field data-invalid={!!errors.description}>

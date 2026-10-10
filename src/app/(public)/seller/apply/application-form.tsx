@@ -6,7 +6,7 @@ import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { DOCUMENT_TYPES } from "@/lib/file-type";
 import { fieldErrors } from "@/lib/lead-schema";
@@ -100,13 +100,15 @@ export function ApplicationForm({ defaults, resubmission }: { defaults: Applicat
           {text("city", "City", { maxLength: 80, autoComplete: "address-level2" })}
           <Field data-invalid={!!errors.state}>
             <FieldLabel htmlFor="state">State</FieldLabel>
-            <NativeSelect id="state" name="state" defaultValue={defaults.state || "Gujarat"} className="w-full" aria-invalid={!!errors.state} aria-describedby={errors.state ? "state-error" : undefined}>
-              {INDIAN_STATES.map((s) => (
-                <NativeSelectOption key={s} value={s}>
-                  {s}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+            <Dropdown
+              id="state"
+              name="state"
+              defaultValue={defaults.state || "Gujarat"}
+              className="w-full"
+              aria-invalid={!!errors.state}
+              aria-describedby={errors.state ? "state-error" : undefined}
+              options={INDIAN_STATES.map((s) => ({ value: s, label: s }))}
+            />
             <FieldMessage id="state-error" message={errors.state} />
           </Field>
           <Field data-invalid={!!errors.description}>

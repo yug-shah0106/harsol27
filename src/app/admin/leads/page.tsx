@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Dropdown } from "@/components/ui/dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BUSINESS_CATEGORIES } from "@/lib/lead-schema";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
@@ -44,44 +44,47 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="status">Status</Label>
-          <NativeSelect id="status" name="status" defaultValue={params.status ?? ""} className="w-full">
-            <NativeSelectOption value="">Any</NativeSelectOption>
-            {LEAD_STATUSES.map((s) => (
-              <NativeSelectOption key={s} value={s}>
-                {LEAD_STATUS_LABELS[s]}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="status"
+            name="status"
+            defaultValue={params.status ?? ""}
+            className="w-full"
+            options={[{ value: "", label: "Any" }, ...LEAD_STATUSES.map((s) => ({ value: s, label: LEAD_STATUS_LABELS[s] }))]}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="industry">Industry</Label>
-          <NativeSelect id="industry" name="industry" defaultValue={params.industry ?? ""} className="w-full">
-            <NativeSelectOption value="">Any</NativeSelectOption>
-            {industries.map((i) => (
-              <NativeSelectOption key={i.id} value={i.id}>
-                {i.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="industry"
+            name="industry"
+            defaultValue={params.industry ?? ""}
+            className="w-full"
+            options={[{ value: "", label: "Any" }, ...industries.map((i) => ({ value: i.id, label: i.name }))]}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="category">Category</Label>
-          <NativeSelect id="category" name="category" defaultValue={params.category ?? ""} className="w-full">
-            <NativeSelectOption value="">Any</NativeSelectOption>
-            {BUSINESS_CATEGORIES.map((c) => (
-              <NativeSelectOption key={c.value} value={c.value}>
-                {c.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            id="category"
+            name="category"
+            defaultValue={params.category ?? ""}
+            className="w-full"
+            options={[{ value: "", label: "Any" }, ...BUSINESS_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))]}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <Label htmlFor="sort">Sort by</Label>
-          <NativeSelect id="sort" name="sort" defaultValue={params.sort} className="w-full">
-            <NativeSelectOption value="newest">Newest first</NativeSelectOption>
-            <NativeSelectOption value="oldest">Oldest first</NativeSelectOption>
-            <NativeSelectOption value="name">Name A–Z</NativeSelectOption>
-          </NativeSelect>
+          <Dropdown
+            id="sort"
+            name="sort"
+            defaultValue={params.sort}
+            className="w-full"
+            options={[
+              { value: "newest", label: "Newest first" },
+              { value: "oldest", label: "Oldest first" },
+              { value: "name", label: "Name A–Z" },
+            ]}
+          />
         </div>
         <div className="flex gap-2 sm:col-span-2 lg:col-span-6">
           <Button type="submit">Apply</Button>
