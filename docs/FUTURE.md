@@ -8,7 +8,8 @@ Tick an item and note the date when it is done.
 The complete list, with owners and how each is verified, is `docs/13-GO-LIVE-CHECKLIST.md`; the
 automatic part runs with `scripts/preflight.ts`.
 
-- [ ] **Production domain name.** Decide and register; point it at the hosting (Phase 8).
+- [ ] **Production domain: harsol27.com** (decided 2026-10-10). Register it in the client's account if not
+      done yet, point it at the hosting (Phase 8), and redirect `www.harsol27.com` to it.
 - [ ] **Verified email sending domain** in Resend (SPF, DKIM, DMARC on the domain's DNS). Until then
       emails go through Resend's test sender, which only delivers to the Resend account's own address,
       so lead confirmations to visitors and every seller email (decisions, inquiries, renewal
@@ -17,16 +18,22 @@ automatic part runs with `scripts/preflight.ts`.
       `CLIENT_IP_HEADER` to `cf-connecting-ip`). Backups, restore and monitoring are built (Phase 8);
       they need a second R2 bucket for off-site copies and an uptime monitor account.
 - [ ] **Legal review of Terms and Privacy** (`/terms`, `/privacy`), then remove the "Draft" notices.
+      The privacy draft covers only the Get started form: it must also describe accounts (name, email,
+      mobile shared with sellers on inquiries, password stored as a hash), sign-in with Google, inquiries
+      and seller applications.
 - [ ] **Privacy contact**: an address people can write to about their data (needed on the Privacy page).
 - [ ] **Rotate secrets that were shared in chat**: the Neon database password and the Resend API key.
-- [ ] **Remove `ALLOW_CONSOLE_SMS`** from the server settings once the SMS provider works. A production
-      build refuses to start with the log-only code sender unless this is set (Phase 7).
 - [ ] **Manual accessibility pass** with a keyboard and a screen reader (NVDA or VoiceOver) over the
       main journeys. The automated checks cover every page but find only part of the real problems.
-- [ ] **SMS provider for one-time codes**: MSG91 is dropped (2026-10-08); a provider is still to be
-      chosen. Indian SMS needs DLT entity and template registration, which takes days. Then add its
-      sender in `src/server/sms.ts`. Until then codes are only written to the server log
-      (`SMS_PROVIDER=console`), so **real users cannot sign in**.
+- [ ] **Google sign-in key**: create an OAuth client (Web application) in Google Cloud Console with the
+      redirect URI `https://harsol27.com/api/auth/callback/google`, and put `GOOGLE_CLIENT_ID` and
+      `GOOGLE_CLIENT_SECRET` in `deploy/.env`. Until then the "Continue with Google" button is hidden.
+- [ ] **Sign-in by SMS code (later, optional)**: switched off on 2026-10-10. Members sign in with email
+      and password (or Google), and the mobile number they type is not verified. The code is kept
+      (`src/server/member-auth.ts`, `otp.ts`, `sms.ts`, `src/app/(public)/sign-in/phone-sign-in.tsx`).
+      To bring it back: choose a provider (MSG91 was dropped on 2026-10-08), register the sender and
+      template with DLT (takes days), add the sender in `src/server/sms.ts`, render `<PhoneSignIn>` on
+      the sign-in page, and decide how phone sign-ins relate to email accounts.
 - [ ] **Document storage on Cloudflare R2**: create a private bucket and an R2 API token, put them in
       `deploy/.env` (`S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`), then run
       `scripts/storage-setup.ts` once. Staging over ngrok needs this too: browsers outside your machine

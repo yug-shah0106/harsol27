@@ -17,7 +17,13 @@ export default async function AccountPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-extrabold tracking-tight">Your account</h1>
-        <p className="text-muted-foreground">Signed in with {member.phone}</p>
+        <p className="text-muted-foreground">Signed in as {member.email ?? member.phone}</p>
+        <p className="text-muted-foreground">
+          Mobile number for sellers: {member.phone} ·{" "}
+          <Link href={`/account/mobile?change=1&next=${encodeURIComponent("/account")}`} className="font-medium text-primary underline">
+            Change
+          </Link>
+        </p>
       </div>
 
       <section aria-labelledby="buying-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">

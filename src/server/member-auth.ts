@@ -1,14 +1,96 @@
 import "server-only";
 import { APIError } from "better-auth/api";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
-import { phoneSchema } from "@/lib/lead-schema";
-import { auth } from "./auth";
+import { z } from "zod";
+import { fieldErrors, leadSchema, phoneSchema } from "@/lib/lead-schema";
+import { auth, isPlaceholderEmail } from "./auth";
+import type { Member } from "./authz";
 import { clientIpFrom } from "./client-ip";
+import { db } from "./db";
 import { env } from "./env";
 import { UserFacingError } from "./errors";
 import { issueOtp } from "./otp";
+import { MEMBER_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "./password";
 import { consumeRateLimit } from "./rate-limit";
 import { sendOtpSms } from "./sms";
+
+/*
+ * Buyers and sellers sign in with email and password (sign-in itself is password-auth.ts, shared
+ * with staff), or with Google. Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is
+ * switched off until an SMS provider is connected (docs/FUTURE.md); nothing calls it.
+ */
+
+export const SIGN_UP_PER_IP = { max: 5, windowSeconds: 60 * 60 };
+export const RESET_RULES = {
+  requestPerIp: { max: 10, windowSeconds: 60 * 60 },
+  requestPerEmail: { max: 3, windowSeconds: 60 * 60 },
+  resetPerIp: { max: 10, windowSeconds: 15 * 60 },
+};
+
+export const EMAIL_TAKEN = "An account with this email already exists. Sign in, or reset your password if you have forgotten it.";
+export const RESET_LINK_INVALID = "This reset link has expired or was already used. Ask for a new one below.";
+
+const emailSchema = leadSchema.shape.email.refine((email) => !isPlaceholderEmail(email), "Enter a valid email address, like name@company.com.");
+const passwordSchema = z
+  .string()
+  .min(MEMBER_PASSWORD_MIN_LENGTH, `Use at least ${MEMBER_PASSWORD_MIN_LENGTH} characters.`)
+  .max(PASSWORD_MAX_LENGTH, `Use at most ${PASSWORD_MAX_LENGTH} characters.`);
+const signUpSchema = z.object({ name: leadSchema.shape.fullName, email: emailSchema, mobile: phoneSchema, password: passwordSchema });
+
+const ipOf = (headers: Headers) => clientIpFrom(headers, env().CLIENT_IP_HEADER) ?? "unknown";
+const fieldError = (field: string, error: z.ZodError) => new UserFacingError("Please correct the highlighted field.", { [field]: error.issues[0]?.message ?? "Check this field." });
+
+/**
+ * Creates a member account and signs it in. By decision there is no email check: the account works
+ * at once. The mobile number is not verified either (no SMS); sellers receive it with inquiries.
+ */
+export async function signUpMember(form: FormData, headers: Headers): Promise<void> {
+  await limit(`sign-up:ip:${ipOf(headers)}`, SIGN_UP_PER_IP, "Too many accounts created from your network.");
+  const parsed = signUpSchema.safeParse({ name: form.get("name"), email: form.get("email"), mobile: form.get("mobile"), password: form.get("password") });
+  if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
+  try {
+    await auth().api.signUpEmail({ body: { ...parsed.data, rememberMe: true }, headers });
+  } catch (error) {
+    if (error instanceof APIError && error.body?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") throw new UserFacingError(EMAIL_TAKEN, { email: EMAIL_TAKEN });
+    throw error;
+  }
+}
+
+/**
+ * Emails a reset link if the address belongs to an active member. The reply is the same either way,
+ * so this cannot be used to find out who has an account. Staff reset with `pnpm staff`.
+ */
+export async function requestMemberPasswordReset(rawEmail: unknown, headers: Headers): Promise<void> {
+  await limit(`reset-request:ip:${ipOf(headers)}`, RESET_RULES.requestPerIp, "Too many reset requests from your network.");
+  const parsed = emailSchema.safeParse(String(rawEmail ?? ""));
+  if (!parsed.success) throw fieldError("email", parsed.error);
+  const email = parsed.data;
+  await limit(`reset-request:email:${email}`, RESET_RULES.requestPerEmail, "Too many reset requests for this address.");
+  const user = await db().user.findUnique({ where: { email }, select: { role: true, disabledAt: true } });
+  if (user?.role === "MEMBER" && !user.disabledAt) await auth().api.requestPasswordReset({ body: { email }, headers });
+}
+
+/** Sets a new password from an emailed link (one use, one hour), then ends every other session. */
+export async function resetMemberPassword(rawToken: unknown, rawPassword: unknown, headers: Headers): Promise<void> {
+  await limit(`reset:ip:${ipOf(headers)}`, RESET_RULES.resetPerIp, "Too many attempts from your network.");
+  const token = String(rawToken ?? "");
+  if (!/^[\w-]{16,128}$/.test(token)) throw new UserFacingError(RESET_LINK_INVALID);
+  const password = passwordSchema.safeParse(String(rawPassword ?? ""));
+  if (!password.success) throw fieldError("password", password.error);
+  try {
+    await auth().api.resetPassword({ body: { newPassword: password.data, token }, headers });
+  } catch (error) {
+    if (error instanceof APIError && error.status === "BAD_REQUEST") throw new UserFacingError(RESET_LINK_INVALID);
+    throw error;
+  }
+}
+
+/** The mobile number sellers receive with inquiries: asked of Google sign-ups, and changeable later. */
+export async function saveMemberMobile(member: Member, rawMobile: unknown): Promise<void> {
+  const parsed = phoneSchema.safeParse(String(rawMobile ?? ""));
+  if (!parsed.success) throw fieldError("mobile", parsed.error);
+  await db().user.update({ where: { id: member.id }, data: { mobile: parsed.data } });
+}
 
 export const OTP_SEND_RULES = {
   perPhone: { max: 3, windowSeconds: 15 * 60 },

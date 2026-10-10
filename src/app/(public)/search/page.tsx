@@ -16,7 +16,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6">
-      <h1 className="text-3xl font-extrabold tracking-tight">{params.q ? `Results for “${params.q}”` : "Search products"}</h1>
+      <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl animate-in slide-in-from-bottom-2 duration-500 ease-out">{params.q ? `Results for “${params.q}”` : "Search products"}</h1>
       <SearchForm values={params} industries={industries} />
       <p aria-live="polite" className="text-muted-foreground">
         {total === 0

@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#1f3a68"/>
+  <rect width="512" height="512" rx="112" fill="#56664f"/>
   <g transform="translate(256 250) scale(1) rotate(-10) translate(-256 -250)">
-    <path d="M256,250 Q330,380 470,540" fill="none" stroke="#fbf8f3" stroke-opacity="0.6" stroke-width="5"/>
-    <path d="M256,96 L146,236 L256,356 Z" fill="#f6b44a"/>
-    <path d="M256,96 L256,356 L366,236 Z" fill="#fbf8f3"/>
-    <path d="M256,356 L230,408 L282,408 Z" fill="#f6b44a"/>
-    <path d="M256,96 L256,356 M146,236 Q256,176 366,236" fill="none" stroke="#1f3a68" stroke-opacity="0.55" stroke-width="6"/>
+    <path d="M256,250 Q330,380 470,540" fill="none" stroke="#faf7f2" stroke-opacity="0.6" stroke-width="5"/>
+    <path d="M256,96 L146,236 L256,356 Z" fill="#f1d9ce"/>
+    <path d="M256,96 L256,356 L366,236 Z" fill="#faf7f2"/>
+    <path d="M256,356 L230,408 L282,408 Z" fill="#f1d9ce"/>
+    <path d="M256,96 L256,356 M146,236 Q256,176 366,236" fill="none" stroke="#56664f" stroke-opacity="0.55" stroke-width="6"/>
   </g>
 </svg>

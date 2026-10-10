@@ -38,6 +38,11 @@ const pairs: [string, string, number][] = [
   ["muted-foreground", "card", 4.5],
   ["muted-foreground", "muted", 4.5],
   ["accent-foreground", "accent", 4.5],
+  ["primary", "accent", 4.5], // olive words on blush (the call to action)
+  ["primary", "secondary", 4.5], // olive words on stone (the marquee, the footer)
+  ["primary", "sage", 4.5], // olive headings on the sage section
+  ["muted-foreground", "sage", 4.5],
+  ["foreground", "sage", 4.5],
   ["destructive", "background", 4.5],
   ["destructive", "card", 4.5],
   ["success", "card", 4.5],

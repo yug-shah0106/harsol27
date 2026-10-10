@@ -4,9 +4,10 @@ import type { Job, JobResult, PgBoss } from "pg-boss";
 import { db } from "./db";
 import { sendEmail, type Email, type EmailConfig } from "./email";
 import { addDays, daysUntil, dueReminder, EXPIRED_NOTICE_LATEST_DAYS, EXPIRING_SOON_DAYS, REMINDER_DAYS, toDateInput } from "@/lib/subscription";
-import { enqueueInTransaction, getBoss, QUEUES, type InquiryJob, type LeadJob, type PhotoJob, type ReminderJob, type SellerChangeJob } from "./jobs";
+import { enqueueInTransaction, getBoss, QUEUES, type InquiryJob, type LeadJob, type PasswordResetJob, type PhotoJob, type ReminderJob, type SellerChangeJob } from "./jobs";
 import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./lead-emails";
 import { logError, logInfo } from "./log";
+import { passwordResetEmail, type PasswordResetForEmail } from "./member-emails";
 import { getOpsStatus, opsAlertEmail } from "./ops";
 import { purgeExpiredRequestMetadata, purgeStaleOtpChallenges, purgeUnclaimedUploads } from "./retention";
 import { processPhoto } from "./photo-processing";
@@ -106,6 +107,12 @@ async function loadReminder({ reminderId }: ReminderJob): Promise<ReminderForEma
   return reminder;
 }
 
+/** A reset link goes only to an active member (staff passwords are managed with `pnpm staff`). */
+async function loadPasswordReset({ userId, token }: PasswordResetJob): Promise<PasswordResetForEmail | null> {
+  const user = await db().user.findUnique({ where: { id: userId }, select: { email: true, name: true, role: true, disabledAt: true } });
+  return user && user.role === "MEMBER" && !user.disabledAt ? { email: user.email, name: user.name, token } : null;
+}
+
 /** The team's weekly call list: approved sellers expiring soon or recently expired, with phone numbers. */
 async function loadSubscriptionSummary(): Promise<SubscriptionSummary> {
   const today = indiaToday();
@@ -163,6 +170,8 @@ export async function registerWorkers(boss: PgBoss, config: WorkerConfig, only?:
     WORK_OPTIONS,
     emailHandler(config, loadSellerChange, (change) => sellerDecisionEmail(change, appUrl)),
   );
+
+  if (wanted(QUEUES.passwordResetEmail)) await boss.work<PasswordResetJob>(QUEUES.passwordResetEmail, WORK_OPTIONS, emailHandler(config, loadPasswordReset, (reset) => passwordResetEmail(reset, appUrl)));
 
   if (wanted(QUEUES.inquiryNotification)) await boss.work<InquiryJob>(QUEUES.inquiryNotification, WORK_OPTIONS, emailHandler(config, loadInquiry, (inquiry) => newInquiryEmail(inquiry, appUrl)));
 

@@ -3,7 +3,8 @@ import { expectAccessible, watchCsp } from "./helpers";
 
 // Size budget for the home page, in KB as transferred (compressed). The 3D scene has no model files
 // (its kites are generated in code), so its whole cost is the 3D library, loaded only after the page.
-const BUDGET_KB = { pageScripts: 180, scene3d: 260 };
+// Motion (GSAP, ScrollTrigger, Lenis: about 52 KB) also loads only after the page, and never with reduced motion.
+const BUDGET_KB = { pageScripts: 180, scene3d: 260, motion: 60 };
 
 async function scriptKb(page: Page): Promise<number> {
   const bytes = await page.evaluate(() =>
@@ -27,7 +28,8 @@ test("home: the kite picture is in the page itself; the live 3D fades in after t
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
   await expect(page.locator('[data-3d="live"] canvas')).toBeVisible({ timeout: 20_000 });
-  expect(await scriptKb(page)).toBeLessThan(BUDGET_KB.pageScripts + BUDGET_KB.scene3d);
+  await page.waitForFunction(() => document.documentElement.classList.contains("lenis")); // motion has loaded too
+  expect(await scriptKb(page)).toBeLessThan(BUDGET_KB.pageScripts + BUDGET_KB.scene3d + BUDGET_KB.motion);
   await expectAccessible(page);
   expect(csp).toEqual([]);
   expect(errors).toEqual([]);
@@ -36,7 +38,7 @@ test("home: the kite picture is in the page itself; the live 3D fades in after t
 test.describe("with reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
 
-  test("home: keeps the static picture and never downloads the 3D library", async ({ page }) => {
+  test("home: keeps the static picture and never downloads the 3D or motion libraries", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("load");
     await page.waitForTimeout(2500); // well past the point where the 3D would have started loading

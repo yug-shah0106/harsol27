@@ -40,20 +40,22 @@ const FRONT_ROOFS = [[0, 90, 48], [85, 70, 62], [150, 110, 40], [255, 60, 70], [
 const roofs = (blocks: number[][]) => blocks.map(([x, w, h]) => `M${x},140V${140 - h!}H${x! + w!}V140Z`).join("");
 const DETAILS = "M268,70h22v-14h-22Z M672,66Q695,18 718,66Z M695,42V30l11,4-11,4Z M430,104a25,25 0 0 1 50,0Z"; // water tank, temple spire and flag, dome
 
-function Rooftops() {
+/** The skyline along the bottom of the hero's sky (decorative; the kites' strings run down behind it). */
+export function Rooftops({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 1000 140" preserveAspectRatio="xMidYMax slice" className="absolute inset-x-0 bottom-0 h-[16%] w-full" focusable="false">
-      <path d={roofs(BACK_ROOFS)} className="fill-[#d5dae4]" />
-      <path d={roofs(FRONT_ROOFS) + DETAILS} className="fill-[#aeb6c7]" />
+    <svg viewBox="0 0 1000 140" preserveAspectRatio="xMidYMax slice" className={className} aria-hidden="true" focusable="false">
+      <path d={roofs(BACK_ROOFS)} className="fill-[#dde3d6]" />
+      <path d={roofs(FRONT_ROOFS) + DETAILS} className="fill-[#c3cdb9]" />
     </svg>
   );
 }
 
 /**
- * The hero picture: `poster` (server-rendered SVG) first; once the page has loaded and the browser is
- * idle, the live 3D scene is fetched and fades in over it. Decorative, so hidden from screen readers.
+ * The hero's kites: `poster` (server-rendered SVG) first; once the page has loaded and the browser is
+ * idle, the live 3D scene is fetched and fades in over it. Transparent, over the section's sky
+ * (`.kite-sky`), and sized by `className`. Decorative, so hidden from screen readers.
  */
-export function HeroSky({ poster }: { poster: ReactNode }) {
+export function HeroSky({ poster, className }: { poster: ReactNode; className?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const [load, setLoad] = useState(false);
   const [ready, setReady] = useState(false);
@@ -80,7 +82,7 @@ export function HeroSky({ poster }: { poster: ReactNode }) {
   }, []);
 
   return (
-    <div ref={box} aria-hidden="true" data-3d={ready ? "live" : "poster"} className="kite-sky relative aspect-square w-full overflow-hidden rounded-3xl border border-border">
+    <div ref={box} aria-hidden="true" data-3d={ready ? "live" : "poster"} className={className}>
       <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-0" : "opacity-100"}`}>{poster}</div>
       {load && (
         <Fallback>
@@ -89,7 +91,6 @@ export function HeroSky({ poster }: { poster: ReactNode }) {
           </div>
         </Fallback>
       )}
-      <Rooftops />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { fieldErrors } from "@/lib/lead-schema";
 import { inquirySchema } from "@/lib/product-schema";
-import type { Member } from "./authz";
+import type { Member, MemberWithPhone } from "./authz";
 import { clientIpFrom } from "./client-ip";
 import { db } from "./db";
 import { env } from "./env";
@@ -28,7 +28,7 @@ const targetSchema = z.object({ productId: z.uuid().optional(), sellerId: z.uuid
  * cannot inquire to themselves, and the inquiry plus the seller's email notification are saved
  * together. Once saved, contact-access.ts lets this buyer see the seller's contact details.
  */
-export async function sendInquiry(member: Member, form: FormData, headers: Headers): Promise<{ sellerId: string }> {
+export async function sendInquiry(member: MemberWithPhone, form: FormData, headers: Headers): Promise<{ sellerId: string }> {
   const target = targetSchema.safeParse({
     productId: String(form.get("productId") ?? "") || undefined,
     sellerId: String(form.get("sellerId") ?? "") || undefined,
@@ -84,10 +84,10 @@ export async function sendInquiry(member: Member, form: FormData, headers: Heade
   return { sellerId };
 }
 
-/** The name to prefill: the member's name, unless it is still the phone-number placeholder. */
+/** The name to prefill: the member's name, unless it is still the phone-number placeholder (phone accounts). */
 export async function buyerDisplayName(member: Member): Promise<string> {
-  const user = await db().user.findUnique({ where: { id: member.id }, select: { name: true } });
-  return user && user.name !== member.phone ? user.name : "";
+  const user = await db().user.findUnique({ where: { id: member.id }, select: { name: true, phoneNumber: true } });
+  return user && user.name !== user.phoneNumber ? user.name : "";
 }
 
 const inquiryListSelect = {

@@ -33,6 +33,7 @@ function ScrollArea({ orientation = "vertical", label, className, children, ...p
       data-orientation={orientation}
       className={cn("scroll-area", OVERFLOW[orientation], className)}
       {...(label ? { role: "region", "aria-label": label, tabIndex: 0 } : {})}
+      {...(orientation !== "horizontal" ? { "data-lenis-prevent": "" } : {})}
       {...props}
     >
       {children}

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SELLER_DOCUMENTS } from "@/lib/seller-schema";
 import { decisionsFor, SELLER_DECISIONS, SELLER_STATUS_LABELS } from "@/lib/seller-status";
 import { EXPIRED_NOTICE, formatDay, formatRupees, subscriptionState, suggestPaidUntil, toDateInput } from "@/lib/subscription";
+import { isPlaceholderEmail } from "@/server/auth";
 import { requireStaff } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
 import { getSellerForStaff } from "@/server/sellers";
@@ -36,7 +37,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
     ["Contact person", seller.contactName],
     ["Contact phone", contact ? <a key="p" href={`tel:${contact.phone}`} className="text-primary underline">{contact.phone}</a> : "—"],
     ["Contact email", contact ? <a key="e" href={`mailto:${contact.email}`} className="text-primary underline">{contact.email}</a> : "—"],
-    ["Signed in with", seller.user.phoneNumber ?? "—"],
+    ["Account", isPlaceholderEmail(seller.user.email) ? (seller.user.phoneNumber ?? "—") : seller.user.email],
     ["Address", `${seller.address ?? ""}, ${seller.city}, ${seller.state}`],
     ["About", seller.description || "—"],
     ["Applied", `${formatIst(seller.createdAt)} IST`],

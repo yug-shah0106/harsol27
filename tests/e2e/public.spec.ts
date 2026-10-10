@@ -9,7 +9,7 @@ test.beforeEach(async ({ context }) => {
 test("home page: real HTML hero, seeded industries, how it works, call to action", async ({ page }) => {
   const csp = watchCsp(page);
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Find the right Gujarati supplier");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Find the right supplier");
   await expect(page.getByRole("heading", { name: "Industries on Harsol27" })).toBeVisible();
   await expect(page.getByRole("listitem").filter({ hasText: "Food Products" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();

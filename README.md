@@ -38,7 +38,7 @@ pnpm dev                      # http://localhost:3000
 pnpm worker                   # in a second terminal: emails, photo processing, scheduled jobs
 ```
 
-Phone sign-in codes are not texted yet (`SMS_PROVIDER=console`): they appear in the `pnpm dev` output.
+Buyers and sellers create an account at `/sign-up` (email, mobile, password); staff sign in at `/staff/sign-in`. Password-reset emails are sent by `pnpm worker`. "Continue with Google" appears once `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set (see `.env.example`). Sign-in by SMS code is switched off.
 
 Checks (the same ones CI runs):
 

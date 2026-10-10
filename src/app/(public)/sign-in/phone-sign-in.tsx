@@ -1,11 +1,14 @@
 "use client";
 
+// Sign-in by SMS code: switched off until an SMS provider is connected (docs/FUTURE.md). Nothing renders
+// this, so its actions (phone-actions.ts) are not part of the site. To bring it back, render it on the sign-in page.
+
 import { useActionState, useEffect, useRef, useState } from "react";
 import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { requestOtpAction, verifyOtpAction, type CodeSent } from "./actions";
+import { requestOtpAction, verifyOtpAction, type CodeSent } from "./phone-actions";
 
 export function PhoneSignIn({ next }: { next: string }) {
   const [sendState, sendAction, sending] = useActionState(requestOtpAction, null);

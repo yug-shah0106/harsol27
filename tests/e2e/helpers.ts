@@ -19,8 +19,13 @@ export async function newPage(browser: Browser): Promise<Page> {
 
 /** Fails on any WCAG 2.1 A/AA violation axe can detect automatically on the current page. */
 export async function expectAccessible(page: Page) {
+  // Check the page as it looks once settled: reduced motion undoes every scroll animation
+  // (components/motion.tsx) and ends CSS entrances at once, so nothing is caught half-faded.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-reveal], [data-word]")].every((el) => getComputedStyle(el).opacity === "1"));
   const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
-  expect(violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
+  // Names the elements, so a failure says where to look.
+  expect(violations.map((v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(" ")).join(", ")})`)).toEqual([]);
 }
 
 /** Collects Content-Security-Policy violations reported in the browser console. */

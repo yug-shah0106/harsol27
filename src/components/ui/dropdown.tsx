@@ -229,7 +229,7 @@ function Dropdown({
         data-side={above ? "top" : "bottom"}
         // Keep focus on the button when an option is clicked.
         onMouseDown={(event) => event.preventDefault()}
-        className="absolute inset-x-0 z-50 max-h-72 min-w-40 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg [--scroll-bg:var(--popover)] data-[side=bottom]:top-full data-[side=bottom]:mt-1 data-[side=top]:bottom-full data-[side=top]:mb-1"
+        className="absolute inset-x-0 z-50 max-h-72 min-w-40 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg [--scroll-bg:var(--popover)] animate-in fade-in-0 zoom-in-95 duration-150 ease-out data-[side=bottom]:top-full data-[side=bottom]:mt-1 data-[side=bottom]:slide-in-from-top-1 data-[side=bottom]:origin-top data-[side=top]:bottom-full data-[side=top]:mb-1 data-[side=top]:slide-in-from-bottom-1 data-[side=top]:origin-bottom"
       >
         {options.map((option, index) => (
           <div

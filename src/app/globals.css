@@ -10,51 +10,53 @@
  * Harsol27 design tokens. Every colour is a hex value in :root so the WCAG contrast test
  * (src/lib/brand-contrast.test.ts) can read and check them. Components use only these tokens.
  *
- * Palette: deep indigo (trust, the primary action colour) and saffron (warmth, used as an
- * accent behind dark text only, never as text on light backgrounds), on a warm ivory page.
- * Light theme only for now.
+ * Palette: light, sober and elegant. Linen #faf7f2 (the page), stone #ede8e0 and sage #dfe6d8 (soft
+ * section backgrounds), blush #f1d9ce (the highlight, behind text only), and olive #56664f, the one
+ * strong colour: buttons, links and headings. No dark backgrounds anywhere. Light theme only.
  */
 :root {
-  --background: #fbf8f3; /* warm ivory page */
-  --foreground: #1f1a17; /* body text */
+  --background: #faf7f2; /* linen page */
+  --foreground: #2e2b27; /* body text: soft charcoal */
   --card: #ffffff;
-  --card-foreground: #1f1a17;
+  --card-foreground: #2e2b27;
   --popover: #ffffff;
-  --popover-foreground: #1f1a17;
-  --primary: #1f3a68; /* indigo: buttons, links */
+  --popover-foreground: #2e2b27;
+  --primary: #56664f; /* olive: buttons, links, headings */
   --primary-foreground: #ffffff;
-  --secondary: #f1ebe0; /* sand: secondary surfaces */
-  --secondary-foreground: #1f1a17;
-  --muted: #f1ebe0;
-  --muted-foreground: #5e5650; /* secondary text */
-  --accent: #f6b44a; /* saffron: highlights, always with dark text */
-  --accent-foreground: #1f1a17;
+  --secondary: #ede8e0; /* stone: secondary surfaces, the marquee, the footer */
+  --secondary-foreground: #2e2b27;
+  --muted: #ede8e0;
+  --muted-foreground: #645e56; /* secondary text */
+  --accent: #f1d9ce; /* blush: highlights, always behind text */
+  --accent-foreground: #2e2b27;
   --destructive: #b42318; /* errors: always paired with an icon or text, never colour alone */
   --success: #067647;
-  --border: #ddd5c8; /* decorative dividers */
-  --input: #8c8279; /* form-control borders: ≥ 3:1 against page and card */
-  --ring: #1f3a68; /* keyboard focus */
+  --border: #e4ddd2; /* decorative hairlines */
+  --sage: #dfe6d8; /* a soft section background */
+  --input: #8a8378; /* form-control borders: ≥ 3:1 against page and card */
+  --ring: #56664f; /* keyboard focus */
   --radius: 0.625rem;
 
   /* Unused shadcn slots, mapped to the palette so stray usage still looks on-brand. */
-  --chart-1: #1f3a68;
-  --chart-2: #f6b44a;
+  --chart-1: #56664f;
+  --chart-2: #f1d9ce;
   --chart-3: #067647;
-  --chart-4: #5e5650;
+  --chart-4: #645e56;
   --chart-5: #b42318;
   --sidebar: #ffffff;
-  --sidebar-foreground: #1f1a17;
-  --sidebar-primary: #1f3a68;
+  --sidebar-foreground: #2e2b27;
+  --sidebar-primary: #56664f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1ebe0;
-  --sidebar-accent-foreground: #1f1a17;
-  --sidebar-border: #ddd5c8;
-  --sidebar-ring: #1f3a68;
+  --sidebar-accent: #ede8e0;
+  --sidebar-accent-foreground: #2e2b27;
+  --sidebar-border: #e4ddd2;
+  --sidebar-ring: #56664f;
 }
 
 @theme inline {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-serif), ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -72,6 +74,7 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-border: var(--border);
+  --color-sage: var(--sage);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
@@ -96,11 +99,11 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* The hero's sky behind the kites: pale morning blue, warming towards the horizon, with a soft sun. */
+/* The hero's sky behind the kites: a soft morning, pale sage above, settling into linen at the horizon, with a blush sun. */
 .kite-sky {
   background:
-    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 55%, transparent) 0, transparent 22%),
-    linear-gradient(to bottom, #dce6f3 0%, #e9eef5 45%, #f8eedd 100%);
+    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 80%, transparent) 0, transparent 24%),
+    linear-gradient(to bottom, #e6ece2 0%, #f1f1ea 45%, var(--background) 100%);
 }
 
 /*
@@ -136,8 +139,68 @@
   }
 }
 
+/* Lenis smooth scrolling (components/motion.tsx): the rules from lenis/dist/lenis.css. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 /* In the components layer, so a page's own classes (e.g. [--scroll-bg:var(--card)]) win over these defaults. */
 @layer components {
+  /*
+   * SpotlightCard (React Bits, rebuilt; components/motion.tsx sets --spot-x/--spot-y as the pointer
+   * moves): a soft olive light inside the card and a brighter rim where the pointer is near its edge.
+   * Shows only on hover; without a mouse or JavaScript the card is unchanged.
+   */
+  .spotlight {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight::before,
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  .spotlight::before {
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%);
+  }
+  .spotlight::after {
+    inset: -1px;
+    padding: 1px;
+    background: radial-gradient(160px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--primary) 70%, transparent), transparent 70%);
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .spotlight:hover::before,
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+
+  /* A line that draws itself from the left once, at first paint (the hero underline). CSS, so it never waits for scripts. */
+  .animate-draw {
+    transform-origin: left;
+    animation: draw-x 900ms cubic-bezier(0.65, 0, 0.35, 1) 600ms both;
+  }
+  @keyframes draw-x {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
   /*
    * <ScrollArea> (components/ui/scroll-area.tsx): soft shadows at an edge while there is more to
    * scroll that way, pure CSS. The "local" covers move with the content and hide each shadow once
@@ -202,6 +265,7 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-delay: 0s !important; /* entrances finish at once instead of appearing late */
       transition-duration: 0.01ms !important;
     }
   }

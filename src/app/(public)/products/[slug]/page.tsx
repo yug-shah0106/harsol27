@@ -43,7 +43,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             <Link href={`/industries/${product.industry.slug}`} className="w-fit text-sm text-primary underline">
               {product.industry.name}
             </Link>
-            <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight animate-in slide-in-from-bottom-2 duration-500 ease-out">{product.name}</h1>
             <p className="text-muted-foreground">
               by{" "}
               <Link href={`/sellers/${product.seller.slug}`} className="font-medium text-primary underline">
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
             </div>
           )}
 
-          <section aria-labelledby="description-heading" className="flex flex-col gap-2">
+          <section aria-labelledby="description-heading" data-reveal className="flex flex-col gap-2">
             <h2 id="description-heading" className="text-xl font-bold">
               Description
             </h2>
@@ -80,7 +80,7 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
           </section>
 
           {specs.length > 0 && (
-            <section aria-labelledby="specs-heading" className="flex flex-col gap-2">
+            <section aria-labelledby="specs-heading" data-reveal className="flex flex-col gap-2">
               <h2 id="specs-heading" className="text-xl font-bold">
                 Specifications
               </h2>

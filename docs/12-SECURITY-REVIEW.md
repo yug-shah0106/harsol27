@@ -22,7 +22,10 @@ on every pull request.
 | **Sellers only touch their own data** | Every product and photo action checks that the item belongs to the signed-in seller. Another seller's product answers "not found". | `src/server/products.test.ts`, `tests/e2e/access.spec.ts` |
 | **Seller contact details** | Hidden by default by the database client; one function decides who may see them; a test fails the build if any other code reads them. They are not in the page at all until an inquiry is sent. | `src/server/contact-access*.test.ts`, `tests/e2e/marketplace.spec.ts` |
 | **Staff sign-in** | Passwords hashed with argon2id. One message for every failure (no hint whether an account exists), with equal timing. Lockout after 5 wrong passwords for 15 minutes; 10 attempts per 15 minutes per network. Staff sessions end when the browser closes and last at most 12 hours. | `src/server/staff-policy.test.ts`, `tests/e2e/staff-auth.spec.ts`, `tests/e2e/security-headers.spec.ts` |
-| **Phone sign-in** | Codes are stored only as keyed hashes, expire in 5 minutes, allow 5 attempts and work once. Limits: 3 codes per 15 minutes per number, 10 per hour per network. | `src/server/otp.test.ts`, `tests/e2e/sellers.spec.ts` |
+| **Buyer and seller sign-in** (email and password, since 2026-10-10) | The same protections as staff sign-in: argon2id, one message for every failure, equal timing, lockout after 5 wrong passwords, 10 attempts per 15 minutes per network. Staff accounts are refused on the member page, so staff only ever sign in through the staff page and its rules. Sign-up: 5 accounts per hour per network. | `tests/e2e/member-auth.spec.ts` |
+| **Password reset** | Single-use links that expire in an hour, sent only to member accounts (staff passwords are set with `pnpm staff`). The page answers the same for unknown addresses. A reset ends every other session and clears a lockout. Limits per network and per address. The reset page sends no referrer, so the token cannot leak. | `src/server/member-emails.test.ts`, `tests/e2e/member-auth.spec.ts` |
+| **Google sign-in** (once a key is set) | Only Google's return address (`/api/auth/callback/google`) is exposed from Better Auth, behind its state check. Google never joins an existing account (staff, or a member who signed up with a password). Google's tokens are stored encrypted. | `tests/e2e/member-auth.spec.ts` |
+| **Phone sign-in** (switched off; kept for later) | Codes are stored only as keyed hashes, expire in 5 minutes, allow 5 attempts and work once. Limits: 3 codes per 15 minutes per number, 10 per hour per network. | `src/server/otp.test.ts` |
 | **Session cookies** | `HttpOnly` (scripts cannot read them), `SameSite=Lax` (not sent with other sites' requests), `Secure` on HTTPS. | `tests/e2e/security-headers.spec.ts` |
 | **Forged requests from other sites** | Next.js rejects a server action whose Origin is not this site, before the action runs. | `tests/e2e/security-headers.spec.ts` (the real lead-form action, posted from this site and from another) |
 | **Script injection (XSS)** | React escapes all output; no raw HTML anywhere in the code. A per-request nonce-based Content Security Policy blocks any script we did not send. All user text in emails is escaped. | `tests/e2e/security-headers.spec.ts`, CSP checks on every page in `tests/e2e/accessibility.spec.ts`, `src/server/*-emails.test.ts` |
@@ -35,12 +38,25 @@ on every pull request.
 | **Secrets** | Never committed: a scan of the whole git history found none, and no `.env` file was ever committed. Settings are validated at start-up, so a missing or weak one stops the app. | `src/server/env.test.ts` |
 | **Server setup** | The app runs as a non-root user in Docker; the app and database ports are bound to the server itself only; the database is not exposed. | `deploy/compose.yml`, `Dockerfile` |
 
+## Change on 2026-10-10: email and password for buyers and sellers
+
+SMS sign-in is switched off until an SMS provider is connected. Buyers and sellers now create an
+account with name, email, mobile number and password, or use Google once a key is set. Two
+decisions by the client carry known risks:
+
+- **No email confirmation.** An account works as soon as it is created, so someone could sign up
+  with another person's address. They could send inquiries under it, but they never receive that
+  person's email. The address cannot be taken twice, and a reset link only ever goes to the real
+  inbox.
+- **The mobile number is not verified** (there is no SMS). Sellers receive the number the buyer
+  typed, which may be wrong.
+
 ## Tests by role
 
 | Role | Journeys covered end to end |
 |---|---|
 | Visitor | Home page (with and without 3D), search, industries, product and seller pages, lead form, sign-in, not-found page, offline page, keyboard-only search |
-| Buyer | Phone sign-in, inquiry from a product and from a seller profile, contacts unlocked, "My inquiries", sign out |
+| Buyer | Create an account, sign in with email and password, forgot password, Google (start and a broken return), adding a missing mobile number, inquiry from a product and from a seller profile, contacts unlocked, "My inquiries", sign out |
 | Seller | Application with documents, rejection and resubmission, approval, products (add, edit, photos: add, reorder, delete), hide and show, inquiries received, subscription page; suspension takes listings offline and reinstatement restores them |
 | Admin | Leads, industries, seller decisions, product removal and restore, inquiries with their source, subscriptions and payments |
 | Viewer | Every admin page, read only: no controls, and changes refused on the server |
@@ -77,7 +93,7 @@ together with the size budget for the 3D scene.
 ## Still to do before launch
 
 These are in `docs/FUTURE.md`:
-- connect an SMS provider and remove `ALLOW_CONSOLE_SMS`
+- ~~connect an SMS provider and remove `ALLOW_CONSOLE_SMS`~~: no longer needed, since sign-in by SMS code is switched off (2026-10-10)
 - rotate the secrets that were shared in chat
 - verify the email domain
 - put Cloudflare in front, which also rate-limits public pages such as search

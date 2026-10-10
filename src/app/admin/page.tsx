@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CountUp } from "@/components/motion-text";
 import { requireStaff } from "@/server/authz";
 import { db } from "@/server/db";
 import { countRecentInquiries } from "@/server/inquiries";
@@ -39,7 +40,7 @@ export default async function AdminHomePage() {
           <li key={tile.label}>
             <Link href={tile.href} className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 no-underline hover:border-primary">
               <span className="text-sm text-muted-foreground">{tile.label}</span>
-              <span className="text-3xl font-bold">{tile.value}</span>
+              <CountUp value={tile.value} className="text-3xl font-bold" />
             </Link>
           </li>
         ))}

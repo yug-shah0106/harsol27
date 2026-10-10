@@ -20,11 +20,12 @@ enum Role {
 model User {
   id                  String    @id @default(uuid(7)) @db.Uuid
   name                String
-  email               String    @unique // lowercase. Phone members get a placeholder address.
+  email               String    @unique // lowercase. Members who signed in by phone (SMS, now off) have a placeholder address.
   emailVerified       Boolean   @default(false)
   image               String?
   phoneNumber         String?   @unique // E.164
   phoneNumberVerified Boolean?
+  mobile              String? // E.164, typed at sign-up and not verified (no SMS yet). Sent to sellers with inquiries.
   role                Role      @default(MEMBER)
   failedLoginCount    Int       @default(0)
   lockedUntil         DateTime?
@@ -70,7 +71,7 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String? // argon2id hash, staff only
+  password              String? // argon2id hash (staff and email members)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
