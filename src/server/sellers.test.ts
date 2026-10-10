@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SELLER_DOCUMENT_KINDS } from "@/lib/seller-schema";
-import type { Member } from "./authz";
+import type { Member, MemberWithPhone } from "./authz";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
@@ -14,10 +14,11 @@ const PDF = new TextEncoder().encode("%PDF-1.4\n% test document\n");
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 let admin: StaffUser;
 
-async function newMember(): Promise<Member> {
+async function newMember(): Promise<MemberWithPhone> {
   const phone = `+9197${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
-  const user = await db().user.create({ data: { name: phone, email: `${phone.slice(1)}@phone.harsol27.invalid`, phoneNumber: phone, phoneNumberVerified: true } });
-  return { id: user.id, phone };
+  const email = `seller-${crypto.randomUUID().slice(0, 8)}@example.test`;
+  const user = await db().user.create({ data: { name: "Seller Test", email, mobile: phone } });
+  return { id: user.id, email, phone };
 }
 
 /** The browser's two steps: ask for an upload URL, then PUT the bytes straight to storage. */

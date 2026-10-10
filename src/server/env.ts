@@ -30,13 +30,24 @@ const schema = baseSchema.extend(storageSchema.shape).extend({
    */
   CLIENT_IP_HEADER: z.enum(["x-forwarded-for", "cf-connecting-ip", "x-real-ip"]).default("x-forwarded-for"),
   /**
-   * How one-time codes are delivered. "console" writes them to the server log: for development and
-   * staging only, until an SMS provider is chosen (see docs/FUTURE.md). Must never be used with real users.
+   * How one-time codes would be delivered. Sign-in by SMS code is switched off (members use email and
+   * password) and kept for later (docs/FUTURE.md), so leave this unset. "console" writes codes to the
+   * server log: development and staging only, never with real users.
    */
-  SMS_PROVIDER: z.enum(["console"]),
+  SMS_PROVIDER: z.enum(["console"]).optional(),
   /** Staging only: lets a production build run with the console sender. Never set at launch. */
   ALLOW_CONSOLE_SMS: z.enum(["true", "false"]).default("false"),
+  /**
+   * "Continue with Google" (optional). Both or neither: the button appears only when both are set.
+   * From Google Cloud Console → APIs & Services → Credentials → OAuth client ID (Web application),
+   * with the redirect URI <BETTER_AUTH_URL>/api/auth/callback/google.
+   */
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
 }).superRefine((config, ctx) => {
+  if (!config.GOOGLE_CLIENT_ID !== !config.GOOGLE_CLIENT_SECRET) {
+    ctx.addIssue({ code: "custom", path: ["GOOGLE_CLIENT_ID"], message: "set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or neither" });
+  }
   // Anyone who can read the server log could sign in as anyone: refuse unless explicitly allowed.
   if (config.NODE_ENV === "production" && config.SMS_PROVIDER === "console" && config.ALLOW_CONSOLE_SMS !== "true") {
     ctx.addIssue({
@@ -62,8 +73,13 @@ const workerSchema = baseSchema.extend(storageSchema.shape).extend({
 export type Env = z.infer<typeof schema>;
 export type WorkerEnv = z.infer<typeof workerSchema>;
 
+/** Docker Compose passes an unset optional setting as "" (e.g. `${GOOGLE_CLIENT_ID:-}`): treat it as unset. */
+export function withoutEmpty(values: Record<string, string | undefined>): Record<string, string> {
+  return Object.fromEntries(Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === "string" && entry[1] !== ""));
+}
+
 function parse<T extends z.ZodType>(s: T): z.infer<T> {
-  const parsed = s.safeParse(process.env);
+  const parsed = s.safeParse(withoutEmpty(process.env));
   if (!parsed.success) {
     // Only variable names and rule messages are printed, never values.
     const problems = parsed.error.issues.map((i) => `  ${i.path.join(".")}: ${i.message}`).join("\n");

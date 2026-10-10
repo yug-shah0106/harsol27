@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { expectAccessible, newPage, unique, watchCsp } from "./helpers";
-import { completeSignIn, PDF_FILE, PNG_FILE, randomMobile, requestCode } from "./member";
+import { completeSignIn, PDF_FILE, PNG_FILE, randomMobile } from "./member";
 import { signInAs, STAFF } from "./staff";
 
 const DOCUMENTS = [
@@ -9,40 +9,6 @@ const DOCUMENTS = [
   ["Udyam or business registration certificate", "udyam.pdf"],
   ["Address proof (for example an electricity bill)", "bill.pdf"],
 ] as const;
-
-
-test("phone sign-in: protected pages send you to sign in and bring you back", async ({ browser }) => {
-  const page = await newPage(browser);
-  await page.goto("/seller/apply");
-  await expect(page).toHaveURL(/\/sign-in\?next=%2Fseller%2Fapply$/);
-  await expect(page.getByText("Test mode.")).toBeVisible();
-  await expectAccessible(page);
-
-  await completeSignIn(page, randomMobile());
-  await expect(page).toHaveURL(/\/seller\/apply$/);
-  await expect(page.getByRole("link", { name: "Your account" })).toBeVisible();
-});
-
-test("phone sign-in: a wrong code is refused with a clear message, and the right one still works", async ({ browser }) => {
-  const page = await newPage(browser);
-  const mobile = randomMobile();
-  await page.goto("/sign-in");
-  await requestCode(page, mobile.local);
-  await page.getByLabel("6-digit code").fill("000000");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByText("That code is not right or has expired")).toBeVisible();
-  await expect(page.getByLabel("6-digit code")).toHaveAttribute("aria-invalid", "true");
-  await expect(page).toHaveURL(/\/sign-in$/);
-});
-
-test("phone sign-in: an invalid number is refused before any code is sent", async ({ browser }) => {
-  const page = await newPage(browser);
-  await page.goto("/sign-in");
-  await page.getByLabel("Mobile number").fill("12345");
-  await page.getByRole("button", { name: "Send code" }).click();
-  await expect(page.getByText("Enter a valid mobile number")).toBeVisible();
-  await expect(page.getByLabel("Mobile number")).toHaveValue("12345"); // what they typed is kept
-});
 
 test("seller journey: apply with documents → rejected with reason → resubmit → approved", async ({ browser }) => {
   // ── The seller applies ──

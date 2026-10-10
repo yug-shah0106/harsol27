@@ -30,13 +30,13 @@ and backup-failure alarms.
 
 | # | Item | Why it matters | Verified by |
 |---|---|---|---|
-| 1 | **Domain name**, registered in the client's account | The site's permanent address | (automatic) "uses its own domain" |
+| 1 | **Domain name: harsol27.com**, registered in the client's account, with `www.harsol27.com` redirecting to it, and `APP_URL="https://harsol27.com"` in `deploy/.env` | The site's permanent address | (automatic) "uses its own domain" |
 | 2 | **Hosting decision (AWS)** and a server. A sensible start is 2 vCPUs, 4 GB memory, 40 GB disk, Ubuntu LTS. | Somewhere to run the stack. Photo processing needs the memory. | Deploys and stays healthy |
 | 3 | **Cloudflare** in front of the domain (DNS, HTTPS, firewall). Then set `CLIENT_IP_HEADER=cf-connecting-ip` and add a rate-limit rule for `/search` and the forms. | Protection from abuse, and real visitor addresses for the rate limits | (automatic) "visitor addresses come from Cloudflare" |
 | 4 | **Cloudflare R2**: a private bucket for files, and an API token for that bucket only | Seller documents and product photos | (automatic) "files are stored in real storage", "file storage answers" |
 | 5 | **A second R2 bucket for backups**, with its own token, and a lifecycle rule deleting copies after 90 days | A lost server must not mean lost data | (automatic) "backups are copied off the server" |
-| 6 | **SMS provider for sign-in codes**, with DLT registration of the sender ID and the code template (allow several days) | Buyers and sellers cannot sign in without it | (automatic) "sign-in codes are sent by SMS"; then remove `ALLOW_CONSOLE_SMS` |
-| 7 | **Email domain verified in Resend** (SPF, DKIM, DMARC records in DNS), and `EMAIL_FROM` set to an address on it | Without it, every email goes to spam or is not delivered | (automatic) "emails come from our own domain", "email domain is verified" |
+| 6 | **Google sign-in key** (optional): an OAuth client in Google Cloud Console with the redirect URI `https://harsol27.com/api/auth/callback/google`, in `deploy/.env` as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. (Sign-in by SMS code is switched off, so no SMS provider is needed to launch.) | Without it the "Continue with Google" button is hidden; email and password still work | (automatic) "Continue with Google is set up" (a warning only) |
+| 7 | **Email domain verified in Resend** (SPF, DKIM, DMARC records in DNS), and `EMAIL_FROM` set to an address on it (e.g. `Harsol27 <noreply@harsol27.com>`) | Without it, every email goes to spam or is not delivered, including password-reset links (members who forget their password would be stuck) | (automatic) "emails come from our own domain", "email domain is verified" |
 | 8 | **Legal review** of `/terms` and `/privacy`, then remove the "Draft" notices | Required before collecting real personal data | (automatic) "has been legally reviewed" |
 | 9 | **A privacy contact address** for the privacy page | People must be able to ask about their data | Read the privacy page |
 | 10 | **How sellers pay and renew**: the price and payment details to show sellers | Renewal reminders currently say "reply to this email" | Read the seller subscription page |

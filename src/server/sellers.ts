@@ -207,7 +207,7 @@ export function getSellerForStaff(id: string) {
   return db().seller.findUnique({
     where: { id },
     include: {
-      user: { select: { phoneNumber: true } },
+      user: { select: { phoneNumber: true, email: true } },
       documents: { orderBy: { kind: "asc" } },
       statusChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true, role: true } } } },
     },

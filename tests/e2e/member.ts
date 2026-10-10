@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 import { Client } from "pg";
-import { hashOtp } from "../../src/server/otp-hash";
 
 /** A random, valid Indian mobile number: "98xxxxxxxx" (local form) and its E.164 form. */
 export function randomMobile(): { local: string; e164: string } {
@@ -8,7 +7,7 @@ export function randomMobile(): { local: string; e164: string } {
   return { local, e164: `+91${local}` };
 }
 
-async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> {
+export async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   const client = new Client({ connectionString: process.env.TEST_DATABASE_URL });
   await client.connect();
   try {
@@ -18,36 +17,31 @@ async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   }
 }
 
+export const MEMBER_PASSWORD = "kite-season-2026";
+/** The email the test account for a mobile number signs up with. */
+export const emailFor = (mobile: { local: string }) => `member.${mobile.local}@example.test`;
+
 /**
- * The SMS sender is not connected yet (codes only go to the server log), so the test replaces the
- * stored hash of the code it just requested with the hash of a code it knows. Everything else (the
- * page, rate limits, attempts, single use, session creation) runs exactly as in production.
+ * Creates a buyer/seller account through the real "Create an account" form, starting from the sign-in
+ * page (where a protected page sends you), and lands wherever sign-in was meant to go. The mobile
+ * number identifies the member in the database helpers below.
  */
-export async function setKnownCode(e164: string, code: string): Promise<void> {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) throw new Error("BETTER_AUTH_SECRET is not set for the e2e run");
-  await withDb((db) =>
-    db.query(
-      `UPDATE "OtpChallenge" SET "codeHash" = $1
-       WHERE "id" = (SELECT "id" FROM "OtpChallenge" WHERE "phone" = $2 AND "consumedAt" IS NULL ORDER BY "createdAt" DESC LIMIT 1)`,
-      [hashOtp(secret, e164, code), e164],
-    ),
-  );
-}
-
-export async function requestCode(page: Page, local: string) {
-  await page.getByLabel("Mobile number").fill(local);
-  await page.getByRole("button", { name: "Send code" }).click();
-  await expect(page.getByText("We sent a 6-digit code")).toBeVisible();
-}
-
-/** Full phone sign-in from wherever the page currently is (it must be on /sign-in). */
 export async function completeSignIn(page: Page, mobile: { local: string; e164: string }) {
-  await requestCode(page, mobile.local);
-  await setKnownCode(mobile.e164, "246810");
-  await page.getByLabel("6-digit code").fill("246810");
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).not.toHaveURL(/\/sign-in/); // signed in and sent on
+  await page.getByRole("link", { name: "Create an account" }).click();
+  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible({ timeout: 20_000 });
+  await page.getByLabel("Your name").fill("Meera Desai");
+  await page.getByLabel("Email").fill(emailFor(mobile));
+  await page.getByLabel("Mobile number").fill(mobile.local);
+  await page.getByLabel("Password").fill(MEMBER_PASSWORD);
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).not.toHaveURL(/\/(sign-in|sign-up)/, { timeout: 20_000 }); // signed in and sent on (password hashing is slow by design)
+}
+
+/** Signs an existing member in with email and password (the page must be on /sign-in). */
+export async function signInMember(page: Page, email: string, password = MEMBER_PASSWORD) {
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Continue" }).click();
 }
 
 export const PDF_FILE = (name: string) => ({ name, mimeType: "application/pdf", buffer: Buffer.from(`%PDF-1.4\n% ${name}\n`) });
@@ -68,7 +62,7 @@ export async function makeApprovedSeller(e164: string, company: string, paidForD
     db.query(
       `INSERT INTO "Seller" ("id","userId","companyName","slug","city","state","contactName","contactPhone","contactEmail","status","paidUntil","createdAt","updatedAt")
        SELECT gen_random_uuid(), "id", $2, $3, 'Rajkot', 'Gujarat', 'Kiran Patel', $4, $5, 'APPROVED', current_date + $6::int, now(), now()
-       FROM "User" WHERE "phoneNumber" = $1`,
+       FROM "User" WHERE "mobile" = $1`,
       [e164, company, `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 7)}`, contactPhone, contactEmail, paidForDays],
     ),
   );
@@ -77,7 +71,7 @@ export async function makeApprovedSeller(e164: string, company: string, paidForD
 
 /** The seller id for a member's phone (after makeApprovedSeller). */
 export async function sellerOf(e164: string): Promise<{ id: string; slug: string }> {
-  const { rows } = await withDb((db) => db.query(`SELECT s."id", s."slug" FROM "Seller" s JOIN "User" u ON u."id" = s."userId" WHERE u."phoneNumber" = $1`, [e164]));
+  const { rows } = await withDb((db) => db.query(`SELECT s."id", s."slug" FROM "Seller" s JOIN "User" u ON u."id" = s."userId" WHERE u."mobile" = $1`, [e164]));
   return rows[0] as { id: string; slug: string };
 }
 
@@ -100,7 +94,7 @@ export async function makeInquiry(buyerE164: string, sellerId: string, productId
   await withDb((db) =>
     db.query(
       `INSERT INTO "Inquiry" ("id","buyerId","sellerId","productId","message","buyerName","buyerPhone","sourceIp","createdAt")
-       SELECT gen_random_uuid(), u."id", $2, $3, 'Please quote for 100 cartons.', 'Meera Desai', $1, '203.0.113.7', now() FROM "User" u WHERE u."phoneNumber" = $1`,
+       SELECT gen_random_uuid(), u."id", $2, $3, 'Please quote for 100 cartons.', 'Meera Desai', $1, '203.0.113.7', now() FROM "User" u WHERE u."mobile" = $1`,
       [buyerE164, sellerId, productId],
     ),
   );
@@ -119,7 +113,7 @@ export async function makeLead(fullName: string): Promise<string> {
 }
 
 export async function setSellerStatus(e164: string, status: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"): Promise<void> {
-  await withDb((db) => db.query(`UPDATE "Seller" SET "status" = $2 WHERE "userId" = (SELECT "id" FROM "User" WHERE "phoneNumber" = $1)`, [e164, status]));
+  await withDb((db) => db.query(`UPDATE "Seller" SET "status" = $2 WHERE "userId" = (SELECT "id" FROM "User" WHERE "mobile" = $1)`, [e164, status]));
 }
 
 /** Replaces the backup history with one run that ended just now (ok or failed), or with none. */

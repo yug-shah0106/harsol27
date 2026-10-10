@@ -1,5 +1,5 @@
 // Test data builders for database tests. Each call creates fresh, uniquely named rows.
-import type { Member } from "../src/server/authz";
+import type { Member, MemberWithPhone } from "../src/server/authz";
 import { db } from "../src/server/db";
 import type { StaffUser } from "../src/server/staff-policy";
 import { indiaToday } from "../src/server/visibility";
@@ -7,10 +7,12 @@ import { indiaToday } from "../src/server/visibility";
 const uid = () => crypto.randomUUID().slice(0, 8);
 export const daysFromToday = (days: number) => new Date(indiaToday().getTime() + days * 86_400_000);
 
-export async function makeMember(): Promise<Member> {
+/** A buyer/seller account as made by the sign-up form: email, name and an (unverified) mobile. */
+export async function makeMember(): Promise<MemberWithPhone> {
   const phone = `+9196${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
-  const user = await db().user.create({ data: { name: phone, email: `${phone.slice(1)}@phone.harsol27.invalid`, phoneNumber: phone, phoneNumberVerified: true } });
-  return { id: user.id, phone };
+  const email = `member-${uid()}@example.test`;
+  const user = await db().user.create({ data: { name: `Member ${uid()}`, email, mobile: phone } });
+  return { id: user.id, email, phone };
 }
 
 export async function makeStaff(role: "ADMIN" | "VIEWER" = "ADMIN"): Promise<StaffUser> {

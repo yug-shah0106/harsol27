@@ -113,7 +113,7 @@ describe("inquiries", () => {
     await expect(sendInquiry(buyer, inquiryForm({ productId: hidden.id }), headers())).rejects.toThrow(/no longer available/);
     await expect(sendInquiry(buyer, inquiryForm({ productId: crypto.randomUUID() }), headers())).rejects.toThrow(/no longer available/);
     await expect(sendInquiry(buyer, inquiryForm({}), headers())).rejects.toThrow(/could not be found/);
-    await expect(sendInquiry({ id: sellerOwnerId, phone: "+919999999999" }, inquiryForm({ productId: product.id }), headers())).rejects.toThrow(/your own listing/);
+    await expect(sendInquiry({ id: sellerOwnerId, email: null, phone: "+919999999999" }, inquiryForm({ productId: product.id }), headers())).rejects.toThrow(/your own listing/);
     expect(await getSellerContact({ kind: "member", id: buyer.id }, visibleSeller.id)).toBeNull();
   });
 

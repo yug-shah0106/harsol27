@@ -50,13 +50,16 @@ test("visitor pages", async ({ browser }) => {
     `/products/${product.slug}`,
     `/sellers/${sellerSlug}`,
     "/sign-in",
+    "/sign-up",
+    "/forgot-password",
+    "/reset-password?token=not-a-real-token",
     "/staff/sign-in",
     "/this-page-does-not-exist",
   ]);
 });
 
 test("buyer and seller pages", async ({ browser }) => {
-  await sweep(fixture.buyerPage, ["/account", "/account/inquiries", `/products/${fixture.product.slug}`, "/seller/apply"]);
+  await sweep(fixture.buyerPage, ["/account", "/account/mobile?change=1", "/account/inquiries", `/products/${fixture.product.slug}`, "/seller/apply"]);
   await sweep(fixture.sellerPage, ["/seller", "/seller/products", "/seller/products/new", `/seller/products/${fixture.product.id}`, "/seller/inquiries", "/seller/subscription"]);
   const fresh = await newPage(browser); // the application form, before applying
   await fresh.goto("/sign-in");

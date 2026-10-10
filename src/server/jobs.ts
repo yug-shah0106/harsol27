@@ -16,6 +16,7 @@ export const QUEUES = {
   subscriptionReminderEmail: "subscription-reminder-email",
   subscriptionSummary: "subscription-summary", // weekly, to the team
   opsCheck: "ops-check", // daily: backups, worker, failed jobs → email the team if anything is wrong
+  passwordResetEmail: "password-reset-email",
 } as const;
 
 export type LeadJob = { leadId: string };
@@ -25,6 +26,8 @@ export type PhotoJob = { photoId: string };
 export type InquiryJob = { inquiryId: string };
 /** Points at one SubscriptionReminder row, which exists once per seller, paid-until date and reminder. */
 export type ReminderJob = { reminderId: string };
+/** The reset token itself: Better Auth keeps only its row (which expires in an hour), so the job carries it. */
+export type PasswordResetJob = { userId: string; token: string };
 
 // Retries with exponential backoff, capped at one hour between attempts (about a day in total).
 const QUEUE_OPTIONS = { retryLimit: 12, retryDelay: 30, retryBackoff: true, retryDelayMax: 3600 };
@@ -67,4 +70,9 @@ export async function enqueueLeadEmails(instance: PgBoss, tx: Prisma.Transaction
   const db = fromPrisma(tx);
   await instance.send(QUEUES.leadConfirmation, { leadId } satisfies LeadJob, { db });
   await instance.send(QUEUES.leadTeamAlert, { leadId } satisfies LeadJob, { db });
+}
+
+/** Queue a password-reset email. Not in a transaction: the token row is already saved by Better Auth. */
+export async function enqueuePasswordResetEmail(userId: string, token: string): Promise<void> {
+  await (await getBoss()).send(QUEUES.passwordResetEmail, { userId, token } satisfies PasswordResetJob);
 }
