@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CountUp } from "@/components/motion-text";
+import { pageMetadata } from "@/lib/seo";
 import { listIndustriesWithCounts } from "@/server/catalog";
 
-export const metadata: Metadata = { title: "Browse by industry", description: "Gujarat's manufacturers, wholesalers and traders, by industry." };
+export const metadata: Metadata = pageMetadata({
+  title: "Browse suppliers by industry",
+  description: "Browse Harsol27 by industry to find approved manufacturers, wholesalers and traders from Gujarat, and contact them directly.",
+  path: "/industries",
+  keywords: ["suppliers by industry Gujarat", "Gujarat industries"],
+});
 
 export default async function IndustriesPage() {
   const industries = await listIndustriesWithCounts();

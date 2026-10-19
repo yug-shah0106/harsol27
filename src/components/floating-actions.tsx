@@ -29,9 +29,9 @@ export function FloatingActions() {
           <ArrowUp aria-hidden="true" />
         </Button>
       )}
-      {pathname !== "/get-started" && (
+      {pathname !== "/Pre-Registration" && (
         <Button asChild className="h-11 rounded-full px-5 shadow-lg">
-          <Link href="/get-started">
+          <Link href="/Pre-Registration">
             <MessageCircle aria-hidden="true" />
             Talk to us
           </Link>

@@ -11,7 +11,7 @@ export function SignInForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4" noValidate={false} aria-describedby={error ? "sign-in-error" : undefined}>
       {error && (
-        <p id="sign-in-error" role="alert" className="rounded-md border border-red-700 bg-red-50 p-3 text-sm text-red-900">
+        <p id="sign-in-error" role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           <span className="font-semibold">Sign-in failed: </span>
           {error}
         </p>
@@ -27,7 +27,7 @@ export function SignInForm() {
           autoComplete="username"
           required
           maxLength={254}
-          className="rounded-md border border-neutral-500 px-3 py-2 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          className="rounded-lg border border-input bg-card px-3 py-2"
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -40,13 +40,13 @@ export function SignInForm() {
           autoComplete="current-password"
           required
           maxLength={128}
-          className="rounded-md border border-neutral-500 px-3 py-2 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          className="rounded-lg border border-input bg-card px-3 py-2"
         />
       </div>
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-4 py-2 font-medium text-white disabled:opacity-60 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        className="rounded-full bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--primary)_85%,black)] disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

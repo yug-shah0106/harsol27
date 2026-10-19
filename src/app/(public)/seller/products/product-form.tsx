@@ -56,6 +56,7 @@ export function ProductForm({ productId, values, industries }: { productId?: str
             className="w-full"
             aria-invalid={!!errors.industryId}
             aria-describedby={errors.industryId ? "industryId-error" : undefined}
+            searchable={{ placeholder: "Search industries" }}
             options={industries.map((i) => ({ value: i.id, label: i.name }))}
           />
           <FieldMessage id="industryId-error" message={errors.industryId} />

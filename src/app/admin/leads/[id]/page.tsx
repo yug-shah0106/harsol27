@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
+import { leadIndustryName } from "@/lib/lead-schema";
 import { pickUtm } from "@/lib/utm";
 import { requireStaff } from "@/server/authz";
 import { getLead } from "@/server/leads";
@@ -25,8 +26,17 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
   const details: [string, React.ReactNode][] = [
     ["Phone", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],
+    ["Father's name", lead.fatherName ?? "Not given"],
+    ["Native place", lead.nativePlace ?? "Not given"],
+    ["Address or city", lead.address ?? "Not given"],
     ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industry", lead.industry.name],
+    ["Industries", leadIndustryName(lead)],
+    // Stored only as http(s) addresses (lib/lead-schema.ts), so they are safe to link; opened in a new tab.
+    ["Website", lead.website ? <ExternalLink key="w" href={lead.website} /> : "Not given"],
+    ["Instagram", lead.instagram ? <ExternalLink key="i" href={`https://www.instagram.com/${lead.instagram}/`} label={`@${lead.instagram}`} /> : "Not given"],
+    ["Google Maps", lead.mapsLink ? <ExternalLink key="m" href={lead.mapsLink} label="Open the map" /> : "Not given"],
+    // Opens a 60-second storage link in a new tab (the page's CSP keeps storage images out of the page itself).
+    ["Payment screenshot", lead.paymentProofKey ? <ExternalLink key="p" href={`/api/admin/leads/${lead.id}/payment-proof`} label="View the screenshot" /> : "Not added"],
     ["Received", `${formatIst(lead.createdAt)} IST`],
     ["Campaign", utm ? Object.entries(utm).map(([key, value]) => `${key.replace("utm_", "")}: ${value}`).join(" · ") : "Not from a campaign link"],
     ["Source IP", lead.sourceIp ?? "Not recorded"],
@@ -108,5 +118,13 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
         </ol>
       </section>
     </div>
+  );
+}
+
+function ExternalLink({ href, label }: { href: string; label?: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-primary underline">
+      {label ?? href}
+    </a>
   );
 }

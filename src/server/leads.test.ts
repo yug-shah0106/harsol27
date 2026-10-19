@@ -3,7 +3,7 @@ import { HONEYPOT_FIELD } from "@/lib/lead-schema";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
-import { changeLeadStatus, LEAD_IP_RULE, listLeads, leadListParamsSchema, submitLead } from "./leads";
+import { changeLeadStatus, createPaymentUpload, LEAD_IP_RULE, listLeads, leadListParamsSchema, submitLead } from "./leads";
 import type { StaffUser } from "./staff-policy";
 
 const run = crypto.randomUUID().slice(0, 8);
@@ -14,17 +14,32 @@ let admin: StaffUser;
 const headersFor = (ip: string) => new Headers({ "x-forwarded-for": ip, "user-agent": "vitest" });
 const uniqueIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 
-function form(overrides: Record<string, string> = {}) {
+const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+
+/** The browser's two steps: ask for an upload URL, then PUT the screenshot straight to storage. */
+async function paymentUpload(bytes: Uint8Array = PNG, contentType = "image/png"): Promise<string> {
+  const { key, uploadUrl } = await createPaymentUpload({ fileName: "paid.png", contentType, sizeBytes: bytes.length }, headersFor(uniqueIp()));
+  const response = await fetch(uploadUrl, { method: "PUT", body: Buffer.from(bytes), headers: { "Content-Type": contentType } });
+  expect(response.ok).toBe(true);
+  return key;
+}
+
+/** A complete form, with a fresh payment screenshot unless one is given. */
+async function form(overrides: Record<string, string | string[]> = {}) {
   const fd = new FormData();
   const values = {
     fullName: "Asha Patel",
+    fatherName: "Ramesh Patel",
+    nativePlace: "Harsol",
+    address: "Talod, Sabarkantha",
     phone: "98765 43210",
     email: `Asha.${run}@Example.com`,
     businessCategory: "MANUFACTURING",
-    industryId,
+    industryIds: [industryId],
+    paymentProof: "paymentProof" in overrides ? "" : await paymentUpload(),
     ...overrides,
   };
-  for (const [k, v] of Object.entries(values)) fd.set(k, v);
+  for (const [k, v] of Object.entries(values)) for (const one of [v].flat()) fd.append(k, one);
   return fd;
 }
 
@@ -53,7 +68,7 @@ afterAll(async () => {
 describe("submitLead", () => {
   it("saves a normalised lead and queues both emails in the same transaction", async () => {
     const email = `asha.${run}@example.com`;
-    await submitLead(form(), headersFor("203.0.113.7"));
+    await submitLead(await form(), headersFor("203.0.113.7"));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
     expect(lead).toMatchObject({ phone: "+919876543210", status: "NEW", sourceIp: "203.0.113.7", userAgent: "vitest" });
 
@@ -64,25 +79,57 @@ describe("submitLead", () => {
 
   it("returns normally but saves nothing when the honeypot is filled", async () => {
     const email = `bot.${run}@example.com`;
-    await expect(submitLead(form({ email, [HONEYPOT_FIELD]: "http://spam.example" }), headersFor(uniqueIp()))).resolves.toBeUndefined();
+    await expect(submitLead(await form({ email, [HONEYPOT_FIELD]: "http://spam.example" }), headersFor(uniqueIp()))).resolves.toBeUndefined();
     expect(await db().lead.count({ where: { email } })).toBe(0);
   });
 
   it("re-validates every field on the server", async () => {
-    await expectFieldError(submitLead(form({ email: "nope" }), headersFor(uniqueIp())), "email");
-    await expectFieldError(submitLead(form({ phone: "12345" }), headersFor(uniqueIp())), "phone");
-    await expectFieldError(submitLead(form({ businessCategory: "FARMING" }), headersFor(uniqueIp())), "businessCategory");
+    await expectFieldError(submitLead(await form({ email: "nope" }), headersFor(uniqueIp())), "email");
+    await expectFieldError(submitLead(await form({ phone: "12345" }), headersFor(uniqueIp())), "phone");
+    await expectFieldError(submitLead(await form({ businessCategory: "FARMING" }), headersFor(uniqueIp())), "businessCategory");
+  });
+
+  it("saves 'Other' as the visitor's own words, with no listed industry", async () => {
+    const email = `other.${run}@example.com`;
+    await submitLead(await form({ email, industryIds: ["other"], industryOther: "  Solar panels " }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email }, include: { industries: true } });
+    expect(lead).toMatchObject({ industries: [], industryOther: "Solar panels" });
+    await expectFieldError(submitLead(await form({ email: `other2.${run}@example.com`, industryIds: ["other"] }), headersFor(uniqueIp())), "industryOther");
+  });
+
+  it("saves every chosen industry, plus the optional links", async () => {
+    const email = `multi.${run}@example.com`;
+    // Its own second industry: CI's database holds only the one the tests create.
+    const second = (await db().industry.create({ data: { name: `Second ${run}`, nameKey: `second ${run}`, slug: `second-${run}`, sortOrder: 999 } })).id;
+    await submitLead(await form({ email, industryIds: [industryId, second], website: "shah.example", instagram: "@shah", mapsLink: "" }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email }, include: { industries: { select: { id: true } } } });
+    expect(lead.industries.map((i) => i.id).sort()).toEqual([industryId, second].sort());
+    expect(lead).toMatchObject({ website: "https://shah.example/", instagram: "shah", mapsLink: null, industryOther: null });
+  });
+
+  it("needs a real, unused payment screenshot", async () => {
+    const email = `pay.${run}@example.com`;
+    await expectFieldError(submitLead(await form({ email, paymentProof: "" }), headersFor(uniqueIp())), "paymentProof");
+    await expectFieldError(submitLead(await form({ email, paymentProof: `lead-payments/${crypto.randomUUID()}.png` }), headersFor(uniqueIp())), "paymentProof");
+    const renamed = await paymentUpload(new TextEncoder().encode("MZ fake executable"), "image/png");
+    await expectFieldError(submitLead(await form({ email, paymentProof: renamed }), headersFor(uniqueIp())), "paymentProof");
+
+    const paid = await paymentUpload();
+    await submitLead(await form({ email, paymentProof: paid }), headersFor(uniqueIp()));
+    expect(await db().lead.findFirstOrThrow({ where: { email } })).toMatchObject({ paymentProofKey: paid, paymentProofName: "paid.png" });
+    // One screenshot backs one lead only.
+    await expectFieldError(submitLead(await form({ email: `pay2.${run}@example.com`, paymentProof: paid }), headersFor(uniqueIp())), "paymentProof");
   });
 
   it("rejects an industry that is inactive or does not exist", async () => {
-    await expectFieldError(submitLead(form({ industryId: inactiveIndustryId }), headersFor(uniqueIp())), "industryId");
-    await expectFieldError(submitLead(form({ industryId: crypto.randomUUID() }), headersFor(uniqueIp())), "industryId");
+    await expectFieldError(submitLead(await form({ industryIds: [inactiveIndustryId] }), headersFor(uniqueIp())), "industryIds");
+    await expectFieldError(submitLead(await form({ industryIds: [industryId, crypto.randomUUID()] }), headersFor(uniqueIp())), "industryIds");
   });
 
   it("rate-limits submissions per IP", async () => {
     const ip = uniqueIp();
-    for (let i = 0; i < LEAD_IP_RULE.max; i++) await submitLead(form({ email: `rl${i}.${run}@example.com` }), headersFor(ip));
-    await expect(submitLead(form({ email: `rl-over.${run}@example.com` }), headersFor(ip))).rejects.toThrow(/Too many submissions/);
+    for (let i = 0; i < LEAD_IP_RULE.max; i++) await submitLead(await form({ email: `rl${i}.${run}@example.com` }), headersFor(ip));
+    await expect(submitLead(await form({ email: `rl-over.${run}@example.com` }), headersFor(ip))).rejects.toThrow(/Too many submissions/);
   });
 });
 
@@ -109,7 +156,7 @@ describe("changeLeadStatus", () => {
 
   it("applies a duplicate change only once, even when both requests arrive together", async () => {
     const email = `race.${run}@example.com`;
-    await submitLead(form({ email }), headersFor(uniqueIp()));
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
     const results = await Promise.allSettled([
       changeLeadStatus({ leadId: lead.id, status: "CONTACTED" }, admin),

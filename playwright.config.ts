@@ -31,6 +31,7 @@ export default defineConfig({
       BETTER_AUTH_URL: baseURL,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "",
       CLIENT_IP_HEADER: "x-forwarded-for",
+      COMING_SOON: "false", // the tests use the full site; /coming-soon itself is still checked
       // A made-up Google client: enough to show "Continue with Google" and check where it sends you.
       GOOGLE_CLIENT_ID: "e2e-google-client.apps.googleusercontent.com",
       GOOGLE_CLIENT_SECRET: "e2e-google-secret-never-used",

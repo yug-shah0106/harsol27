@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "./db";
 import { getBoss } from "./jobs";
-import { submitLead } from "./leads";
+import { createPaymentUpload, submitLead } from "./leads";
 import { registerWorkers } from "./workers";
 
 const run = crypto.randomUUID().slice(0, 8);
@@ -22,11 +22,13 @@ afterAll(async () => {
 
 describe("email pipeline: form → queue → worker → Resend", () => {
   it("delivers the confirmation and the team alert for a submitted lead", async () => {
-    // Network stubbed: no real email leaves the test.
+    // Email stubbed: nothing leaves the test. Other requests (the screenshot upload to local storage) go through.
     const sent: { to: unknown; subject: string; key: string | null }[] = [];
+    const realFetch = globalThis.fetch;
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (_url: string, init: RequestInit) => {
+      vi.fn(async (url: string, init: RequestInit) => {
+        if (!String(url).startsWith("https://api.resend.com")) return realFetch(url, init);
         const body = JSON.parse(String(init.body)) as { to: unknown; subject: string };
         sent.push({ to: body.to, subject: body.subject, key: new Headers(init.headers).get("idempotency-key") });
         return new Response('{"id":"x"}', { status: 200 });
@@ -40,8 +42,13 @@ describe("email pipeline: form → queue → worker → Resend", () => {
       appUrl: "https://harsol27.test",
     });
 
+    // The payment screenshot, uploaded the way the browser does it.
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+    const ticket = await createPaymentUpload({ fileName: "paid.png", contentType: "image/png", sizeBytes: png.length }, new Headers({ "x-forwarded-for": "198.51.100.9" }));
+    expect((await fetch(ticket.uploadUrl, { method: "PUT", body: png, headers: { "Content-Type": "image/png" } })).ok).toBe(true);
+
     const form = new FormData();
-    for (const [k, v] of Object.entries({ fullName: "Worker Test", phone: "9876543210", email, businessCategory: "RETAIL", industryId })) form.set(k, v);
+    for (const [k, v] of Object.entries({ fullName: "Worker Test", fatherName: "Father Test", nativePlace: "Harsol", address: "Ahmedabad", phone: "9876543210", email, businessCategory: "RETAIL", industryIds: industryId, paymentProof: ticket.key })) form.set(k, v);
     await submitLead(form, new Headers({ "x-forwarded-for": "198.51.100.9" }));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
 

@@ -63,7 +63,7 @@ async function main() {
   const [command] = process.argv.slice(2);
   const { values } = parseArgs({
     args: process.argv.slice(3),
-    options: { email: { type: "string" }, name: { type: "string" }, role: { type: "string" } },
+    options: { email: { type: "string" }, name: { type: "string" }, role: { type: "string" }, "if-missing": { type: "boolean" } },
   });
   const email = emailSchema.parse(values.email);
   const url = z.string().min(1, "DATABASE_URL is not set.").parse(process.env.DATABASE_URL);
@@ -75,7 +75,9 @@ async function main() {
         const name = z.string().trim().min(1, "--name is required.").max(100).parse(values.name);
         const role = z.enum(["ADMIN", "VIEWER"]).parse(values.role);
         if (await db.user.findUnique({ where: { email }, select: { id: true } })) {
-          throw new Error(`An account with email ${email} already exists.`);
+          if (!values["if-missing"]) throw new Error(`An account with email ${email} already exists.`);
+          console.log(`An account for ${email} already exists.`);
+          break;
         }
         const passwordHash = await hashPassword(await readPassword());
         await db.$transaction(async (tx) => {

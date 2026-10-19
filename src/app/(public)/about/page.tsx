@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { ProsePage } from "@/components/prose-page";
+import { pageMetadata } from "@/lib/seo";
 
 // Answers only from what the site does (as described above): no promises it doesn't keep.
 const FAQ: { q: string; a: React.ReactNode }[] = [
@@ -19,14 +20,19 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "How do I list my business?",
     a: (
       <>
-        Share a few details on <Link href="/get-started" className="font-medium text-primary underline">Get started</Link> and our team will get in
+        Share a few details on <Link href="/Pre-Registration" className="font-medium text-primary underline">Get started</Link> and our team will get in
         touch, or apply as a seller right away.
       </>
     ),
   },
 ];
 
-export const metadata: Metadata = { title: "About", description: "What Harsol27 is and how it works." };
+export const metadata: Metadata = pageMetadata({
+  title: "About Harsol27 and how it works",
+  description: "How Harsol27, by the Harsol Sattavis (27) Jain community, works: approved Gujarati sellers, direct enquiries, no online payment, and common questions.",
+  path: "/about",
+  keywords: ["how Harsol27 works", "Harsol27 FAQ", "sell on Harsol27"],
+});
 
 export default function AboutPage() {
   return (
@@ -51,7 +57,7 @@ export default function AboutPage() {
         directly between buyer and seller.
       </p>
       <p>
-        Want to join? <Link href="/get-started" className="font-medium text-primary underline">Get started here</Link>.
+        Want to join? <Link href="/Pre-Registration" className="font-medium text-primary underline">Get started here</Link>.
       </p>
 
       <h2 id="faq">Questions</h2>

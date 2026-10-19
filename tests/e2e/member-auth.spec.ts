@@ -72,12 +72,12 @@ test("sign in: email and password; a wrong password and a staff account get the 
   await page.goto("/sign-in");
   // "Continue" looks inactive until both fields are filled in (but stays clickable).
   const button = page.getByRole("button", { name: "Continue" });
-  await expect(button).toHaveCSS("background-color", "rgb(237, 232, 224)"); // stone
+  await expect(button).toHaveCSS("background-color", "rgb(251, 236, 214)"); // turmeric
   await signInMember(page, emailFor(mobile), "not-my-password");
   await expect(page.getByRole("main").getByRole("alert")).toContainText(GENERIC, SLOW);
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByLabel("Email")).toHaveValue(emailFor(mobile)); // kept for the next try
-  await expect(button).toHaveCSS("background-color", "rgb(86, 102, 79)"); // olive
+  await expect(button).toHaveCSS("background-color", "rgb(156, 47, 40)"); // kumkum
 
   // Staff can only sign in on the staff page: here the right staff password fails like any other.
   await signInMember(page, STAFF.viewer.email, passwordOf(STAFF.viewer));

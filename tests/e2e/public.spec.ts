@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { expectAccessible, fillLeadForm, unique, watchCsp } from "./helpers";
-import { uniqueIp } from "./staff";
+import { addPaymentScreenshot, choose, expectAccessible, fillLeadForm, sendClientIp, unique, watchCsp } from "./helpers";
+import { withDb } from "./member";
 
 test.beforeEach(async ({ context }) => {
-  await context.setExtraHTTPHeaders({ "x-forwarded-for": uniqueIp() });
+  await sendClientIp(context);
 });
 
 test("home page: real HTML hero, seeded industries, how it works, call to action", async ({ page }) => {
@@ -14,7 +14,7 @@ test("home page: real HTML hero, seeded industries, how it works, call to action
   await expect(page.getByRole("listitem").filter({ hasText: "Food Products" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
   await page.getByRole("link", { name: "Get started" }).first().click();
-  await expect(page).toHaveURL(/\/get-started$/);
+  await expect(page).toHaveURL(/\/Pre-Registration$/);
   expect(csp).toEqual([]);
 });
 
@@ -27,7 +27,7 @@ test("the first Tab press reaches the skip link, which jumps to the main content
   await expect(page).toHaveURL(/#main$/);
 });
 
-for (const path of ["/", "/about", "/terms", "/privacy", "/get-started"]) {
+for (const path of ["/", "/about", "/terms", "/privacy", "/Pre-Registration"]) {
   test(`${path} has no detectable WCAG A/AA violations`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);
@@ -35,7 +35,7 @@ for (const path of ["/", "/about", "/terms", "/privacy", "/get-started"]) {
 }
 
 test("lead form: client-side errors are announced with text and focus the first problem", async ({ page }) => {
-  await page.goto("/get-started");
+  await page.goto("/Pre-Registration");
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByLabel("Full name")).toBeFocused();
   await expect(page.getByText("Enter your full name.")).toBeVisible();
@@ -50,7 +50,7 @@ test("lead form: client-side errors are announced with text and focus the first 
 
 test("lead form: a valid submission shows a confirmation", async ({ page }) => {
   const csp = watchCsp(page);
-  await page.goto("/get-started");
+  await page.goto("/Pre-Registration");
   await fillLeadForm(page, {
     name: "Public Journey",
     phone: "98250 12345",
@@ -61,4 +61,89 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByRole("status")).toContainText("We have received your details");
   expect(csp).toEqual([]);
+});
+
+test("public pages tell search engines and link previews what they are", async ({ page }) => {
+  // [page, its canonical address]; /coming-soon is served at "/" before launch.
+  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Pre-Registration", "/Pre-Registration"], ["/about", "/about"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
+    await page.goto(path);
+    const meta = (name: string) => page.locator(`meta[name="${name}"], meta[property="${name}"]`).getAttribute("content");
+    const title = await page.title();
+    expect(title, path).toContain("Harsol27");
+    expect(title.length, `${path} title: ${title}`).toBeLessThanOrEqual(60);
+    const description = (await meta("description"))!;
+    expect(description.length, `${path} description: ${description}`).toBeGreaterThanOrEqual(100);
+    expect(description.length, `${path} description: ${description}`).toBeLessThanOrEqual(160);
+    expect(await meta("keywords"), path).toContain("B2B marketplace Gujarat");
+    expect(await page.locator('link[rel="canonical"]').getAttribute("href"), path).toMatch(new RegExp(`^https?://[^/]+${canonical === "/" ? "/?" : canonical}$`));
+    expect(await meta("og:title"), path).toContain("Harsol27");
+    expect(await meta("og:description"), path).toBe(description);
+    expect(await meta("og:image"), path).toMatch(/\/og-image\.png$/);
+  }
+  const image = await page.request.get("/og-image.png");
+  expect(image.headers()["content-type"]).toBe("image/png");
+});
+
+test("the Pre-registration form is at /Pre-Registration, and its old and lowercase addresses lead there", async ({ page }) => {
+  for (const path of ["/get-started", "/pre-registration", "/Pre-Registration"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/Pre-Registration$/);
+    await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+  }
+});
+
+test("lead form: the fee is paid by the client's UPI QR code, UPI ID or bank account, and the QR code can be saved for a UPI app", async ({ page }) => {
+  await page.goto("/Pre-Registration");
+  const qr = page.getByRole("img", { name: "UPI QR code for paying Shree Harsol Sattavis Jain Yuvak Trust" });
+  await expect.poll(() => qr.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  for (const detail of ["9152000352m@pnb", "09952191031725", "PUNB0099510"]) await expect(page.getByText(detail, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy IFSC" })).toBeVisible();
+  const saved = await page.request.get((await page.getByRole("link", { name: "Save the QR code" }).getAttribute("href"))!);
+  expect(saved.headers()["content-type"]).toBe("image/png"); // UPI apps open photos, not SVG files
+});
+
+test("lead form: a native place and an industry that aren't listed are chosen as Other and typed in", async ({ page }) => {
+  const email = `other.${unique()}@example.test`;
+  await page.goto("/Pre-Registration");
+  await page.getByLabel("Full name").fill("Kiran Shah");
+  await page.getByLabel("Father's name").fill("Mahesh Shah");
+  await choose(page, "Native place", "Other (not listed)");
+  await page.getByLabel("Your native place").fill("Talod");
+  await page.getByLabel("Address or city").fill("Himatnagar");
+  await page.getByLabel("Phone number").fill("98250 54321");
+  await page.getByLabel("Email").fill(email);
+  await choose(page, "Business category", "Services");
+
+  // Several industries: a listed one, and "Other" for what isn't listed.
+  const industries = page.getByRole("combobox", { name: "Industries", exact: true });
+  await industries.click();
+  const search = page.getByRole("searchbox", { name: "Search industries" });
+  await search.fill("photo");
+  await page.keyboard.press("Enter"); // Photography (the list stays open)
+  await search.fill("solar");
+  await expect(page.getByRole("listbox", { name: "Industries" }).getByRole("option")).toHaveText(["Other (not listed)"]); // nothing matches, Other stays
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Escape");
+  await expect(industries).toHaveText("Photography, Other (not listed)");
+  const own = page.getByLabel("Your industry");
+  await addPaymentScreenshot(page);
+
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(page.getByText("Tell us your industry.")).toBeVisible();
+  await own.fill("Solar panels");
+  await page.getByLabel("Instagram").fill("not a handle!");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(page.getByText("Enter your Instagram name, like @yourshop.")).toBeVisible();
+  await page.getByLabel("Instagram").fill("@kiran.solar");
+  await page.getByRole("button", { name: "Submit" }).click();
+  await expect(page.getByRole("status")).toContainText("We have received your details");
+
+  const { rows } = await withDb((db) =>
+    db.query(
+      `SELECT l."nativePlace", l."industryOther", l."instagram", array_agg(i."name") AS industries FROM "Lead" l
+       JOIN "_IndustryToLead" li ON li."B" = l."id" JOIN "Industry" i ON i."id" = li."A" WHERE l."email" = $1 GROUP BY l."id"`,
+      [email],
+    ),
+  );
+  expect(rows).toEqual([{ nativePlace: "Talod", industryOther: "Solar panels", instagram: "kiran.solar", industries: ["Photography"] }]);
 });

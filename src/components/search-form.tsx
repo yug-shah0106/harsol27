@@ -37,7 +37,8 @@ export function SearchForm({ values = {}, industries, action = "/search", compac
             name="industry"
             defaultValue={values.industry ?? ""}
             className="w-full"
-            options={[{ value: "", label: "All industries" }, ...industries.map((i) => ({ value: i.slug, label: i.name }))]}
+            searchable={{ placeholder: "Search industries" }}
+            options={[{ value: "", label: "All industries", pinned: true }, ...industries.map((i) => ({ value: i.slug, label: i.name }))]}
           />
         </div>
       )}

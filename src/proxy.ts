@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { comingSoonRoute } from "@/lib/coming-soon";
 
 /** Origin browsers upload documents to (R2 / local S3), allowed in connect-src. Nothing else is. */
 function storageOrigin(): string {
@@ -15,6 +16,15 @@ function storageOrigin(): string {
  * header and attaches it to its own scripts, so no inline script without the nonce can run.
  */
 export function proxy(request: NextRequest) {
+  // The Pre-registration form's old address (/get-started) and other spellings (/pre-registration) lead to it.
+  // Here, not in next.config redirects: those ignore case, so "/pre-registration" would match itself and loop.
+  const path = request.nextUrl.pathname;
+  if (path !== "/Pre-Registration" && ["/get-started", "/pre-registration"].includes(path.toLowerCase())) {
+    return NextResponse.redirect(new URL("/Pre-Registration", request.url), 308);
+  }
+  const route = comingSoonRoute(path);
+  if (route === "redirect") return NextResponse.redirect(new URL("/", request.url));
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
   const csp = [
@@ -37,7 +47,10 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const response =
+    route === "rewrite"
+      ? NextResponse.rewrite(new URL("/coming-soon", request.url), { request: { headers: requestHeaders } })
+      : NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
   return response;
 }

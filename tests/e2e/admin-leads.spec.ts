@@ -1,11 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
-import { choose, expectAccessible, fillLeadForm, unique } from "./helpers";
+import { choose, expectAccessible, fillLeadForm, newPage, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
 async function submitLead(page: Page, name: string, email: string) {
   await page.goto("/?utm_source=newsletter&utm_campaign=diwali&ignored=1"); // arrives by a campaign link
   await page.waitForFunction(() => sessionStorage.getItem("harsol27.utm"));
-  await page.goto("/get-started");
+  await page.goto("/Pre-Registration");
   await fillLeadForm(page, { name, phone: "98250 54321", email, category: "Trading", industry: "Ceramics & Tiles" });
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByRole("status")).toContainText("We have received your details");
@@ -14,7 +14,7 @@ async function submitLead(page: Page, name: string, email: string) {
 test("admin finds a new lead, sees staff-only details, and changes its status with history", async ({ browser }) => {
   const ip = uniqueIp();
   const name = `Lead Admin Journey ${unique()}`;
-  const visitor = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": ip } })).newPage();
+  const visitor = await newPage(browser, ip); // the IP header goes to the app only: storage's CORS rule refuses it
   await submitLead(visitor, name, `journey.${unique()}@example.test`);
   await visitor.close();
 
@@ -34,6 +34,10 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
   await expect(page.getByText(ip)).toBeVisible(); // source IP is shown to staff
   await expect(page.getByText("source: newsletter · campaign: diwali")).toBeVisible(); // the campaign it came from
   await expect(page.getByText("Ceramics & Tiles")).toBeVisible();
+  // The payment screenshot opens through a short-lived storage link, for staff only.
+  const proof = await page.request.get(await page.getByRole("link", { name: "View the screenshot" }).getAttribute("href") ?? "", { maxRedirects: 0 });
+  expect(proof.status()).toBe(302);
+  expect(proof.headers().location).toContain("lead-payments/");
 
   await choose(page, "New status", "Contacted");
   await page.getByLabel("Note (optional)").fill("Spoke on the phone");
@@ -49,7 +53,7 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
 
 test("a viewer can read leads but gets no controls to change them", async ({ browser }) => {
   const name = `Lead Viewer Journey ${unique()}`;
-  const visitor = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
+  const visitor = await newPage(browser);
   await submitLead(visitor, name, `viewer.${unique()}@example.test`);
   await visitor.close();
 

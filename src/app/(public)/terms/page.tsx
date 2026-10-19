@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import { DraftNotice, ProsePage } from "@/components/prose-page";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Terms of use" };
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of use",
+  description: "The terms for using Harsol27, the directory that connects business buyers with sellers from Gujarat. Harsol27 is not a party to deals between them.",
+  path: "/terms",
+  keywords: ["Harsol27 terms"],
+});
 
 // Draft written from what the site actually does. Must be reviewed by the client's legal adviser before launch.
 export default function TermsPage() {

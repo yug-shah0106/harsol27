@@ -9,7 +9,7 @@ let industryId: string;
 
 async function lead(email: string, createdAt: Date) {
   return db().lead.create({
-    data: { fullName: "R", phone: "+919876543210", email, businessCategory: "RETAIL", industryId, sourceIp: "203.0.113.1", userAgent: "ua", createdAt },
+    data: { fullName: "R", phone: "+919876543210", email, businessCategory: "RETAIL", industries: { connect: { id: industryId } }, sourceIp: "203.0.113.1", userAgent: "ua", createdAt },
   });
 }
 

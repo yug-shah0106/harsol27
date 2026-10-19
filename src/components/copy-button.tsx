@@ -4,8 +4,11 @@ import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-/** Copies `value` to the clipboard. `what` completes the button's name for screen readers: "Copy phone number". */
-export function CopyButton({ value, what }: { value: string; what: string }) {
+/**
+ * Copies `value` to the clipboard. `what` completes the button's name for screen readers: "Copy phone number".
+ * `compact`: just the icon (for values in a list), with the same name.
+ */
+export function CopyButton({ value, what, compact = false }: { value: string; what: string; compact?: boolean }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -18,9 +21,16 @@ export function CopyButton({ value, what }: { value: string; what: string }) {
   };
   return (
     <>
-      <Button type="button" variant="outline" size="sm" className="h-10 shrink-0 rounded-full px-4" onClick={copy}>
+      <Button
+        type="button"
+        variant={compact ? "ghost" : "outline"}
+        size={compact ? "icon" : "sm"}
+        className={compact ? "shrink-0 rounded-full text-muted-foreground" : "h-10 shrink-0 rounded-full px-4"}
+        title={compact ? `Copy ${what}` : undefined}
+        onClick={copy}
+      >
         {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-        {copied ? "Copied" : "Copy"}
+        <span className={compact ? "sr-only" : undefined}>{copied ? "Copied" : "Copy"}</span>
         <span className="sr-only"> {what}</span>
       </Button>
       <span aria-live="polite" className="sr-only">

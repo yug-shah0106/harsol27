@@ -5,6 +5,7 @@ import { ContactPanel } from "@/components/contact-panel";
 import { FormAlert } from "@/components/form-feedback";
 import { ProductPhoto } from "@/components/product-photo";
 import { parseSpecifications } from "@/lib/product-schema";
+import { clip, pageMetadata } from "@/lib/seo";
 import { getViewer } from "@/server/authz";
 import { getProductForPage } from "@/server/catalog";
 
@@ -15,9 +16,14 @@ async function load(slug: string) {
 export async function generateMetadata({ params }: PageProps<"/products/[slug]">): Promise<Metadata> {
   const product = await load((await params).slug);
   if (!product) return {};
+  const { companyName, city } = product.seller;
   return {
-    title: `${product.name} · ${product.seller.companyName}`,
-    description: product.description.slice(0, 160),
+    ...pageMetadata({
+      title: `${product.name} · ${companyName}`,
+      description: clip(`${product.name} from ${companyName}, ${city}. ${product.description}`),
+      path: `/products/${product.slug}`,
+      keywords: [product.name, `${product.name} ${city}`, `${product.name} supplier Gujarat`, product.industry.name, companyName],
+    }),
     robots: product.isPublic ? undefined : { index: false },
   };
 }

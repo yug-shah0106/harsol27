@@ -1,41 +1,35 @@
 ---
 version: alpha
 name: Harsol27
-description: Harsol27 is a B2B marketplace that puts buyers in direct touch with approved Gujarati manufacturers, wholesalers and traders. The look is light, sober and premium, with an editorial home page in the spirit of lenis.dev — a linen page ({colors.background}), soft stone, sage and blush sections, olive ({colors.primary}) as the one strong colour for actions and headings, large elegant serif headings with italics for emphasis, no dark sections (dark mode only when the visitor chooses it) — and a signature moment: Uttarayan kites flying behind the home page headline.
+description: Harsol27 is a B2B marketplace that puts buyers in direct touch with approved Gujarati manufacturers, wholesalers and traders. The theme is Marigold (chosen by the client, 2026-10-19) — a Gujarati festival in daylight, light and warm, never dark — a cream page ({colors.background}), turmeric, leaf and marigold surfaces, kumkum red ({colors.primary}) as the one strong colour for actions and headings, a soft serif (Fraunces) for headings with italics for emphasis, Gujarati beside English, and festival decoration that moves: a toran strung across the top of pages and a rangoli that draws itself and turns.
 
 colors:
-  background: "#faf7f2"
-  foreground: "#2e2b27"
+  background: "#fff9ef"
+  foreground: "#3a2418"
   card: "#ffffff"
   popover: "#ffffff"
-  primary: "#56664f"
+  primary: "#9c2f28"
   on-primary: "#ffffff"
-  secondary: "#ede8e0"
-  muted: "#ede8e0"
-  muted-foreground: "#645e56"
-  accent: "#f1d9ce"
-  on-accent: "#2e2b27"
-  sage: "#dfe6d8"
+  secondary: "#fbecd6"
+  muted: "#fbecd6"
+  muted-foreground: "#6b5141"
+  accent: "#ffd27a"
+  on-accent: "#3a2418"
+  sage: "#e3f0dc"
   destructive: "#b42318"
   success: "#067647"
-  border: "#e4ddd2"
-  input: "#8a8378"
-  ring: "#56664f"
-  kite-champagne: "#e3c9a0"
-  kite-clay: "#c98b76"
-  kite-sage: "#b9c6b0"
-  kite-ivory: "#fbf8f3"
-  sky-top: "#e6ece2"
-  sky-mid: "#f1f1ea"
-  sky-horizon: "#faf7f2"
-  roofs-back: "#dde3d6"
-  roofs-front: "#c3cdb9"
+  border: "#f0dcc0"
+  input: "#977d6b"
+  ring: "#9c2f28"
+  festival-gold: "#f2a20c"
+  festival-turmeric: "#f7c548"
+  festival-leaf: "#3f7d4e"
 typography:
-  family: "Plus Jakarta Sans (self-hosted by next/font), fallback ui-sans-serif, system-ui, sans-serif"
-  display-family: "Instrument Serif (self-hosted by next/font), one weight (400) plus italic; headings and the wordmark only"
-  hero-display: { family: display, size: "clamp(44px, 19px + 6vw, 108px)", weight: 400, lineHeight: 0.95, letterSpacing: "-0.025em" }
+  family: "Hind Vadodara (self-hosted by next/font, Latin and Gujarati), weights 400–700, fallback ui-sans-serif, system-ui, sans-serif"
+  display-family: "Fraunces (self-hosted by next/font), variable, with its SOFT and WONK axes on (the soft, slightly wonky cut) plus italic; headings and the wordmark only"
+  hero-display: { family: display, size: "clamp(46px, 19px + 6.4vw, 112px)", weight: 400, lineHeight: 0.96, letterSpacing: "-0.025em" }
   page-title: { family: display, size: "60px (36px on phones)", weight: 400, lineHeight: 1.05, letterSpacing: "-0.025em" }
-  section-heading: { family: display, size: "72px (48px on phones)", weight: 400, lineHeight: 1.0, letterSpacing: "-0.025em" }
+  section-heading: { family: display, size: "60px (48px on phones)", weight: 400, lineHeight: 1.0, letterSpacing: "-0.025em" }
   admin-title: { size: "24px", weight: 700, lineHeight: 1.33 }
   card-heading: { size: "18px", weight: 600, lineHeight: 1.55 }
   lead: { size: "18px", weight: 400, lineHeight: 1.55, color: "{colors.muted-foreground}" }
@@ -46,11 +40,11 @@ typography:
   badge: { size: "12px", weight: 500 }
 
 rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "10px"
-  xl: "14px"
-  3xl: "22px"
+  sm: "10px"
+  md: "13px"
+  lg: "16px"
+  xl: "22px"
+  3xl: "35px"
   full: "9999px"
 
 spacing:
@@ -64,71 +58,77 @@ components:
   button-primary: { background: "{colors.primary}", text: "{colors.on-primary}", height: "40px", padding: "0 16px", rounded: "{rounded.lg}" }
   button-large: { background: "{colors.primary}", text: "{colors.on-primary}", height: "48px", padding: "0 24px", rounded: "{rounded.lg}" }
   button-outline: { background: "{colors.background}", text: "{colors.foreground}", border: "1px {colors.border}", rounded: "{rounded.lg}" }
-  button-pill: { note: "marketing pages only: the same buttons with rounded {rounded.full}" }
+  button-pill: { note: "marketing pages and the festival pages: the same buttons with rounded {rounded.full}" }
   input: { background: "{colors.card}", border: "1px {colors.input}", height: "40px", padding: "0 12px", rounded: "{rounded.lg}" }
   card: { background: "{colors.card}", border: "1px {colors.border}", rounded: "{rounded.xl}", padding: "20px" }
-  eyebrow-pill: { background: "white at 70%", text: "{colors.primary}", border: "1px {colors.primary} at 25%", rounded: "{rounded.full}", padding: "4px 14px" }
-  stacked-card: { background: "{colors.card}", border: "1px {colors.border}", rounded: "16px", padding: "28px (36px from 640px)", shadow: "xl, olive at 10%" }
+  arch-card: { background: "a kumkum, marigold or leaf wash", rounded: "full top, 28px bottom", padding: "96px 28px 36px", shadow: "kumkum-tinted" }
+  ticket: { stub: "{colors.primary}", body: "{colors.card}", notches: "16px half-circles at the perforation", rounded: "20px" }
 ---
 
 # Harsol27 design
 
 > This file describes the design that is in the code today. The code is the source of truth:
-> colours live in `src/app/globals.css` (`:root`), components in `src/components/ui/`. If this file
-> and the code disagree, the code wins — then fix this file. Change the design deliberately, not by drift.
+> colours live in `src/app/globals.css` (`:root`), components in `src/components/ui/` and
+> `src/components/festive.tsx`. If this file and the code disagree, the code wins — then fix this file.
+> Change the design deliberately, not by drift.
 
 ## 1. Visual theme & atmosphere
 
-Harsol27 should feel like a trustworthy, premium business directory made with care. The home page is
-editorial, after lenis.dev: large type, full-width sections and scroll-driven motion, but in light,
-sober colours. Buyers are owners and purchase managers of Gujarati businesses; many browse on a phone.
-So the design is:
+**Marigold**, chosen by the client on 19 October 2026: Harsol27 should feel like a Gujarati festival in
+daylight — warm, welcoming and proud of where it comes from — while staying a trustworthy business
+directory. Buyers and sellers are owners and purchase managers of Gujarati businesses; many browse on a
+phone, and many read Gujarati. So the design is:
 
-- **Light by default.** A linen page ({colors.background}), white cards, and soft stone, sage and blush
-  sections; no dark sections. Dark mode exists only as the visitor's choice (the header's moon button).
-- **One strong colour.** Olive ({colors.primary}) for buttons, links, focus and headings. Everything else is soft.
-- **One soft highlight.** Blush ({colors.accent}): the headline underline, the row hover, the call-to-action section.
-- **Elegant type.** Large serif headings (Instrument Serif), with italics for emphasis ("*call them.*"),
-  over a clean sans for everything you read and use.
-- **One signature moment.** On the home page, kites fly at Uttarayan over a city skyline, behind the
-  headline (a live 3D scene, with a static picture first and as the fallback).
-- **Editorial where it sells, calm where you work.** Home and marketing pages: serif headings,
-  alternating full-width sections, a drifting marquee. Forms, search results, product and seller pages,
-  and the dashboards stay plain.
-- **Alive, not busy.** Content rises in as you reach it, headings blur into focus, cards catch a soft
-  light under the mouse, main buttons lean toward it, and scrolling is smooth (see 6a. Motion).
-- **Generous space.** Plenty of room, short plain-English copy ("Find the right supplier. Then just
-  call them."), hairlines rather than boxes, very little shadow.
+- **Light and warm.** A cream page ({colors.background}), white cards, and turmeric, leaf and marigold
+  surfaces; no dark sections. Dark mode exists only as the visitor's choice (the header's moon button):
+  the same festival by lamplight.
+- **One strong colour.** Kumkum red ({colors.primary}) for buttons, links, focus and headings.
+- **One warm highlight.** Marigold ({colors.accent}): pills, the offer, highlighted rows. Behind text only.
+- **Festival decoration that moves.** A toran (a string of flags) across the top of every page, swaying;
+  on the coming-soon page, a rangoli that draws itself and turns as you scroll, jharokha arches, diyas
+  that light up, a ticket for the offer, floating marigold petals. Gold #f2a20c is for decoration only.
+- **Two languages.** Gujarati lines sit beside the English ones ("ટૂંક સમયમાં આવી રહ્યું છે"), set in Hind
+  Vadodara, which carries both scripts.
+- **Soft serif headings.** Fraunces in its soft, slightly wonky cut, with italics for emphasis ("*take
+  off*" over a hand-drawn marigold underline), over Hind Vadodara for everything you read and use.
+- **Festive where it welcomes, calm where you work.** The coming-soon page is the full festival; forms,
+  Pre-registration, staff sign-in and the admin keep a compact toran and the palette, and stay plain.
+- **Generous space.** Plenty of room, short plain-English copy, hairlines rather than boxes.
+
+The site is closed until launch (`COMING_SOON`, `src/lib/coming-soon.ts`): visitors see only the
+coming-soon page, Pre-registration and the legal pages. The rest of the site is built and kept, behind
+that switch; this file still describes it, in the Marigold palette.
 
 ## 2. Colour palette & roles
 
 | Token | Hex | Role |
 |---|---|---|
-| `background` | #faf7f2 | Linen page |
-| `foreground` | #2e2b27 | Body text, a soft charcoal (13.2:1 on the page) |
+| `background` | #fff9ef | Cream page |
+| `foreground` | #3a2418 | Body text, a warm brown ink (14:1 on the page) |
 | `card` / `popover` | #ffffff | Cards, form panels, header, dropdown lists |
-| `primary` | #56664f | Olive: buttons, links, focus ring, headings, wordmark "Harsol" (5.8:1 on the page) |
-| `on-primary` | #ffffff | Text on olive (6.2:1) |
-| `secondary` / `muted` | #ede8e0 | Stone: secondary buttons, highlighted list option, photo placeholders, the marquee and the footer |
-| `muted-foreground` | #645e56 | Secondary text (6.0:1 on the page, 5.3:1 on stone, 5.0:1 on sage, 4.8:1 on blush) |
-| `accent` | #f1d9ce | Blush: the headline underline, the industry rows' hover, the call-to-action section. **Behind text only, never text** |
-| `on-accent` | #2e2b27 | Text on blush (10.4:1); olive headings on blush are 4.6:1 |
-| `sage` | #dfe6d8 | A soft section background (Why Harsol27). Olive on it is 4.8:1 |
-| `border` | #e4ddd2 | Decorative hairlines and card outlines |
-| `input` | #8a8378 | Form-control borders and the scrollbar thumb (≥ 3:1, as WCAG requires for controls) |
+| `primary` | #9c2f28 | Kumkum: buttons, links, focus ring, headings, the wordmark (7.6:1 on the page) |
+| `on-primary` | #ffffff | Text on kumkum (8:1) |
+| `secondary` / `muted` | #fbecd6 | Turmeric: secondary buttons, highlighted list option, photo placeholders, the industries band and the footer |
+| `muted-foreground` | #6b5141 | Secondary text (≥ 4.5:1 on the page, cards, turmeric and leaf) |
+| `accent` | #ffd27a | Marigold: pills, the offer price, highlights. **Behind text only, never text** |
+| `on-accent` | #3a2418 | Text on marigold; kumkum on marigold passes too |
+| `sage` | #e3f0dc | Leaf: a fresh section background. (The token keeps its old name.) |
+| `border` | #f0dcc0 | Decorative hairlines and card outlines |
+| `input` | #977d6b | Form-control borders and the scrollbar thumb (≥ 3:1, as WCAG requires for controls) |
 | `destructive` | #b42318 | Errors — always with an icon or words, never colour alone |
 | `success` | #067647 | Confirmations |
 
-**Hero art** (home only; `src/lib/kites.ts` and `.kite-sky` in `globals.css`): a soft morning sky, pale
-sage #e6ece2 → #f1f1ea → linen, with a blush sun; rooftops in pale sage #dde3d6 (back) and #c3cdb9
-(front). Kites in olive, champagne #e3c9a0, clay #c98b76, sage #b9c6b0, ivory #fbf8f3 and blush. The
-kite-only colours are not used anywhere else.
+**Festival colours** (decoration only, never text, in `components/festive.tsx` and the coming-soon page):
+gold #f2a20c (the rangoli, underlines, the steps' path and medallions, the diyas), turmeric #f7c548 and
+leaf #3f7d4e (toran flags, rangoli petals). The jharokha arches use soft washes: kumkum #fbe3dd→#f6cfc6,
+marigold #fff0c9→#ffd98a, leaf #e9f4e3→#d3e8c9 (deeper versions in dark mode). The closing card on the
+coming-soon page is fixed kumkum with marigold #ffd27a in both modes.
 
-**Dark mode** (`.dark` in `globals.css`, on screen only): the same roles in warm charcoal. Page #1b1a17,
-cards #24221f, text #ece7df, secondary text #b3aca2, primary a light olive #a7b89b with dark text on it,
-blush becomes a deep #4b3832, sage #232a22, hairlines #3a3631. The hero turns to dusk (the kites keep
-their light haze). It is never automatic: the header's toggle puts `.dark` on `<html>` and stores
-`theme=dark` in a cookie, and the root layout renders the next page dark, so there is no flash.
+**Dark mode** (`.dark` in `globals.css`, on screen only): the festival by lamplight. Page #1b130f, cards
+#251a14, text #f4e8d8, secondary text #cdb7a2, primary a light marigold #f2b866 with dark text on it,
+marigold becomes a deep #5c3a14, leaf #1f281b, hairlines #3d2b21. It is never automatic: the header's
+toggle puts `.dark` on `<html>` and stores `theme=dark` in a cookie, and the root layout renders the next
+page dark, so there is no flash.
 
 Contrast is enforced: `src/lib/brand-contrast.test.ts` reads `:root` and `.dark` and fails CI if a pairing
 drops below WCAG AA (4.5:1 text, 3:1 controls and focus) in either theme. `dark:` utilities apply only
@@ -137,20 +137,18 @@ under the `.dark` class.
 ## 3. Typography
 
 Two families, both self-hosted by `next/font` (no request to Google from the visitor):
-**Plus Jakarta Sans** for everything you read and use, and **Instrument Serif** (`font-display`) for
-headings and the wordmark. The serif has one weight: never add `font-bold` to it (the browser would fake
-a bold). Use italics for emphasis. Display headings are olive. The offline page uses the system font,
-because the web fonts may not be cached.
+**Hind Vadodara** for everything you read and use — it sets Gujarati as well as English — and
+**Fraunces** (`font-display`) for headings and the wordmark. `globals.css` turns on Fraunces' SOFT and
+WONK axes for every `font-display`, which gives the Marigold voice. Use italics for emphasis. Display
+headings are kumkum. The offline page uses the system font, because the web fonts may not be cached.
 
 | Role | Size | Weight | Notes |
 |---|---|---|---|
-| Hero headline | 44px → 108px (`clamp`) | 400 | Serif, `leading-[0.95]`, `text-balance`, "call them." in italic over a blush underline; home page only |
-| Giant lines | up to 104–184px (`clamp`) | 400 | Serif: the home page's step titles and "Sell everything on *Harsol27*" |
-| Page title (h1) | 60px (36px phones) | 400 | Serif, olive, on browsing and marketing pages. Product and seller names, forms and dashboards keep Jakarta 30px/800 |
-| Section heading (h2) | 72px (48px phones) | 400 | Serif, olive, `leading-none` (home page) |
-| Statement | 72px (36px phones) | 400 | Serif, `leading-[1.1]`; words light up on scroll |
-| Small numbers ("01") | 20px | 400 | Serif italic |
-| Eyebrow | 12px | 600 | Jakarta, uppercase, `tracking-[0.18em]` |
+| Coming-soon headline | 46px → 112px (`clamp`) | 400 | Fraunces, `leading-[0.96]`, `text-balance`; "*take off*" in kumkum italic over a hand-drawn marigold underline that draws itself |
+| Page title (h1) | 60px (36px phones) | 400 | Fraunces, kumkum, on Pre-registration and marketing pages. Forms and dashboards keep Hind 30px/700 |
+| Section heading (h2) | 60px (48px phones) | 400 | Fraunces, kumkum |
+| Gujarati line | 16–18px | 600 | Hind Vadodara, kumkum, often in a cream pill, with `lang="gu"` |
+| Eyebrow | 12px | 700 | Hind, uppercase, `tracking-[0.22em]` |
 | Admin page title | 24px | 700 | |
 | Card heading | 18px | 600 | |
 | Lead paragraph | 18px | 400 | `muted-foreground` |
@@ -158,63 +156,92 @@ because the web fonts may not be cached.
 | Small text, nav links | 14px | 400–500 | Inputs drop to 14px from 768px up (16px on phones stops iOS zoom) |
 | Badge | 12px | 500 | |
 
-Wordmark: "Harsol" in olive + "*27*" in charcoal italic, Instrument Serif 27px (24px phones), tight tracking.
+Wordmark: "Harsol*27*" in kumkum Fraunces, "27" in italic, 27px (24px phones), tight tracking.
 
 ## 4. Component stylings
 
 Use the components in `src/components/ui/` rather than restyling raw elements.
 
-- **Button** (`button.tsx`): radius 10px, 14px/500 label.
-  - Default: olive, 40px tall; a little darker on hover (a lighter hover would drop the white text below 4.5:1).
+- **Button** (`button.tsx`): radius 16px, 14px/500 label.
+  - Default: kumkum, 40px tall; a little darker on hover (a lighter hover would drop the white text below 4.5:1).
   - `lg`: 48px tall, 16px label.
-  - `outline`: linen with a hairline border.
-  - `secondary`: stone.
-  - `ghost` and `link` (olive text, underline on hover).
-  - Every button gets the 3px olive focus ring, and moves down 1px when pressed.
-- **Input / Textarea**: white, 1px `input` border, 40px tall, radius 10px. Invalid fields get a red
+  - `outline`: cream with a hairline border.
+  - `secondary`: turmeric.
+  - `ghost` and `link` (kumkum text, underline on hover).
+  - Every button gets the 3px kumkum focus ring, and moves down 1px when pressed.
+- **Input / Textarea**: white, 1px `input` border, 40px tall, radius 16px. Invalid fields get a red
   border and ring plus an error message linked with `aria-describedby`.
 - **Dropdown** (`dropdown.tsx`): use this for every choice from a list. Never use a native `<select>`.
   - Closed, it looks like an Input, with a chevron that flips when open.
-  - The list is a white popover: radius 10px, `shadow-lg`, 4px padding, up to 288px tall, scrolling inside.
-  - Options are 14px. The highlighted one has a stone background; the chosen one is semibold with an olive check.
+  - The list is a white popover: radius 16px, `shadow-lg`, 4px padding, up to 288px tall, scrolling inside.
+  - Options are 14px. The highlighted one has a turmeric background; the chosen one is semibold with an kumkum check.
   - It opens upwards when there's no room below.
-- **Card** (a plain bordered `div`, not the shadcn `<Card>`): white, 1px `border`, radius 14px, padding 16–20px
+  - Long lists (industries) are `searchable`: opening puts the cursor in a search box at the top of the
+    list ("Search industries"), typing narrows the options, and `pinned` options ("All industries",
+    "Other (not listed)") always stay listed.
+  - `multiple` (Get started's "Industries"): each option has a tick box and toggles; the list stays open
+    while choosing (Escape, Tab or a click outside closes it), and the button lists the choices,
+    comma-separated. Up to 5 industries.
+  - "Other (not listed)" (Get started form): choosing it shows a "Your industry" field where the visitor
+    types their own; staff see it as "Other: …".
+- **Optional group** (Get started's "Links to your business"): a `<fieldset>` whose legend says
+  "(optional)" in muted text: Website, Instagram (any of @name, name or a link) and Google Maps link.
+  Links are tidied ("https://" added) and only http(s) addresses are kept.
+- **Payment** (Pre-registration's "Pay the fee", `src/lib/fee.ts`): a turmeric panel with the client's UPI QR
+  code on a white tile beside the price. The QR is their printed bank code module for module (never
+  re-encoded, never a logo over it), in brown ink with kumkum corner markers and a white margin. Beside it: the regular price struck through
+  in muted serif, the offer price in large kumkum serif, "for 15 months", a marigold "Offer price till …" pill
+  while the offer lasts and three numbered steps. Under the QR, a "Save the QR code" link (a PNG, so UPI
+  apps can open it from the phone's photos). Below both, a white card "Pay by UPI ID or bank transfer":
+  account name, UPI ID, account number, IFSC and bank (branch beneath), two columns from 640px, with
+  icon-only Copy buttons (`CopyButton compact`) on the values people type. Under the panel, a
+  required "Payment screenshot" file field (JPG, PNG or PDF, 5 MB) that uploads at once and shows
+  "Uploaded: name"; Submit waits for the upload.
+- **Card** (a plain bordered `div`, not the shadcn `<Card>`): white, 1px `border`, radius 22px, padding 16–20px
   (form panels 20px, 32px from 640px up).
-  - Clickable cards turn the border olive on hover.
-  - Product cards add a 4:3 photo on stone, and the title underlines on hover.
-- **Industry tile**: white, bordered, radius 10px, 12px × 16px padding, medium weight, olive border on hover.
-- **Eyebrow pill**: translucent white, a thin olive outline, olive 12px uppercase letter-spaced text. At most one per page.
+  - Clickable cards turn the border kumkum on hover.
+  - Product cards add a 4:3 photo on turmeric, and the title underlines on hover.
+- **Industry tile**: white, bordered, radius 16px, 12px × 16px padding, medium weight, kumkum border on hover.
+- **Eyebrow pill**: translucent white, a thin kumkum outline, kumkum 12px uppercase letter-spaced text. At most one per page.
 - **Pill buttons**: on the home and marketing pages, buttons and the hero search are fully rounded
-  (`rounded-full`). Forms and tools keep the 10px radius.
-- **Marquee band**: stone, between hairlines, serif italic olive words ("Manufacturers · Wholesalers ·
-  Traders") with tiny olive diamonds, drifting sideways. Decorative (`aria-hidden`).
-- **Stacked cards** (Why Harsol27, on sage): white cards with a hairline and a soft olive-tinted shadow,
+  (`rounded-full`). Forms and tools keep the 16px radius.
+- **Marquee band**: turmeric, between hairlines, serif italic kumkum words ("Manufacturers · Wholesalers ·
+  Traders") with tiny kumkum diamonds, drifting sideways. Decorative (`aria-hidden`).
+- **Stacked cards** (Why Harsol27, on sage): white cards with a hairline and a soft kumkum-tinted shadow,
   radius 16px, each tilted 1° and sticking a little lower than the last, so they pile up as you scroll.
-  An italic serif number, an olive serif title, muted text.
-- **Numbered steps** ("How it works"): an italic serif "01", then the step title as a giant olive serif
-  line sliding in from alternating sides, over a hairline that draws itself in olive.
+  An italic serif number, an kumkum serif title, muted text.
+- **Numbered steps** ("How it works"): an italic serif "01", then the step title as a giant kumkum serif
+  line sliding in from alternating sides, over a hairline that draws itself in kumkum.
 - **Numbered rows**: the home page's industries. A small number, the name in serif and an arrow, with a
-  hairline under each; blush fills the row from below on hover or focus.
-- **Call-to-action section**: blush, a giant two-line serif heading ("Sell everything on" in charcoal, "*Harsol27*"
-  in olive italic), then a hairline, a line of text and an olive pill "Get started".
-- **Badge** (`badge.tsx`): 20px tall, fully rounded, 12px. Default (olive) for "new", secondary (stone) for other statuses.
+  hairline under each; marigold fills the row from below on hover or focus.
+- **Call-to-action section**: marigold, a giant two-line serif heading ("Sell everything on" in brown ink, "*Harsol27*"
+  in kumkum italic), then a hairline, a line of text and an kumkum pill "Get started".
+- **Badge** (`badge.tsx`): 20px tall, fully rounded, 12px. Default (kumkum) for "new", secondary (turmeric) for other statuses.
 - **Table** (`table.tsx`): sits in a ScrollArea that scrolls sideways on phones. Pass `scrollLabel`
   so keyboard users can reach it.
 - **ScrollArea** (`scroll-area.tsx`): use it for anything that scrolls inside a page.
-  - Thin brand scrollbar: 10px, `input`-coloured thumb, olive on hover.
+  - Thin brand scrollbar: 10px, `input`-coloured thumb, kumkum on hover.
   - Soft edge shadows while there is more to see.
   - Set `--scroll-bg` to the colour behind it.
-- **Header**: sticky (it stays at the top), white at 85% with a blur, bottom hairline, 1152px container.
-  - Wordmark on the left.
-  - 14px/500 text links that underline on hover, the dark-mode toggle (moon/sun), then an olive pill "Get started" button.
+- **Header**: under a compact toran (not sticky), sticky itself (it stays at the top), white at 85% with a blur, bottom hairline, full width with the
+  page gutters (16px, 24px, 40px from 1024px), like the footer.
+  - In the left corner, the Harsol Sattavis Jain Yuvak Trust's logo (`public/logo.webp`, 52px, reaching into
+    the header's padding so the header stays 65px; 44px under 360px), then the wordmark, smaller beside it
+    (Fraunces 22px; 20px on phones, 18px under 360px). The same pair heads the admin and staff sign-in.
+  - In the right corner: 14px/500 text links (Home, Search, About, Sign in or Your account) that underline
+    on hover, the dark-mode toggle (moon/sun), then an kumkum pill "Get started" button.
   - Below 640px the links and the toggle move into a **menu** (a "Menu" button that opens a panel under the
     header with the links in serif; Escape closes it). "Get started" stays visible.
-  - A 2px olive **reading-progress line** along its bottom edge, driven by the scroll in CSS
+  - A 2px kumkum **reading-progress line** along its bottom edge, driven by the scroll in CSS
     (`.scroll-progress`, scroll-driven animations; browsers without them don't show it).
-- **Footer**: stone, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px),
-  the copyright in `muted-foreground`, then text links (About, FAQ, Terms, Privacy). 96px of bottom
-  padding keeps the links clear of the floating buttons.
-- **Floating buttons** (bottom right, every public page): an olive pill "Talk to us" (to the Get started
+  - Until launch, every public page (Pre-registration, Terms, Privacy) uses the coming-soon page's
+    `blend` form: clear at the top, frosting into a cream bar as you scroll. Pre-registration's page starts
+    under it (65px), so its rangoli runs up to the toran.
+- **Footer**: turmeric, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px):
+  one slim row (20px padding), all on the left: the copyright in `muted-foreground`, then text links
+  (About, FAQ, Terms, Privacy). The right is left clear for the floating buttons; phones keep 96px of
+  bottom padding for them.
+- **Floating buttons** (bottom right, every public page): an kumkum pill "Talk to us" (to the Get started
   form, our only public contact so far; hidden on that page), and above it a round "Back to top" that
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
 - **Cookie notice**: a white card, bottom left (full width on phones), until "OK" (a form post, so it works
@@ -230,12 +257,32 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   turning to "Copied" with a tick; announced to screen readers.
 - **FAQ** (About page): native `<details>`, one per question, between hairlines; a plus that turns into a
   cross when open. Answers say only what the site does.
-- **Loading**: a thin olive bar sliding along the top of the window while the next page loads
+- **Loading**: a thin kumkum bar sliding along the top of the window while the next page loads
   (`navigation-progress.tsx`; a still bar with reduced motion). Pages are not streamed behind a loading
   screen: that would make a missing page answer 200 instead of 404, and break server redirects.
 - **Last updated**: legal pages show "Last updated 10 October 2026" under the title (`ProsePage updated=`).
 - **Admin and seller tabs**: one horizontal row that scrolls sideways on phones.
 - **Icons**: `lucide-react`, 16px (`size-4`), `aria-hidden`, always next to a text label.
+- **Festival pieces** (Marigold; `src/components/festive.tsx`, styles in `globals.css`):
+  - **Toran** (`<Toran>`): flags in gold, kumkum, leaf and turmeric on a gently sagging string, swaying
+    from the string. One size (32–44px), above the header on every page: coming soon, public pages, staff
+    sign-in and the admin.
+  - **Rangoli** (`<Rangoli>`): three rings of soft petals (kumkum, gold, leaf), a ring of gold dots and a
+    centre. It draws itself ring by ring on load and turns with the scroll (`data-spin`). Behind the
+    coming-soon headline (35%), in its closing card (25%), and faint in Pre-registration's corner.
+  - **Jharokha arch cards**: fully round tops, an inner outline, a kumkum, marigold or leaf wash; they rise
+    in and lean toward the mouse (`data-tilt`). The three promises.
+  - **Diya chips**: every industry as a cream pill with a glowing gold dot; they light up one after another
+    as the section scrolls by (`data-light`).
+  - **Step medallions**: gold discs with a large Fraunces number, joined by a gold path that draws itself
+    with the scroll (`data-path`).
+  - **Ticket**: the offer, a kumkum stub with the price counting up and the regular price struck through,
+    a dashed perforation with notches cut from both sides, and the details on white.
+  - **Rotating word** (`<RotatingWord>`): "manufacturers / wholesalers / traders", one sliding up every
+    2.2s; hidden from screen readers, which get the whole sentence.
+  - **Closing card**: fixed kumkum with marigold in both modes, a turning rangoli, and floating petals.
+- **Staff sign-in**: compact toran, the wordmark, a Fraunces "Staff sign in", and the form on a white
+  card with a kumkum pill button.
 
 ## 5. Layout principles
 
@@ -247,11 +294,27 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
 - Gutters: 16px on phones, 24px from 640px.
 - Vertical rhythm:
   - pages: 40–48px top and bottom;
-  - home sections: 96px, 128px from 640px; full-width, alternating linen, stone, sage, white and blush;
+  - home sections: 96px, 128px from 640px; full-width, alternating cream, turmeric, leaf, white and marigold;
   - hero: at least the screen's height from 1024px.
 - Hero: a full-width sky with the skyline along the bottom. The headline spans the width; the paragraph,
   search and links sit under it on the left. From 1024px the kites fly on the right, behind the headline,
   faded towards it so the words stay clear. Below 1024px the kites come after the copy.
+- Coming soon (`src/app/coming-soon`, shown at `/` until `COMING_SOON=false`): the full Marigold
+  festival, under the toran and the site header (wordmark left; Home, the theme toggle and "Pre-register"
+  right) in its `blend` form: clear at the top, with no hairline, and the hero slides up under it so the
+  rangoli runs up to the toran; it frosts into a cream bar over the first 120px of scroll (CSS scroll
+  timeline, `.header-blend`). Then, top to bottom:
+  - **Hero**, centred on the rangoli: a Gujarati pill, "Coming soon", the headline, the rotating word,
+    one paragraph and a large "Pre-register your business" pill.
+  - **Why Harsol27?**: three arch cards.
+  - **A festival of trades**: the diya chips, on turmeric.
+  - **How it works**: three medallions on the drawn path.
+  - **The offer**: the ticket.
+  - **Closing card**, then a one-line footer with Privacy and Terms.
+
+  Until launch the Get started form is called Pre-registration (at `/Pre-Registration`; `/get-started`
+  and `/pre-registration` redirect there), and the header and footer link only what is open (Home,
+  Pre-register, Terms, Privacy).
 - Grids:
   - industries: 2 → 3 → 4 columns;
   - products: 1 → 2 → 3 → 4 columns;
@@ -260,11 +323,11 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
 
 ## 6. Depth & elevation
 
-The site is almost flat: surfaces are separated by colour (linen page, white cards, soft sections) and
+The site is almost flat: surfaces are separated by colour (cream page, white cards, soft sections) and
 1px hairlines. Cards lift 2–4px on hover and catch the spotlight; product photos zoom 5% inside their frame.
 
 - **Shadows:** only floating layers get one. Dropdown lists use `shadow-lg`; the stacked cards, which
-  pile on each other, use a soft olive-tinted `shadow-xl`.
+  pile on each other, use a soft kumkum-tinted `shadow-xl`.
 - **Scrolling:** scroll areas show soft inner shadows at an edge only while there is more content that way.
 - **Corners:** the stacked cards use 16px; everything else uses 6–14px, or fully round pills.
 
@@ -278,16 +341,23 @@ Motion is built on GSAP, ScrollTrigger and Lenis smooth scrolling. All of it is 
 | `data-reveal` | Rises 32px and fades in when scrolled to, 0.8s `power3.out`. Items arriving together stagger 0.08s. Use on cards, list items and sections below the fold. |
 | `data-blur-text` (via `<BlurText>`) | Heading words go from blurred and above to sharp, one after another. Use on section headings, never the page's main headline. |
 | `data-count` (via `<CountUp>`) | A number counts up from 0 when it appears. |
-| `data-spotlight` + `.spotlight` | A soft olive light, plus a brighter rim, follows the mouse over a card. Use on clickable cards. |
-| `data-magnet` | Leans a quarter of the way toward a mouse within 48px. Main calls to action only: at most two per screen. |
+| `data-spotlight` + `.spotlight` | A soft kumkum light, plus a brighter rim, follows the mouse over a card. Use on clickable cards. |
+| `data-magnet` | Leans a quarter of the way toward a mouse within 48px. Main calls to action only: at most two per screen. Never on the Pre-register buttons. |
 | `data-parallax="10"` | Drifts by that percent of its height as the page scrolls past. Only the hero's kite panel. |
 | `data-draw` | A line that draws itself as its section scrolls by. |
 | `data-scroll-text` (via `<ScrollText>`) | A statement whose words go from faint to full while it crosses the screen (as on lenis.dev). |
 | `data-slide="left"` / `"right"` | A giant line slides in from that side as it scrolls up the screen (finishing by the bottom of the page). Its section needs `overflow-x-clip`. |
 | `data-stack` | On a list of CSS-sticky cards: each card sinks back to 92% as the next one slides over it. |
 | `data-marquee` | A track holding its content twice drifts sideways for ever; scrolling speeds it up, scrolling back turns it round. |
+| `data-spin="140"` | Turns that many degrees while it crosses the screen. The rangolis. |
+| `data-path` | An SVG path (`pathLength={1}`, class `drawn-path`) that grows bit by bit as you scroll, from when its drawing is near the bottom of the screen (85%) until it is near the top (25%). The steps' path. |
+| `data-light` | Its `[data-lamp]` items go from dim to lit one after another as it scrolls by. The diya chips. |
+| `data-tilt` | Leans in 3D toward the mouse (up to 10°), smoothly re-targeting. Arch cards and the ticket. |
 
-BlurText, CountUp, SpotlightCard and Magnet are adapted from React Bits (reactbits.dev), rebuilt on GSAP.
+BlurText, CountUp, SpotlightCard, Magnet and TiltedCard are adapted from React Bits (reactbits.dev), rebuilt on GSAP.
+CSS-only festival motion (`globals.css`): the toran sways, the rangoli and the hand underline draw
+themselves once (`stroke-draw`), the rotating word slides (300ms, strong ease-out), and the petals float.
+All of it stops for reduced motion. Curves are `--ease-out` and `--ease-in-out` on `:root`.
 
 Rules:
 - **Nothing on screen at load waits for JavaScript.** The first view enters with CSS (`tw-animate-css`:
@@ -305,21 +375,22 @@ Rules:
 ## 7. Do's and don'ts
 
 **Do**
-- Use only the tokens. No new hex values in components (the kite scene is the one exception).
-- Keep olive text for things you can click or focus, and for headings.
+- Use only the tokens. No new hex values in components (the festival pieces and the home kites are the exceptions).
+- Keep kumkum text for things you can click or focus, and for headings.
 - Write plain, short English, and say what happens next ("Our team will get in touch").
 - Give every input a visible `<Label>`, and every error both words and an icon.
-- Keep the 3px olive focus outline visible on everything interactive.
+- Keep the 3px kumkum focus outline visible on everything interactive.
 - Respect `prefers-reduced-motion` (motion.tsx, the kites and the global CSS rule already do).
 - Add motion with the data attributes above, not with one-off animation code.
 
 **Don't**
-- Don't add dark sections. In the light theme sections are linen, stone, sage, white or blush.
+- Don't add dark sections. In the light theme sections are cream, turmeric, leaf, white or marigold.
 - Don't use inline `style` attributes or `<style>` tags. The site's Content Security Policy blocks them,
   so they silently do nothing. Use Tailwind classes; arbitrary values like `fill-[#c3cdb9]` are fine.
-- Don't use blush as a text colour (it is a background), or bold the serif.
-- Don't add gradients, glows or decorative illustrations outside the home hero. The one exception is the
-  spotlight's hover light on cards.
+- Don't use marigold as a text colour (it is a background), or bold the serif.
+- Keep the festival on the welcoming pages. The coming-soon page carries the full set; Pre-registration
+  gets the compact toran and a faint corner rangoli; staff sign-in and the admin get only the compact
+  toran. No gradients or glows elsewhere, apart from the spotlight's hover light on cards.
 - Don't hide anything that is on screen at load until a script runs, and never fade the main headline.
 - Don't use native `<select>`. Use `Dropdown`.
 - Don't use colour alone to show status or errors.
@@ -334,7 +405,7 @@ Rules:
   - grids drop columns;
   - admin and seller tabs, and tables, scroll sideways rather than wrap;
   - the hero stacks.
-- Images: product photos are 4:3 with `object-cover` on a stone placeholder. A missing photo shows an icon,
+- Images: product photos are 4:3 with `object-cover` on a turmeric placeholder. A missing photo shows an icon,
   not an empty box. Photos load lazily, except the first few on a page.
 
 ## 8a. Print
@@ -346,25 +417,29 @@ light theme, with anything the scroll animations had not revealed yet shown.
 ## 9. Agent prompt guide
 
 **Quick reference:**
-- Page: linen #faf7f2; soft sections: stone #ede8e0, sage #dfe6d8, blush #f1d9ce
-- Cards: #ffffff with a #e4ddd2 border, radius 14px
-- Text: #2e2b27, secondary #645e56
-- Action, links and headings: olive #56664f
-- Fonts: Plus Jakarta Sans for text; Instrument Serif (one weight, italics for emphasis) for headings and the wordmark
+- Page: cream #fff9ef; soft sections: turmeric #fbecd6, leaf #e3f0dc, marigold #ffd27a
+- Cards: #ffffff with a #f0dcc0 border, radius 22px
+- Text: #3a2418, secondary #6b5141
+- Action, links and headings: kumkum #9c2f28; decoration gold #f2a20c (never text)
+- Fonts: Hind Vadodara for text (Latin and Gujarati); Fraunces (soft, wonky cut; italics for emphasis) for headings and the wordmark
+- Festival pieces: `<Toran>`, `<Rangoli>`, arch cards, diya chips, the ticket (`components/festive.tsx`)
 - No dark sections; dark mode only when the visitor turns it on
-- Corners: 10px for controls, 14px for cards
+- Corners: 16px for controls, 22px for cards, fully round pills on festival pages
 
 **Example prompts:**
 - "Build the seller's 'Edit profile' page in the Harsol27 style. Follow DESIGN.md:
   - a 576px form panel (a white card), Labels above Inputs, `Dropdown` for choices;
-  - one olive primary button and an outline Cancel;
+  - one kumkum primary button and an outline Cancel;
   - errors in words, linked with aria-describedby."
 - "Add a 'Recent inquiries' list to the admin dashboard, matching the existing admin tiles:
-  - white bordered cards with radius 14px and an olive border on hover;
+  - white bordered cards with radius 22px and an kumkum border on hover;
   - muted 14px labels, and a Badge for status."
 
 ## Known gaps
 
+- **The home page's kites and rooftops** (behind the coming-soon switch) still draw in the old palette's
+  hard-coded sage and olive (`src/lib/kites.ts`, `components/hero/hero-sky.tsx`). Recolour them for
+  Marigold before the full site opens.
 - **Dark mode and the kites:** the 3D kites and their static picture keep the light theme's haze in dark mode.
 - **Contact:** "Talk to us" goes to the Get started form because there is no public phone number or email yet.
 - **Unused components:** the shadcn `<Card>` exists but pages use plain bordered `div`s. Follow the pages.

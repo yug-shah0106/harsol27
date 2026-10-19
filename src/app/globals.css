@@ -7,100 +7,105 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Harsol27 design tokens. Every colour is a hex value in :root so the WCAG contrast test
- * (src/lib/brand-contrast.test.ts) can read and check them. Components use only these tokens.
+ * Harsol27 design tokens: the Marigold theme (chosen by the client, 2026-10-19). Every colour is a hex
+ * value in :root so the WCAG contrast test (src/lib/brand-contrast.test.ts) can read and check them.
+ * Components use only these tokens.
  *
- * Palette: light, sober and elegant. Linen #faf7f2 (the page), stone #ede8e0 and sage #dfe6d8 (soft
- * section backgrounds), blush #f1d9ce (the highlight, behind text only), and olive #56664f, the one
- * strong colour: buttons, links and headings. No dark sections: the page is light unless the visitor
- * turns on dark mode (the .dark tokens below, checked by the same test).
+ * Palette: a Gujarati festival in daylight. Cream #fff9ef (the page), turmeric #fbecd6 (soft
+ * sections), leaf #e3f0dc (a fresh section), marigold #ffd27a (the highlight, behind text only),
+ * and kumkum red #9c2f28, the one strong colour: buttons, links and headings. Gold #f2a20c appears
+ * in decoration only (the toran, the rangoli, drawn lines), never as text. Dark mode (.dark below,
+ * checked by the same test) is the same festival by lamplight.
  */
 :root {
-  --background: #faf7f2; /* linen page */
-  --foreground: #2e2b27; /* body text: soft charcoal */
+  --background: #fff9ef; /* cream page */
+  --foreground: #3a2418; /* body text: warm brown ink */
   --card: #ffffff;
-  --card-foreground: #2e2b27;
+  --card-foreground: #3a2418;
   --popover: #ffffff;
-  --popover-foreground: #2e2b27;
-  --primary: #56664f; /* olive: buttons, links, headings */
+  --popover-foreground: #3a2418;
+  --primary: #9c2f28; /* kumkum: buttons, links, headings */
   --primary-foreground: #ffffff;
-  --secondary: #ede8e0; /* stone: secondary surfaces, the marquee, the footer */
-  --secondary-foreground: #2e2b27;
-  --muted: #ede8e0;
-  --muted-foreground: #645e56; /* secondary text */
-  --accent: #f1d9ce; /* blush: highlights, always behind text */
-  --accent-foreground: #2e2b27;
+  --secondary: #fbecd6; /* turmeric: secondary surfaces, the footer */
+  --secondary-foreground: #3a2418;
+  --muted: #fbecd6;
+  --muted-foreground: #6b5141; /* secondary text */
+  --accent: #ffd27a; /* marigold: highlights, always behind text */
+  --accent-foreground: #3a2418;
   --destructive: #b42318; /* errors: always paired with an icon or text, never colour alone */
   --success: #067647;
-  --border: #e4ddd2; /* decorative hairlines */
-  --sage: #dfe6d8; /* a soft section background */
-  --input: #8a8378; /* form-control borders: ≥ 3:1 against page and card */
-  --ring: #56664f; /* keyboard focus */
-  --radius: 0.625rem;
+  --border: #f0dcc0; /* decorative hairlines */
+  --sage: #e3f0dc; /* leaf: a fresh section background */
+  --input: #977d6b; /* form-control borders: ≥ 3:1 against page and card */
+  --ring: #9c2f28; /* keyboard focus */
+  --radius: 1rem;
+  /* Motion curves (Emil Kowalski's): a strong ease-out for entrances, ease-in-out for on-screen movement. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
   /* Unused shadcn slots, mapped to the palette so stray usage still looks on-brand. */
-  --chart-1: #56664f;
-  --chart-2: #f1d9ce;
+  --chart-1: #9c2f28;
+  --chart-2: #ffd27a;
   --chart-3: #067647;
-  --chart-4: #645e56;
+  --chart-4: #6b5141;
   --chart-5: #b42318;
   --sidebar: #ffffff;
-  --sidebar-foreground: #2e2b27;
-  --sidebar-primary: #56664f;
+  --sidebar-foreground: #3a2418;
+  --sidebar-primary: #9c2f28;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ede8e0;
-  --sidebar-accent-foreground: #2e2b27;
-  --sidebar-border: #e4ddd2;
-  --sidebar-ring: #56664f;
+  --sidebar-accent: #fbecd6;
+  --sidebar-accent-foreground: #3a2418;
+  --sidebar-border: #f0dcc0;
+  --sidebar-ring: #9c2f28;
 }
 
-/* Dark mode: warm charcoal, with the same roles. Screen only, so a page always prints light. */
+/* Dark mode: the festival by lamplight, with the same roles. Screen only, so a page always prints light. */
 @media screen {
   .dark {
     color-scheme: dark;
-    --background: #1b1a17;
-    --foreground: #ece7df;
-    --card: #24221f;
-    --card-foreground: #ece7df;
-    --popover: #24221f;
-    --popover-foreground: #ece7df;
-    --primary: #a7b89b; /* light olive, with dark text on it */
-    --primary-foreground: #1b1a17;
-    --secondary: #2e2b27;
-    --secondary-foreground: #ece7df;
-    --muted: #2e2b27;
-    --muted-foreground: #b3aca2;
-    --accent: #4b3832; /* deep blush */
-    --accent-foreground: #ece7df;
+    --background: #1b130f;
+    --foreground: #f4e8d8;
+    --card: #251a14;
+    --card-foreground: #f4e8d8;
+    --popover: #251a14;
+    --popover-foreground: #f4e8d8;
+    --primary: #f2b866; /* marigold light, with dark text on it */
+    --primary-foreground: #1b130f;
+    --secondary: #33241b;
+    --secondary-foreground: #f4e8d8;
+    --muted: #33241b;
+    --muted-foreground: #cdb7a2;
+    --accent: #5c3a14; /* deep marigold */
+    --accent-foreground: #f4e8d8;
     --destructive: #f2827a;
     --success: #6fcf97;
-    --border: #3a3631;
-    --sage: #232a22;
-    --input: #77706a;
-    --ring: #a7b89b;
-    --chart-1: #a7b89b;
-    --chart-2: #4b3832;
-    --chart-4: #b3aca2;
-    --sidebar: #24221f;
-    --sidebar-foreground: #ece7df;
-    --sidebar-primary: #a7b89b;
-    --sidebar-primary-foreground: #1b1a17;
-    --sidebar-accent: #2e2b27;
-    --sidebar-accent-foreground: #ece7df;
-    --sidebar-border: #3a3631;
-    --sidebar-ring: #a7b89b;
+    --border: #3d2b21;
+    --sage: #1f281b;
+    --input: #8f7867;
+    --ring: #f2b866;
+    --chart-1: #f2b866;
+    --chart-2: #5c3a14;
+    --chart-4: #cdb7a2;
+    --sidebar: #251a14;
+    --sidebar-foreground: #f4e8d8;
+    --sidebar-primary: #f2b866;
+    --sidebar-primary-foreground: #1b130f;
+    --sidebar-accent: #33241b;
+    --sidebar-accent-foreground: #f4e8d8;
+    --sidebar-border: #3d2b21;
+    --sidebar-ring: #f2b866;
   }
   /* Dusk instead of morning. (The kites keep their light haze: ponytail, a dark fog for the 3D if it bothers.) */
   .dark .kite-sky {
     background:
       radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 80%, transparent) 0, transparent 24%),
-      linear-gradient(to bottom, #1f2620 0%, #222420 45%, var(--background) 100%);
+      linear-gradient(to bottom, #2a1d15 0%, #221812 45%, var(--background) 100%);
   }
 }
 
 @theme inline {
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), var(--font-gujarati), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-body), var(--font-gujarati), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-serif), ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -144,11 +149,11 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* The hero's sky behind the kites: a soft morning, pale sage above, settling into linen at the horizon, with a blush sun. */
+/* The home page's sky behind the kites (behind the coming-soon switch for now): a warm morning, a marigold sun. */
 .kite-sky {
   background:
     radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 80%, transparent) 0, transparent 24%),
-    linear-gradient(to bottom, #e6ece2 0%, #f1f1ea 45%, var(--background) 100%);
+    linear-gradient(to bottom, #ffefd2 0%, #fff6e6 45%, var(--background) 100%);
 }
 
 /*
@@ -199,11 +204,171 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* The display face (Fraunces) in its soft, slightly wonky cut: the Marigold voice. */
+@layer utilities {
+  .font-display {
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+}
+
+/*
+ * The Marigold festival pieces (components/festive.tsx, the coming-soon page). Decorative motion only:
+ * the toran's flags sway, the rangoli and the hand-drawn underline draw themselves once, words rotate,
+ * petals float. All of it stops for reduced motion.
+ */
+@layer components {
+  .toran-flag {
+    transform-box: fill-box;
+    transform-origin: 50% 0;
+    animation: toran-sway 3.4s var(--ease-in-out) infinite alternate;
+  }
+  .toran-flag:nth-of-type(even) {
+    animation-delay: -1.7s;
+  }
+  @keyframes toran-sway {
+    from {
+      transform: rotate(-4deg);
+    }
+    to {
+      transform: rotate(4deg);
+    }
+  }
+  /* Drawn strokes (pathLength 1): they draw themselves once on load. */
+  .hand-underline path,
+  .rangoli-petal {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: stroke-draw 900ms var(--ease-out) 500ms forwards;
+  }
+  .rangoli-petal {
+    animation-duration: 1400ms;
+    animation-delay: 150ms;
+  }
+  .rangoli-petal.ring-2 {
+    animation-delay: 450ms;
+  }
+  .rangoli-petal.ring-3 {
+    animation-delay: 750ms;
+  }
+  @keyframes stroke-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  /* A path drawn by the scroll (data-path in components/motion.tsx); fully drawn when that does not run. */
+  .drawn-path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+  /* components/rotating-word.tsx: the words share one grid cell, so the line never changes width. */
+  .rotator {
+    display: inline-grid;
+    overflow: hidden;
+    vertical-align: bottom;
+  }
+  .rotator > span {
+    grid-area: 1 / 1;
+    transition:
+      transform 300ms var(--ease-out),
+      opacity 300ms var(--ease-out);
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  .rotator > span[data-state="current"] {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .rotator > span[data-state="previous"] {
+    transform: translateY(-100%);
+  }
+  /* Jharokha arches: a round top, an inner outline, a warm wash (deeper by lamplight). */
+  .arch {
+    border-radius: 999px 999px 1.75rem 1.75rem;
+    box-shadow: 0 20px 40px -24px color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+  .arch-inner {
+    border: 1.5px solid color-mix(in srgb, var(--primary) 22%, transparent);
+    border-radius: 999px 999px 1.25rem 1.25rem;
+  }
+  .arch-kumkum {
+    background: linear-gradient(to bottom, #fbe3dd, #f6cfc6);
+  }
+  .arch-marigold {
+    background: linear-gradient(to bottom, #fff0c9, #ffd98a);
+  }
+  .arch-leaf {
+    background: linear-gradient(to bottom, #e9f4e3, #d3e8c9);
+  }
+  .dark .arch-kumkum {
+    background: linear-gradient(to bottom, #3b201b, #2c1713);
+  }
+  .dark .arch-marigold {
+    background: linear-gradient(to bottom, #3d2c12, #2d200d);
+  }
+  .dark .arch-leaf {
+    background: linear-gradient(to bottom, #233021, #1a2418);
+  }
+  /* A diya's glow on each industry. */
+  .diya {
+    box-shadow: 0 0 10px 2px #f7c548;
+  }
+  /* The offer as a ticket: notches cut from both sides at the perforation. */
+  .ticket {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    -webkit-mask:
+      radial-gradient(circle 16px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 16px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+    mask:
+      radial-gradient(circle 16px at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+      radial-gradient(circle 16px at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+  }
+  @media (min-width: 640px) {
+    .ticket-body {
+      border-left: 2px dashed var(--border);
+    }
+  }
+  /* Marigold petals floating in the closing card. */
+  .petal {
+    width: 1.4rem;
+    height: 2.2rem;
+    border-radius: 999px 999px 999px 0;
+    background: linear-gradient(135deg, #ffd27a, #f2a20c);
+    opacity: 0.85;
+    animation: petal-float 5s var(--ease-in-out) infinite alternate;
+  }
+  .petal-2 {
+    animation-delay: -1.2s;
+    background: linear-gradient(135deg, #fff1c9, #f7c548);
+  }
+  .petal-3 {
+    animation-delay: -2.4s;
+  }
+  .petal-4 {
+    animation-delay: -3.6s;
+    background: linear-gradient(135deg, #f6cfc6, #f2a20c);
+  }
+  @keyframes petal-float {
+    from {
+      transform: translateY(0) rotate(-12deg);
+    }
+    to {
+      transform: translateY(-18px) rotate(16deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .toran-flag,
+    .petal {
+      animation: none !important;
+    }
+  }
+}
+
 /* In the components layer, so a page's own classes (e.g. [--scroll-bg:var(--card)]) win over these defaults. */
 @layer components {
   /*
    * SpotlightCard (React Bits, rebuilt; components/motion.tsx sets --spot-x/--spot-y as the pointer
-   * moves): a soft olive light inside the card and a brighter rim where the pointer is near its edge.
+   * moves): a soft kumkum light inside the card and a brighter rim where the pointer is near its edge.
    * Shows only on hover; without a mouse or JavaScript the card is unchanged.
    */
   .spotlight {
@@ -251,6 +416,24 @@ html.lenis body {
   @keyframes scroll-progress {
     from {
       transform: scaleX(0);
+    }
+  }
+
+  /* The coming-soon header (SiteHeader blend): clear at the top, so the toran, header and rangoli read as one
+     scene, frosting into a cream bar over the first 120px of scroll. Without scroll-driven animations it is
+     simply that bar. */
+  @supports (animation-timeline: scroll()) {
+    .header-blend {
+      animation: header-blend linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 120px;
+    }
+  }
+  @keyframes header-blend {
+    from {
+      border-color: transparent;
+      background-color: transparent;
+      backdrop-filter: none;
     }
   }
 

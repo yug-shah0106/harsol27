@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { Toran } from "@/components/festive";
 import { Motion } from "@/components/motion";
 import { SkipLink, Wordmark } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <div className="flex flex-1 flex-col">
       <SkipLink />
+      <Toran className="bg-card" />
       <header className="flex items-center justify-between gap-4 bg-card px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2">
           <Wordmark />

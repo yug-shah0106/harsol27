@@ -104,8 +104,12 @@ export async function makeInquiry(buyerE164: string, sellerId: string, productId
 export async function makeLead(fullName: string): Promise<string> {
   const { rows } = await withDb((db) =>
     db.query(
-      `INSERT INTO "Lead" ("id","fullName","phone","email","businessCategory","industryId","createdAt","updatedAt")
-       SELECT gen_random_uuid(), $1, '+919876500000', 'lead@example.test', 'MANUFACTURING', i."id", now(), now() FROM "Industry" i WHERE i."slug" = 'food-products' RETURNING "id"`,
+      `WITH lead AS (
+         INSERT INTO "Lead" ("id","fullName","phone","email","businessCategory","createdAt","updatedAt")
+         VALUES (gen_random_uuid(), $1, '+919876500000', 'lead@example.test', 'MANUFACTURING', now(), now()) RETURNING "id"
+       ), link AS (
+         INSERT INTO "_IndustryToLead" ("A","B") SELECT i."id", lead."id" FROM "Industry" i, lead WHERE i."slug" = 'food-products'
+       ) SELECT "id" FROM lead`,
       [fullName],
     ),
   );

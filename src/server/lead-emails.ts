@@ -4,6 +4,13 @@ import { escapeHtml, type Email } from "./email";
 export type LeadForEmail = {
   id: string;
   fullName: string;
+  fatherName: string | null;
+  nativePlace: string | null;
+  address: string | null;
+  website?: string | null;
+  instagram?: string | null;
+  mapsLink?: string | null;
+  paymentProofKey?: string | null;
   phone: string;
   email: string;
   businessCategory: string;
@@ -27,7 +34,7 @@ function detailsTable(rows: [string, string][]): string {
 export function leadConfirmationEmail(lead: LeadForEmail): Email {
   const rows: [string, string][] = [
     ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industry", lead.industryName],
+    ["Industries", lead.industryName],
     ["Phone", lead.phone],
   ];
   return {
@@ -54,10 +61,17 @@ export function leadTeamAlertEmail(lead: LeadForEmail, to: string[], appUrl: str
   const link = `${appUrl}/admin/leads/${lead.id}`;
   const rows: [string, string][] = [
     ["Name", lead.fullName],
+    ["Father's name", lead.fatherName ?? "Not given"],
+    ["Native place", lead.nativePlace ?? "Not given"],
+    ["Address or city", lead.address ?? "Not given"],
     ["Phone", lead.phone],
     ["Email", lead.email],
     ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industry", lead.industryName],
+    ["Industries", lead.industryName],
+    ["Website", lead.website ?? "Not given"],
+    ["Instagram", lead.instagram ? `@${lead.instagram}` : "Not given"],
+    ["Google Maps", lead.mapsLink ?? "Not given"],
+    ["Payment screenshot", lead.paymentProofKey ? "Added: open the lead in admin to check it" : "Not added"],
     ["Received", `${lead.createdAt.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST`],
   ];
   return {

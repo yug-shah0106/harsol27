@@ -1,11 +1,20 @@
 import { ArrowUpRight } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { HeroSky, Rooftops } from "@/components/hero/hero-sky";
 import { KitePoster } from "@/components/hero/kite-poster";
 import { BlurText, ScrollText } from "@/components/motion-text";
 import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
+import { pageMetadata } from "@/lib/seo";
 import { listActiveIndustries } from "@/server/industries";
+
+export const metadata: Metadata = pageMetadata({
+  title: { absolute: "Harsol27 · Harsol Sattavis Jain community B2B marketplace" },
+  description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Gujarat and talk to the seller directly.",
+  path: "/",
+  keywords: ["find suppliers in Gujarat", "buy from Gujarat manufacturers", "wholesale suppliers Gujarat"],
+});
 
 const STEPS = [
   {
@@ -215,7 +224,7 @@ export default async function HomePage() {
               Share a few details about your business and our team will get in touch, or apply as a seller right away.
             </p>
             <Button asChild size="lg" data-magnet className="w-fit rounded-full px-8">
-              <Link href="/get-started">Get started</Link>
+              <Link href="/Pre-Registration">Get started</Link>
             </Button>
           </div>
         </div>

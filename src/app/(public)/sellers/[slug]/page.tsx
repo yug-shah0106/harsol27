@@ -3,12 +3,20 @@ import { notFound } from "next/navigation";
 import { ContactPanel } from "@/components/contact-panel";
 import { ProductGrid } from "@/components/product-card";
 import { BlurText } from "@/components/motion-text";
+import { clip, pageMetadata } from "@/lib/seo";
 import { getMember } from "@/server/authz";
 import { getPublicSeller } from "@/server/catalog";
 
 export async function generateMetadata({ params }: PageProps<"/sellers/[slug]">): Promise<Metadata> {
   const seller = await getPublicSeller((await params).slug);
-  return seller ? { title: seller.companyName, description: seller.description?.slice(0, 160) ?? `${seller.companyName}, ${seller.city}` } : {};
+  if (!seller) return {};
+  const { companyName, city, state } = seller;
+  return pageMetadata({
+    title: `${companyName}, ${city}`,
+    description: clip(seller.description || `${companyName} in ${city}, ${state}: products and contact details on Harsol27, Gujarat's B2B marketplace.`),
+    path: `/sellers/${seller.slug}`,
+    keywords: [companyName, `${companyName} ${city}`, `suppliers in ${city}`],
+  });
 }
 
 export default async function SellerProfilePage({ params }: PageProps<"/sellers/[slug]">) {

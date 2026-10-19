@@ -39,7 +39,7 @@ and backup-failure alarms.
 | 7 | **Email domain verified in Resend** (SPF, DKIM, DMARC records in DNS), and `EMAIL_FROM` set to an address on it (e.g. `Harsol27 <noreply@harsol27.com>`) | Without it, every email goes to spam or is not delivered, including password-reset links (members who forget their password would be stuck) | (automatic) "emails come from our own domain", "email domain is verified" |
 | 8 | **Legal review** of `/terms` and `/privacy`, then remove the "Draft" notices | Required before collecting real personal data | (automatic) "has been legally reviewed" |
 | 9 | **A privacy contact address** for the privacy page | People must be able to ask about their data | Read the privacy page |
-| 10 | **How sellers pay and renew**: the price and payment details to show sellers | Renewal reminders currently say "reply to this email" | Read the seller subscription page |
+| 10 | **How sellers pay and renew**: the price is decided (₹1,000 for 15 months, ₹500 till 24 November 2026; `src/lib/fee.ts`). The client's UPI QR code is in (`public/payment-qr.svg` and `.png`, read from their printed PNB code: pays SHREE HARSOL SATTAVIS JAIN YUVAK TRUST, 9152000352m@pnb). Still needed: the renewal payment details | Renewal reminders currently say "reply to this email" | The QR on /Pre-Registration scans to the client's account (make one small test payment before launch) |
 | 11 | **Rotate the secrets shared in chat** (the Neon database password and the Resend key) | Anything pasted into a chat must be treated as exposed | The old values no longer work |
 | 12 | **An uptime monitor account** (UptimeRobot, Better Stack or similar) on `/api/health/full` | Someone hears about an outage before users do | Stop the worker for 5 minutes: an alert arrives |
 | 13 | **Someone reads the team inbox** (`harsol27helpdesk@gmail.com`) every day | Leads, seller applications and the daily health email go there | — |
@@ -59,7 +59,7 @@ and backup-failure alarms.
 ## Launch day
 
 1. Take a backup: `docker compose -f deploy/compose.yml exec backup /backup/backup.sh`
-2. Deploy: `deploy/deploy.sh`
+2. Open the site: `COMING_SOON="false"` in `deploy/.env` (until then visitors see only the coming-soon page), then deploy: `deploy/deploy.sh`
 3. Run the go-live check (0 blocking) and the smoke test (item 19).
 4. Turn on the uptime monitor's alerts.
 5. Announce.

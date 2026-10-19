@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Browser, type Page } from "@playwright/test";
+import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { PNG_FILE } from "./member";
 import { uniqueIp } from "./staff";
 
 /** A suffix for test names that stays unique even when copies of a test run in parallel. */
@@ -10,11 +11,15 @@ export const unique = () => `${Date.now()}${Math.random().toString(36).slice(2, 
  * header is added only to requests to the app: sent to storage, it would fail the bucket's strict CORS
  * rule, which allows nothing but Content-Type. Real browsers never send this header.
  */
-export async function newPage(browser: Browser): Promise<Page> {
+export async function newPage(browser: Browser, ip = uniqueIp()): Promise<Page> {
   const context = await browser.newContext();
-  const ip = uniqueIp();
-  await context.route(/^http:\/\/localhost:3217\//, (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }));
+  await sendClientIp(context, ip);
   return context.newPage();
+}
+
+/** Gives a context its own client IP, on requests to the app only (see newPage). */
+export async function sendClientIp(context: BrowserContext, ip = uniqueIp()): Promise<void> {
+  await context.route(/^http:\/\/localhost:3217\//, (route) => route.continue({ headers: { ...route.request().headers(), "x-forwarded-for": ip } }));
 }
 
 /** Fails on any WCAG 2.1 A/AA violation axe can detect automatically on the current page. */
@@ -46,8 +51,19 @@ export async function choose(page: Page, label: string, option: string) {
 
 export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string }) {
   await page.getByLabel("Full name").fill(values.name);
+  await page.getByLabel("Father's name").fill("Ramesh Patel");
+  await choose(page, "Native place", "Harsol");
+  await page.getByLabel("Address or city").fill("Talod, Sabarkantha");
   await page.getByLabel("Phone number").fill(values.phone);
   await page.getByLabel("Email").fill(values.email);
   await choose(page, "Business category", values.category);
-  await choose(page, "Industry", values.industry);
+  await choose(page, "Industries", values.industry);
+  await page.keyboard.press("Escape"); // several can be chosen, so the list stays open until closed
+  await addPaymentScreenshot(page);
+}
+
+/** Adds a tiny real PNG as the payment screenshot, and waits until it has reached storage. */
+export async function addPaymentScreenshot(page: Page) {
+  await page.getByLabel("Payment screenshot").setInputFiles(PNG_FILE("payment.png"));
+  await expect(page.getByText("Uploaded: payment.png")).toBeVisible();
 }

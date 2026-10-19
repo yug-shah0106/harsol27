@@ -27,7 +27,7 @@ test("dark mode: the toggle switches at once, is remembered, and every page stay
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await toggle.click();
   await expect(page.locator("html")).toHaveClass(/\bdark\b/);
-  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(27, 26, 23)");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(27, 19, 15)"); // Marigold by lamplight
 
   for (const path of ["/", "/about", "/sign-in", "/search?q=khakhra", "/industries"]) {
     await page.goto(path); // rendered dark by the server: no flash of light
@@ -48,6 +48,19 @@ test("the header stays at the top, with a line showing how far down the page you
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect.poll(scale).toBeGreaterThan(0.95);
   expect((await page.getByRole("banner").boundingBox())!.y).toBe(0);
+});
+
+test("coming soon: the header is clear at the top and frosts as you scroll; a reload starts at the top", async ({ browser }) => {
+  const page = await newPage(browser);
+  await page.goto("/coming-soon");
+  const header = page.getByRole("banner");
+  const background = () => header.evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(await background()).toMatch(/\/ 0\)$|rgba\(0, 0, 0, 0\)/);
+  await page.evaluate(() => window.scrollTo(0, 900));
+  await expect.poll(background).toMatch(/\/ 0\.85\)$/);
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.classList.contains("lenis")); // settled: the browser would have restored by now
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
 
 test("back to top appears once you have scrolled down, and takes you (and the focus) back up", async ({ browser }) => {
@@ -85,7 +98,7 @@ test("'Talk to us' leads to the Get started form from any page", async ({ browse
   const page = await newPage(browser);
   await page.goto("/industries");
   await page.getByRole("link", { name: "Talk to us" }).click();
-  await expect(page).toHaveURL(/\/get-started$/);
+  await expect(page).toHaveURL(/\/Pre-Registration$/);
   await expect(page.getByRole("link", { name: "Talk to us" })).toHaveCount(0); // not on the form itself
 });
 
