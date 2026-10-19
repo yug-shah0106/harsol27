@@ -279,6 +279,12 @@ export function countPerIndiaDay(dates: Date[], now: Date, days: number): { day:
  * The admin overview's figures for Seller registrations: how many by decision (and not yet contacted),
  * per day over the last 14 days, the top native places and categories, and the five waiting longest.
  */
+/** Changes whenever a registration comes in: the admin pages poll it and refresh themselves (admin/live-leads.tsx). */
+export async function leadsStamp(): Promise<string> {
+  const { _count, _max } = await db().lead.aggregate({ _count: { _all: true }, _max: { createdAt: true } });
+  return `${_count._all}:${_max.createdAt?.toISOString() ?? ""}`;
+}
+
 export async function leadOverview(now = new Date()) {
   const [decisions, notContacted, recent, places, categories, waiting] = await Promise.all([
     db().lead.groupBy({ by: ["decision"], _count: { _all: true } }),

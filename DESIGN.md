@@ -176,6 +176,8 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - The list is a white popover: radius 16px, `shadow-lg`, 4px padding, up to 288px tall, scrolling inside.
   - Options are 14px. The highlighted one has a turmeric background; the chosen one is semibold with an kumkum check.
   - It opens upwards when there's no room below.
+  - The list floats above the page (a popover in the top layer), so a table or card that scrolls sideways
+    never cuts it off; it follows its button when the page scrolls.
   - Long lists (industries) are `searchable`: opening puts the cursor in a search box at the top of the
     list ("Search industries"), typing narrows the options, and `pinned` options ("All industries",
     "Other (not listed)") always stay listed.

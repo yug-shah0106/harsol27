@@ -37,6 +37,8 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
   for (const choice of ["Approved", "Rejected", "Pending"]) {
     await approval.click();
     await expect(page.getByRole("listbox").getByRole("option")).toHaveText(["Pending", "Approved", "Rejected"]);
+    // The table scrolls sideways, which used to clip the list: every option must be fully on screen.
+    await expect(page.getByRole("option", { name: "Rejected" })).toBeInViewport({ ratio: 1 });
     const saved = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
     await page.getByRole("option", { name: choice }).click();
     await saved;
@@ -194,6 +196,16 @@ test("an approved registration gets a login from the team; an admin can reset it
   await seller.getByLabel("Password", { exact: true }).fill(newPassword);
   await seller.getByRole("button", { name: "Sign in" }).click();
   await expect(seller.getByRole("main").getByRole("alert")).toContainText("Username or password is incorrect", { timeout: 20_000 });
+});
+
+test("a new registration shows on the open leads list without a reload", async ({ browser }) => {
+  const page = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
+  await signInAs(page, STAFF.viewer);
+  await page.goto("/admin/leads");
+  const name = `Lead Live ${unique()}`;
+  const visitor = await newPage(browser);
+  await submitLead(visitor, name, `live.${unique()}@example.test`);
+  await expect(page.getByRole("link", { name })).toBeVisible({ timeout: 25_000 }); // checked every 10 seconds
 });
 
 test("lead pages are staff-only", async ({ page }) => {

@@ -10,9 +10,10 @@ import { LEAD_DECISION_LABELS } from "@/lib/lead-status";
 import { requireStaff } from "@/server/authz";
 import { db } from "@/server/db";
 import { countRecentInquiries } from "@/server/inquiries";
-import { indiaDay, leadOverview } from "@/server/leads";
+import { indiaDay, leadOverview, leadsStamp } from "@/server/leads";
 import { countSubscriptionViews } from "@/server/subscriptions";
 import { categoryLabel } from "./leads/format";
+import { LiveLeads } from "./live-leads";
 
 const IST = "Asia/Kolkata";
 // The approval colours, as SVG fills and dots: green, red, and the toran's marigold for pending (it reads in
@@ -25,7 +26,8 @@ export default async function AdminHomePage() {
   // Layouts don't re-run on every navigation, so each page checks access itself.
   const staff = await requireStaff();
   const now = new Date();
-  const [leads, pendingSellers, inquiriesThisWeek, subscriptions] = await Promise.all([
+  const [stamp, leads, pendingSellers, inquiriesThisWeek, subscriptions] = await Promise.all([
+    leadsStamp(),
     leadOverview(now),
     db().seller.count({ where: { status: "PENDING" } }),
     countRecentInquiries(7),
@@ -41,6 +43,7 @@ export default async function AdminHomePage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <LiveLeads stamp={stamp} />
       {/* Greeting: who, when, what access, and the one thing to do next. */}
       <section className="relative isolate overflow-hidden rounded-2xl border border-border bg-linear-to-br from-accent/40 via-card to-card p-6 sm:p-8">
         {/* The rangoli whole, as on the home page, turning slowly (not with reduced motion); from 768px, beside the text. */}
