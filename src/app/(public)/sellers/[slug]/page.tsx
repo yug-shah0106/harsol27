@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps<"/sellers/[slug]">)
   const { companyName, city, state } = seller;
   return pageMetadata({
     title: `${companyName}, ${city}`,
-    description: clip(seller.description || `${companyName} in ${city}, ${state}: products and contact details on Harsol27, Gujarat's B2B marketplace.`),
+    description: clip(seller.description || `${companyName} in ${city}, ${state}: products and contact details on Harsol27, Harsol's B2B marketplace.`),
     path: `/sellers/${seller.slug}`,
     keywords: [companyName, `${companyName} ${city}`, `suppliers in ${city}`],
   });

@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { fieldErrors, leadIndustryName, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "./lead-schema";
+import { fieldErrors, leadIndustryName, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE, suggestUsername, usernameSchema } from "./lead-schema";
 
 const valid = {
-  fullName: "  Asha Patel ",
-  fatherName: " Ramesh Patel ",
+  firstName: "  Asha ",
+  fatherName: " Ramesh ",
+  lastName: " Patel",
   nativePlace: "Harsol",
-  address: "Talod, Sabarkantha",
+  address: "12 Station Road",
+  city: "Talod",
+  state: "Gujarat",
+  pincode: "383 215",
   phone: "98765 43210",
   email: " Asha@Example.COM ",
   businessCategory: "MANUFACTURING",
@@ -14,12 +18,16 @@ const valid = {
 };
 
 describe("leadSchema", () => {
-  it("normalises name, India-default phone to E.164 and lowercases email", () => {
+  it("trims the name's parts, joins the pincode, India-default phone to E.164 and lowercases email", () => {
     expect(leadSchema.parse(valid)).toEqual({
-      fullName: "Asha Patel",
-      fatherName: "Ramesh Patel",
+      firstName: "Asha",
+      fatherName: "Ramesh",
+      lastName: "Patel",
       nativePlace: "Harsol",
-      address: "Talod, Sabarkantha",
+      address: "12 Station Road",
+      city: "Talod",
+      state: "Gujarat",
+      pincode: "383215",
       phone: "+919876543210",
       email: "asha@example.com",
       businessCategory: "MANUFACTURING",
@@ -55,11 +63,12 @@ describe("leadSchema", () => {
     }
   });
 
-  it("takes one or more industries (each once), at most five", () => {
+  it("takes exactly one industry", () => {
     const ids = ["0199b5c0-0000-7000-8000-000000000001", "0199b5c0-0000-7000-8000-000000000002"];
-    expect(leadSchema.parse({ ...valid, industryIds: [...ids, ids[0]] }).industryIds).toEqual(ids);
-    const six = Array.from({ length: 6 }, (_, i) => `0199b5c0-0000-7000-8000-00000000001${i}`);
-    for (const industryIds of [[], six, ["steel"]]) {
+    expect(leadSchema.parse({ ...valid, industryIds: [ids[0], ids[0]] }).industryIds).toEqual([ids[0]]); // the same one twice is one
+    const two = leadSchema.safeParse({ ...valid, industryIds: ids });
+    expect(!two.success && fieldErrors(two.error).industryIds).toBe("Choose one industry.");
+    for (const industryIds of [[], ids, ["steel"]]) {
       const result = leadSchema.safeParse({ ...valid, industryIds });
       expect(result.success).toBe(false);
       if (!result.success) expect(fieldErrors(result.error).industryIds).toBeTruthy();
@@ -82,8 +91,14 @@ describe("leadSchema", () => {
   });
 
   it.each([
-    ["fullName", ""],
-    ["fullName", "Asha\nBcc: x@evil.test"],
+    ["firstName", ""],
+    ["firstName", "Asha\nBcc: x@evil.test"],
+    ["lastName", ""],
+    ["city", ""],
+    ["state", "Gujarat State"],
+    ["pincode", "38001"],
+    ["pincode", "080001"],
+    ["pincode", "abcdef"],
     ["fatherName", ""],
     ["fatherName", "R\nBcc: x@evil.test"],
     ["nativePlace", " "],
@@ -106,8 +121,22 @@ describe("leadSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(Object.keys(fieldErrors(result.error)).sort()).toEqual(
-        ["address", "businessCategory", "email", "fatherName", "fullName", "industryIds", "nativePlace", "paymentProof", "phone"].sort(),
+        ["address", "businessCategory", "city", "email", "fatherName", "firstName", "industryIds", "lastName", "nativePlace", "paymentProof", "phone", "pincode", "state"].sort(),
       );
     }
+  });
+});
+
+describe("member usernames", () => {
+  it("are 3 to 30 lowercase letters, numbers, dots or underscores", () => {
+    expect(usernameSchema.parse(" YugShah27 ")).toBe("yugshah27");
+    for (const ok of ["yug", "yug.shah", "yug_shah", "27yug"]) expect(usernameSchema.safeParse(ok).success, ok).toBe(true);
+    for (const bad of ["yu", "yug shah", ".yug", "yug-shah", "a".repeat(31), "યુગ"]) expect(usernameSchema.safeParse(bad).success, bad).toBe(false);
+  });
+
+  it("are suggested from the name", () => {
+    expect(suggestUsername({ firstName: "Yug", lastName: "Shah", fullName: "Yug Ramesh Shah" })).toBe("yugshah");
+    expect(suggestUsername({ firstName: null, lastName: null, fullName: "Asha Patel" })).toBe("ashapatel");
+    expect(suggestUsername({ firstName: "Om", lastName: "", fullName: "Om" })).toBe("omseller");
   });
 });

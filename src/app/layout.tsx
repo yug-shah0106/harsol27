@@ -24,7 +24,7 @@ export function generateMetadata(): Metadata {
   return {
     metadataBase: site ? new URL(site) : undefined,
     title: { default: "Harsol27 · Harsol Sattavis Jain community B2B marketplace", template: "%s · Harsol27" },
-    description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Gujarat and talk to the seller directly.",
+    description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Harsol and talk to the seller directly.",
     keywords: SITE_KEYWORDS,
     openGraph: { type: "website", siteName: "Harsol27", locale: "en_IN", images: [SHARE_IMAGE] },
     twitter: { card: "summary_large_image", images: [SHARE_IMAGE] },

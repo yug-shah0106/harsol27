@@ -8,6 +8,7 @@ import { env } from "./env";
 import { checkOtp } from "./otp";
 import { enqueuePasswordResetEmail } from "./jobs";
 import { hashPassword, MEMBER_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, verifyPassword } from "./password";
+import { isStaffRole } from "./staff-policy";
 
 /** Placeholder address for phone-only members (Better Auth requires a unique email). Never deliverable. */
 export function memberPlaceholderEmail(phone: string): string {
@@ -17,13 +18,13 @@ export function memberPlaceholderEmail(phone: string): string {
 export const isPlaceholderEmail = (email: string) => email.endsWith("@phone.harsol27.invalid");
 
 /**
- * Better Auth is used as a library: its HTTP handler is NOT mounted under /api/auth. Every sign-in,
- * sign-up and password reset goes through our own server actions, which apply our rate limits,
- * lockout and role checks before calling `auth().api.*`. The one exception is Google's return
- * address, /api/auth/callback/google (its own route file), which only finishes a Google sign-in.
+ * Better Auth is used as a library: its HTTP handler is NOT mounted. Every sign-in and staff password
+ * reset goes through our own server actions, which apply our rate limits, lockout and role checks before
+ * calling `auth().api.*`. There is no sign-up and no Google sign-in: the team makes every login
+ * (member-logins.ts, `pnpm staff`), client decision 2026-10-19.
  */
 function createAuth() {
-  const { BETTER_AUTH_URL, BETTER_AUTH_SECRET, CLIENT_IP_HEADER, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = env();
+  const { BETTER_AUTH_URL, BETTER_AUTH_SECRET, CLIENT_IP_HEADER } = env();
   return betterAuth({
     appName: "Harsol27",
     baseURL: BETTER_AUTH_URL,
@@ -32,14 +33,16 @@ function createAuth() {
     database: prismaAdapter(db(), { provider: "postgresql" }),
     emailAndPassword: {
       enabled: true,
-      // Sign-up is reachable only through our sign-up action and always makes a MEMBER (role is not an
-      // input). Staff accounts are created only with `pnpm staff`, which enforces the staff length.
+      // No sign-up at all: member logins are made by the team from approved Seller registrations
+      // (server/member-logins.ts), staff accounts with `pnpm staff`. Both write the account directly.
+      disableSignUp: true,
       minPasswordLength: MEMBER_PASSWORD_MIN_LENGTH,
       maxPasswordLength: PASSWORD_MAX_LENGTH,
       password: { hash: hashPassword, verify: verifyPassword },
-      // Reset links go to members only (staff passwords are set with `pnpm staff`), by the worker.
+      // Reset links go to staff only (/staff/forgot-password), by the worker. Members cannot reset their
+      // own: the team gives them a new password (client, 2026-10-19).
       sendResetPassword: async ({ user, token }) => {
-        if ((user as { role?: unknown }).role === "MEMBER") await enqueuePasswordResetEmail(user.id, token);
+        if (isStaffRole((user as { role?: unknown }).role)) await enqueuePasswordResetEmail(user.id, token);
       },
       onPasswordReset: async ({ user }) => {
         await db().user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
@@ -58,19 +61,6 @@ function createAuth() {
       disableSessionRefresh: true, // fixed lifetime; staff are additionally capped in authz.ts
     },
     rateLimit: { enabled: false }, // only applies to the HTTP handler; see rate-limit.ts
-    socialProviders:
-      GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET
-        ? { google: { clientId: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, prompt: "select_account" } }
-        : {},
-    account: {
-      // Google never joins an existing account (staff, or a member who signed up with a password):
-      // that email must sign in the way it signed up. New Google users become members.
-      accountLinking: { enabled: false },
-      encryptOAuthTokens: true, // we only need Google to say who you are; its tokens are stored encrypted
-    },
-    // A Google return that cannot be completed (expired or forged state) lands on our sign-in page,
-    // which shows a plain message for ?error=. Better Auth's own error page is not exposed.
-    onAPIError: { errorURL: "/sign-in" },
     advanced: {
       cookiePrefix: "harsol27",
       useSecureCookies: BETTER_AUTH_URL.startsWith("https://"),
@@ -85,15 +75,14 @@ function createAuth() {
           throw new Error("Phone codes are sent by server/member-auth.ts, not by Better Auth.");
         },
         verifyOTP: ({ phoneNumber: phone, code }) => checkOtp(phone, code),
+        // Switched off (no SMS provider). Before turning it on, note it would create accounts on
+        // verification, while member logins are now made only by the team.
         signUpOnVerification: { getTempEmail: memberPlaceholderEmail, getTempName: (phone) => phone },
       }),
       nextCookies(), // must stay last: lets server actions set the session cookie
     ],
   });
 }
-
-/** "Continue with Google" is offered only when its key is configured (both values; env.ts checks). */
-export const googleSignInEnabled = () => !!env().GOOGLE_CLIENT_ID;
 
 type Auth = ReturnType<typeof createAuth>;
 let instance: Auth | undefined;

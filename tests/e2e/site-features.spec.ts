@@ -63,12 +63,19 @@ test("coming soon: the header is clear at the top and frosts as you scroll; a re
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 });
 
-test("back to top appears once you have scrolled down, and takes you (and the focus) back up", async ({ browser }) => {
+test("back to top appears once you have scrolled down, stays above the footer, and takes you (and the focus) back up", async ({ browser }) => {
   const page = await newPage(browser);
   await page.goto("/");
   const backToTop = page.getByRole("button", { name: "Back to top" });
   await expect(backToTop).toHaveCount(0);
   await page.evaluate(() => window.scrollTo(0, 2000));
+  await expect(backToTop).toBeInViewport(); // rides the bottom of the screen
+  // At the very end of the page it stops above the footer, not over it.
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect.poll(async () => {
+    const [button, footer] = await Promise.all([backToTop.boundingBox(), page.getByRole("contentinfo").boundingBox()]);
+    return button!.y + button!.height <= footer!.y;
+  }).toBe(true);
   await backToTop.click();
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(10);
   await expect(page.locator("#main")).toBeFocused();
@@ -98,7 +105,7 @@ test("'Talk to us' leads to the Get started form from any page", async ({ browse
   const page = await newPage(browser);
   await page.goto("/industries");
   await page.getByRole("link", { name: "Talk to us" }).click();
-  await expect(page).toHaveURL(/\/Pre-Registration$/);
+  await expect(page).toHaveURL(/\/Seller-Registration$/);
   await expect(page.getByRole("link", { name: "Talk to us" })).toHaveCount(0); // not on the form itself
 });
 

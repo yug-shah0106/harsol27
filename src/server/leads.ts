@@ -4,7 +4,8 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { DOCUMENT_TYPES, detectDocumentType } from "@/lib/file-type";
 import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE, type BusinessCategoryValue } from "@/lib/lead-schema";
-import { LEAD_STATUSES } from "@/lib/lead-status";
+import { FEE } from "@/lib/fee";
+import { LEAD_DECISIONS, LEAD_DECISION_LABELS, LEAD_STATUSES } from "@/lib/lead-status";
 import { uploadRequestSchema } from "@/lib/seller-schema";
 import { parseUtm } from "@/lib/utm";
 import { clientIpFrom } from "./client-ip";
@@ -20,7 +21,7 @@ import { headObject, presignUpload, readObjectStart } from "./storage";
 /** Per client IP. Generous enough for an office or mobile network sharing one address. */
 export const LEAD_IP_RULE = { max: 10, windowSeconds: 60 * 60 };
 
-const LEAD_FIELDS = ["fullName", "fatherName", "nativePlace", "nativePlaceOther", "address", "phone", "email", "businessCategory", "industryOther", "website", "instagram", "mapsLink", "paymentProof"] as const;
+const LEAD_FIELDS = ["firstName", "fatherName", "lastName", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "phone", "email", "businessCategory", "industryOther", "website", "instagram", "mapsLink", "paymentProof"] as const;
 
 // ───────────── Payment screenshot (browser → storage directly, like seller documents) ─────────────
 
@@ -93,7 +94,7 @@ export async function submitLead(form: FormData, headers: Headers): Promise<void
 
   // The browser checks phone numbers with compact metadata; the server uses the full rules.
   if (!isValidPhoneNumber(data.phone)) {
-    throw new UserFacingError("Please correct the highlighted fields.", { phone: "Enter a valid phone number, for example 98765 43210." });
+    throw new UserFacingError("Please correct the highlighted fields.", { phone: "Enter a valid WhatsApp number, for example 98765 43210." });
   }
 
   const found = await db().industry.count({ where: { id: { in: listed }, isActive: true } });
@@ -110,12 +111,14 @@ export async function submitLead(form: FormData, headers: Headers): Promise<void
     const lead = await tx.lead.create({
       data: {
         ...data,
+        fullName: `${data.firstName} ${data.fatherName} ${data.lastName}`, // shown everywhere a lead is listed
         nativePlace: nativePlace === OTHER_NATIVE_PLACE ? nativePlaceOther : nativePlace, // the place itself, listed or typed
         industries: { connect: listed.map((id) => ({ id })) },
         industryOther: other ? industryOther : null,
         website: website || null,
         instagram: instagram || null,
         mapsLink: mapsLink || null,
+        tenureMonths: FEE.months, // the subscription the fee bought, from today
         paymentProofKey: proof.key,
         paymentProofName: proof.fileName,
         sourceIp: ip,
@@ -138,6 +141,7 @@ const categoryValues = BUSINESS_CATEGORIES.map((c) => c.value) as [BusinessCateg
 /** URL search params → safe filters. Anything malformed silently falls back to "no filter". */
 export const leadListParamsSchema = z.object({
   status: z.preprocess(first, z.enum(LEAD_STATUSES).optional()).catch(undefined),
+  decision: z.preprocess(first, z.enum(LEAD_DECISIONS).optional()).catch(undefined),
   industry: z.preprocess(first, z.union([z.uuid(), z.literal(OTHER_INDUSTRY)]).optional()).catch(undefined),
   category: z.preprocess(first, z.enum(categoryValues).optional()).catch(undefined),
   q: z.preprocess(first, z.string().trim().max(100).optional()).catch(undefined),
@@ -150,6 +154,7 @@ export type LeadListParams = z.infer<typeof leadListParamsSchema>;
 export async function listLeads(params: LeadListParams) {
   const where: Prisma.LeadWhereInput = {
     status: params.status,
+    decision: params.decision,
     ...(params.industry === OTHER_INDUSTRY ? { industryOther: { not: null } } : params.industry ? { industries: { some: { id: params.industry } } } : {}),
     businessCategory: params.category,
     ...(params.q && {
@@ -177,6 +182,8 @@ export async function listLeads(params: LeadListParams) {
         email: true,
         businessCategory: true,
         status: true,
+        decision: true,
+        tenureMonths: true,
         createdAt: true,
         industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
         industryOther: true,
@@ -193,6 +200,8 @@ export function getLead(id: string) {
     include: {
       industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
       statusChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
+      decisionChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
+      user: { select: { username: true, createdAt: true, disabledAt: true } },
     },
   });
 }
@@ -220,4 +229,78 @@ export async function changeLeadStatus(input: Record<string, unknown>, actor: St
       data: { leadId, fromStatus: lead.status, toStatus: status, note: note || null, actorId: actor.id },
     });
   });
+}
+
+const decisionSchema = z.object({
+  leadId: z.uuid(),
+  decision: z.enum(LEAD_DECISIONS, { error: "Choose Pending, Approved or Rejected." }),
+});
+
+/** Approves or rejects a lead, or puts it back to pending, and records who did it and when, atomically. */
+export async function decideLead(input: Record<string, unknown>, actor: StaffUser): Promise<void> {
+  const parsed = decisionSchema.safeParse(input);
+  if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
+  const { leadId, decision } = parsed.data;
+
+  await db().$transaction(async (tx) => {
+    const lead = await tx.lead.findUnique({ where: { id: leadId }, select: { decision: true, userId: true } });
+    if (!lead) throw new UserFacingError("This lead no longer exists.");
+    if (lead.decision === decision) throw new UserFacingError(`This lead is already ${LEAD_DECISION_LABELS[decision].toLowerCase()}.`);
+    // Conditional update: if someone else decided since we read it, nothing happens.
+    const { count } = await tx.lead.updateMany({ where: { id: leadId, decision: lead.decision }, data: { decision } });
+    if (count === 0) throw new UserFacingError("Someone else changed this lead a moment ago. Reload the page to see the latest decision.");
+    await tx.leadDecisionChange.create({ data: { leadId, fromDecision: lead.decision, toDecision: decision, actorId: actor.id } });
+    // A login made for it works only while the registration is approved: switched off (and signed out
+    // everywhere) when it is rejected or put back to pending, on again when approved.
+    if (lead.userId) {
+      await tx.user.update({ where: { id: lead.userId }, data: { disabledAt: decision === "APPROVED" ? null : new Date() } });
+      if (decision !== "APPROVED") await tx.session.deleteMany({ where: { userId: lead.userId } });
+    }
+  });
+}
+
+// ───────────── Staff: the overview ─────────────
+
+const DAY_MS = 86_400_000;
+/** The India-time calendar day of a moment, "YYYY-MM-DD". */
+export const indiaDay = (at: Date) => new Date(at.getTime() + 5.5 * 3_600_000).toISOString().slice(0, 10);
+
+/** How many of `dates` fall on each of the last `days` India-time days, oldest first, ending today. */
+export function countPerIndiaDay(dates: Date[], now: Date, days: number): { day: string; count: number }[] {
+  const counts = new Map<string, number>();
+  for (const d of dates) counts.set(indiaDay(d), (counts.get(indiaDay(d)) ?? 0) + 1);
+  return Array.from({ length: days }, (_, i) => {
+    const day = indiaDay(new Date(now.getTime() - (days - 1 - i) * DAY_MS));
+    return { day, count: counts.get(day) ?? 0 };
+  });
+}
+
+/**
+ * The admin overview's figures for Seller registrations: how many by decision (and not yet contacted),
+ * per day over the last 14 days, the top native places and categories, and the five waiting longest.
+ */
+export async function leadOverview(now = new Date()) {
+  const [decisions, notContacted, recent, places, categories, waiting] = await Promise.all([
+    db().lead.groupBy({ by: ["decision"], _count: { _all: true } }),
+    db().lead.count({ where: { status: "NEW" } }),
+    db().lead.findMany({ where: { createdAt: { gte: new Date(now.getTime() - 15 * DAY_MS) } }, select: { createdAt: true } }),
+    db().lead.groupBy({ by: ["nativePlace"], where: { nativePlace: { not: null } }, _count: { _all: true }, orderBy: { _count: { nativePlace: "desc" } }, take: 5 }),
+    db().lead.groupBy({ by: ["businessCategory"], _count: { _all: true }, orderBy: { _count: { businessCategory: "desc" } } }),
+    db().lead.findMany({
+      where: { decision: "PENDING" },
+      orderBy: { createdAt: "asc" },
+      take: 5,
+      select: { id: true, fullName: true, nativePlace: true, city: true, createdAt: true, industryOther: true, industries: { select: { name: true } } },
+    }),
+  ]);
+  const byDecision = Object.fromEntries(LEAD_DECISIONS.map((d) => [d, decisions.find((x) => x.decision === d)?._count._all ?? 0])) as Record<(typeof LEAD_DECISIONS)[number], number>;
+  return {
+    total: byDecision.PENDING + byDecision.APPROVED + byDecision.REJECTED,
+    byDecision,
+    notContacted,
+    perDay: countPerIndiaDay(recent.map((l) => l.createdAt), now, 14),
+    places: places.map((p) => ({ name: p.nativePlace ?? "", count: p._count._all })),
+    categories: categories.map((c) => ({ value: c.businessCategory, count: c._count._all })),
+    waiting,
+  };
 }

@@ -16,10 +16,10 @@ export default function PrivacyPage() {
   return (
     <ProsePage title="Privacy policy" updated="2026-10-17">
       <DraftNotice />
-      <h2>What we collect through the {isComingSoon() ? "Pre-registration" : "Get started"} form</h2>
+      <h2>What we collect through the {isComingSoon() ? "Seller registration" : "Get started"} form</h2>
       <ul>
-        <li>Your full name, your father&apos;s name, your phone number and email address.</li>
-        <li>Your native place, and your address or city.</li>
+        <li>Your first name, your father&apos;s name and your last name, your WhatsApp number and email address.</li>
+        <li>Your native place, and your address, city, state and pincode.</li>
         <li>If you give them: your business&apos;s website, Instagram name and Google Maps link.</li>
         <li>A screenshot of your payment. Only the Harsol27 team can see it.</li>
         <li>Your business category and industry.</li>

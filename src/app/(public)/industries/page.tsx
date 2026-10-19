@@ -6,9 +6,9 @@ import { listIndustriesWithCounts } from "@/server/catalog";
 
 export const metadata: Metadata = pageMetadata({
   title: "Browse suppliers by industry",
-  description: "Browse Harsol27 by industry to find approved manufacturers, wholesalers and traders from Gujarat, and contact them directly.",
+  description: "Browse Harsol27 by industry to find approved manufacturers, wholesalers and traders from Harsol, and contact them directly.",
   path: "/industries",
-  keywords: ["suppliers by industry Gujarat", "Gujarat industries"],
+  keywords: ["suppliers by industry Harsol", "Harsol industries"],
 });
 
 export default async function IndustriesPage() {
@@ -21,8 +21,7 @@ export default async function IndustriesPage() {
           <li key={industry.id} data-reveal>
             <Link
               href={`/industries/${industry.slug}`}
-              data-spotlight
-              className="spotlight flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 font-semibold no-underline transition-transform duration-300 hover:-translate-y-0.5 hover:border-primary"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 font-semibold no-underline transition-transform duration-300 hover:-translate-y-0.5 hover:border-primary"
             >
               {industry.name}
               <span className="text-sm font-normal text-muted-foreground">

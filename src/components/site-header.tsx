@@ -22,14 +22,19 @@ export function SkipLink() {
 
 export function Wordmark() {
   return (
-    <Link href="/" className="inline-flex items-center gap-1.5 font-display text-lg leading-none tracking-tight text-primary no-underline min-[360px]:gap-2 min-[360px]:text-xl sm:text-[1.375rem]">
-      {/* The Harsol Sattavis Jain Yuvak Trust's logo, the larger of the two (decorative: the wordmark names the link).
+    <Link href="/" className="inline-flex min-w-0 items-center gap-1.5 text-primary no-underline min-[360px]:gap-2">
+      {/* The Harsol Sattavis Jain Yuvak Trust's logo, the larger of the two (decorative: the name beside it names the link).
           52px, reaching into the header's padding (negative margin) so the header stays 65px tall; 44px under
-          360px, where it and "Pre-register" only just fit. A plain <img>: next/image adds an inline style our CSP blocks. */}
+          360px, where it and "Register" only just fit. A plain <img>: next/image adds an inline style our CSP blocks. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.webp" alt="" width={58} height={52} className="-my-0.5 h-11 w-auto shrink-0 min-[360px]:-my-1.5 min-[360px]:h-13" />
-      <span>
-        Harsol<span className="italic">27</span>
+      {/* The trust's name in two lines, no taller than the header's button (40px): "Harsol27" in the serif, then
+          "Jain Yuvak Trust, Bhayander" small beneath (wrapping onto a second line on narrow phones). */}
+      <span className="flex min-w-0 flex-col sm:gap-0.5">
+        <span className="font-display text-lg leading-none tracking-tight sm:text-[1.375rem]">
+          Harsol<span className="italic">27</span>
+        </span>
+        <span className="text-[0.625rem] leading-[1.1] font-semibold text-muted-foreground sm:text-xs sm:whitespace-nowrap">Jain Yuvak Trust, Bhayander</span>
       </span>
     </Link>
   );
@@ -40,18 +45,15 @@ export function Wordmark() {
  * `blend` (the coming-soon page): clear over the page at the top, frosting into a cream bar as you scroll.
  */
 export async function SiteHeader({ blend = false }: { blend?: boolean }) {
-  // Before launch only Home and Pre-registration are open (src/lib/coming-soon.ts), so only they are linked.
+  // Before launch only Home, Seller registration and sign-in (for registered sellers) are open
+  // (src/lib/coming-soon.ts), so only they are linked.
   const closed = isComingSoon();
-  const member = closed ? null : await getMember();
+  const member = await getMember();
   const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
+  const account = member ? { href: "/account", label: "Your account" } : { href: "/sign-in", label: "Sign in" };
   const links = closed
-    ? [{ href: "/", label: "Home" }]
-    : [
-        { href: "/", label: "Home" },
-        { href: "/search", label: "Search" },
-        { href: "/about", label: "About" },
-        member ? { href: "/account", label: "Your account" } : { href: "/sign-in", label: "Sign in" },
-      ];
+    ? [{ href: "/", label: "Home" }, account]
+    : [{ href: "/", label: "Home" }, { href: "/search", label: "Search" }, { href: "/about", label: "About" }, account];
   return (
     <header className={cn("sticky top-0 z-40 border-b border-border backdrop-blur-md print:static print:border-0", blend ? "header-blend bg-background/85" : "bg-card/85")}>
       {/* Full width: the wordmark in the left corner, the links and "Get started" in the right (same gutters as the footer). */}
@@ -66,8 +68,18 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
             ))}
             <ThemeToggle initialDark={dark} />
           </nav>
-          <Button asChild data-magnet={!closed || undefined} className="rounded-full">
-            <Link href="/Pre-Registration">{closed ? "Pre-register" : "Get started"}</Link>
+          <Button asChild className="rounded-full">
+            <Link href="/Seller-Registration">
+              {closed ? (
+                // Short on phones, where the header is tight.
+                <>
+                  <span className="sm:hidden">Register</span>
+                  <span className="hidden sm:inline">Seller registration</span>
+                </>
+              ) : (
+                "Get started"
+              )}
+            </Link>
           </Button>
           <MobileMenu links={links} initialDark={dark} />
         </div>
@@ -80,10 +92,13 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-border bg-secondary print:hidden">
-      {/* One slim row, all on the left: the floating buttons sit bottom-right. Phones keep room under it for them. */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 pt-5 pb-24 text-sm sm:px-6 sm:pb-5 lg:px-10">
-        <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27</p>
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
+      {/* One slim row: the copyright left, the links right (the floating buttons stop above the footer). */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-sm sm:px-6 lg:px-10">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27 Jain Yuvak Trust, Bhayander</p>
+          <InstallApp />
+        </div>
+        <nav aria-label="Footer" className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
           {!isComingSoon() && (
             <>
               <Link href="/about" className="hover:underline">About</Link>
@@ -93,7 +108,6 @@ export function SiteFooter() {
           <Link href="/terms" className="hover:underline">Terms</Link>
           <Link href="/privacy" className="hover:underline">Privacy</Link>
         </nav>
-        <InstallApp />
       </div>
     </footer>
   );

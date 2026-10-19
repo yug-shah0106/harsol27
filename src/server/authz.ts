@@ -19,8 +19,8 @@ export async function getStaff(): Promise<StaffUser | null> {
 
 /**
  * A signed-in buyer/seller. `phone` is what sellers receive with inquiries: the SMS-verified number
- * (phone accounts, before SMS was switched off) or the mobile typed at sign-up (not verified). Google
- * accounts have none until they add one. `email` is null for phone accounts (placeholder address).
+ * (phone accounts, before SMS was switched off) or the mobile on the account (from the Seller registration,
+ * not verified); an account without one adds it first. `email` is null for phone accounts (placeholder address).
  */
 export type Member = { id: string; email: string | null; phone: string | null };
 export type MemberWithPhone = Member & { phone: string };
@@ -39,7 +39,7 @@ export async function getMember(): Promise<Member | null> {
 
 /**
  * For member pages and actions. `returnTo` must be a path on this site; it is where sign-in comes
- * back to. Members without a mobile number (Google sign-ups) are asked for one first, because
+ * back to. Members without a mobile number are asked for one first, because
  * sellers get it with inquiries; only the page that collects it passes `{ phoneOptional: true }`.
  */
 export async function requireMember(returnTo: string): Promise<MemberWithPhone>;

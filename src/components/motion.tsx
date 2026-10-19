@@ -10,8 +10,6 @@ import { useEffect } from "react";
  *   data-reveal         rises and fades in when scrolled to; items arriving together are staggered
  *   data-blur-text      a heading whose words ([data-word]) blur in one after another   (React Bits BlurText)
  *   data-count="1234"   a number that counts up from 0 as it comes into view              (React Bits CountUp)
- *   data-spotlight      a soft olive light follows the pointer across the card           (React Bits SpotlightCard)
- *   data-magnet         leans toward a nearby pointer                                    (React Bits Magnet)
  *   data-parallax="12"  drifts down by that percent of its height while the page scrolls past it
  *   data-draw           draws itself along x as its section scrolls by
  *   data-scroll-text    a statement whose words ([data-word]) go from faint to full as it scrolls by   (as on lenis.dev)
@@ -21,9 +19,10 @@ import { useEffect } from "react";
  *   data-spin="140"     turns that many degrees while it crosses the screen (the coming-soon rangoli)
  *   data-path           an SVG path (pathLength 1) that grows bit by bit as its drawing scrolls up the screen
  *   data-light          its [data-lamp] items light up one after another as it scrolls by, like diyas
- *   data-tilt           leans in 3D toward the pointer                                    (React Bits TiltedCard)
  *
- * The five React Bits effects are adapted from https://reactbits.dev (MIT + Commons Clause,
+ * Nothing follows the mouse (no spotlight, magnet or tilt: removed at the client's request, 2026-10-19).
+ *
+ * The two React Bits effects are adapted from https://reactbits.dev (MIT + Commons Clause,
  * © David Haz) and rebuilt on GSAP: the originals set inline styles, which our CSP blocks.
  *
  * Rules that keep pages fast, readable and accessible:
@@ -32,7 +31,7 @@ import { useEffect } from "react";
  *   at load enters with CSS instead (tw-animate-css classes in the markup). Counters are the exception:
  *   they show the real number until they count.
  * - prefers-reduced-motion: no animation and native scrolling, and these libraries are not even downloaded;
- *   gsap.matchMedia undoes everything if the setting changes after they have loaded. Pointer effects need a mouse (hover + fine pointer).
+ *   gsap.matchMedia undoes everything if the setting changes after they have loaded.
  * - Only transform, opacity and filter are animated (and an SVG stroke for data-path); hidden items stay
  *   focusable and appear when focused.
  */
@@ -63,8 +62,8 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
       if (cancelled) return;
       gsap.registerPlugin(ScrollTrigger);
       const mm = gsap.matchMedia();
-      mm.add({ motion: "(prefers-reduced-motion: no-preference)", mouse: "(hover: hover) and (pointer: fine)" }, (context) => {
-        const { motion, mouse } = context.conditions as { motion: boolean; mouse: boolean };
+      mm.add({ motion: "(prefers-reduced-motion: no-preference)" }, (context) => {
+        const { motion } = context.conditions as { motion: boolean };
         if (!motion) return;
         const main = document.getElementById("main") ?? document.body;
         const all = <T extends Element = HTMLElement>(selector: string, root: Element | Document = main) => gsap.utils.toArray<T>(selector, root);
@@ -214,67 +213,6 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
         }
         for (const group of all("[data-light]").filter(offscreen)) {
           gsap.fromTo(all("[data-lamp]", group), { opacity: 0.28, scale: 0.94 }, { opacity: 1, scale: 1, ease: "none", stagger: 0.06, scrollTrigger: { trigger: group, start: "top 85%", end: "bottom 60%", scrub: true } });
-        }
-
-        if (mouse) {
-          // TiltedCard: leans toward the pointer; quickTo re-targets from wherever it is, so fast moves never jump.
-          for (const card of all("[data-tilt]")) {
-            gsap.set(card, { transformPerspective: 900 });
-            const rx = gsap.quickTo(card, "rotationX", { duration: 0.5, ease: "power3.out" });
-            const ry = gsap.quickTo(card, "rotationY", { duration: 0.5, ease: "power3.out" });
-            const move = (event: PointerEvent) => {
-              const box = card.getBoundingClientRect();
-              ry(((event.clientX - box.left) / box.width - 0.5) * 10);
-              rx(-((event.clientY - box.top) / box.height - 0.5) * 8);
-            };
-            const leave = () => {
-              rx(0);
-              ry(0);
-            };
-            card.addEventListener("pointermove", move);
-            card.addEventListener("pointerleave", leave);
-            cleanups.push(() => {
-              card.removeEventListener("pointermove", move);
-              card.removeEventListener("pointerleave", leave);
-            });
-          }
-
-          // SpotlightCard: the light's position, as CSS variables the card's ::before/::after read (globals.css).
-          const spotlight = (event: PointerEvent) => {
-            const card = (event.target as Element | null)?.closest?.<HTMLElement>("[data-spotlight]");
-            if (!card) return;
-            const box = card.getBoundingClientRect();
-            card.style.setProperty("--spot-x", `${event.clientX - box.left}px`);
-            card.style.setProperty("--spot-y", `${event.clientY - box.top}px`);
-          };
-          document.addEventListener("pointermove", spotlight, { passive: true });
-          cleanups.push(() => document.removeEventListener("pointermove", spotlight));
-
-          // Magnet: within PADDING of the element, it moves a quarter of the way toward the pointer.
-          const PADDING = 48;
-          const STRENGTH = 4;
-          const magnets = all("[data-magnet]", document).map((el) => ({
-            el,
-            x: gsap.quickTo(el, "x", { duration: 0.4, ease: "power3.out" }),
-            y: gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" }),
-          }));
-          const pull = (event: PointerEvent) => {
-            for (const magnet of magnets) {
-              const box = magnet.el.getBoundingClientRect();
-              // Measure where it rests, not where it has been pulled to.
-              const cx = box.left + box.width / 2 - Number(gsap.getProperty(magnet.el, "x"));
-              const cy = box.top + box.height / 2 - Number(gsap.getProperty(magnet.el, "y"));
-              const dx = event.clientX - cx;
-              const dy = event.clientY - cy;
-              const near = Math.abs(dx) < box.width / 2 + PADDING && Math.abs(dy) < box.height / 2 + PADDING;
-              magnet.x(near ? dx / STRENGTH : 0);
-              magnet.y(near ? dy / STRENGTH : 0);
-            }
-          };
-          if (magnets.length) {
-            window.addEventListener("pointermove", pull, { passive: true });
-            cleanups.push(() => window.removeEventListener("pointermove", pull));
-          }
         }
 
         // The display font can arrive after this runs and change heading heights: measure again once it has.

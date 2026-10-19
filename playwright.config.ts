@@ -32,9 +32,6 @@ export default defineConfig({
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "",
       CLIENT_IP_HEADER: "x-forwarded-for",
       COMING_SOON: "false", // the tests use the full site; /coming-soon itself is still checked
-      // A made-up Google client: enough to show "Continue with Google" and check where it sends you.
-      GOOGLE_CLIENT_ID: "e2e-google-client.apps.googleusercontent.com",
-      GOOGLE_CLIENT_SECRET: "e2e-google-secret-never-used",
       S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://127.0.0.1:8333",
       S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test",
       S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? "local-dev-access-key",

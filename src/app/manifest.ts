@@ -4,9 +4,9 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Harsol27 · B2B marketplace for Gujarat",
+    name: "Harsol27 · B2B marketplace for Harsol",
     short_name: "Harsol27",
-    description: "Find approved Gujarati manufacturers, wholesalers and traders, and talk to them directly.",
+    description: "Find approved Harsol manufacturers, wholesalers and traders, and talk to them directly.",
     start_url: "/",
     scope: "/",
     display: "standalone",

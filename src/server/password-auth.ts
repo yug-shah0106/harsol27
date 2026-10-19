@@ -11,30 +11,31 @@ import { consumeRateLimit } from "./rate-limit";
 import { afterFailedLogin, isLocked, isStaffRole } from "./staff-policy";
 
 /**
- * Email-and-password sign-in, shared by staff (/staff/sign-in) and members (/sign-in). Each page
- * accepts only its own kind of account: a staff address on the member page fails like a wrong
- * password, so staff can only get a session through the staff page and its rules.
+ * Password sign-in, shared by staff (/staff/sign-in, by email) and members (/sign-in, by the username the
+ * team gave them). Each page accepts only its own kind of account: a staff login on the member page fails
+ * like a wrong password, so staff can only get a session through the staff page and its rules.
  */
 const KINDS = {
   // rememberMe: false → a browser-session cookie, gone when the browser closes.
-  staff: { accepts: isStaffRole, rememberMe: false },
-  member: { accepts: (role: unknown) => role === "MEMBER", rememberMe: true },
+  staff: { accepts: isStaffRole, rememberMe: false, by: "email", error: "Email or password is incorrect, or the account is temporarily locked. Please try again later." },
+  member: { accepts: (role: unknown) => role === "MEMBER", rememberMe: true, by: "username", error: "Username or password is incorrect, or the account is temporarily locked. Please try again later." },
 } as const;
 export type PasswordAccountKind = keyof typeof KINDS;
 
-// One message for unknown email, wrong password, locked and disabled accounts alike,
+// One message (per page) for an unknown login, a wrong password, locked and disabled accounts alike,
 // so the response never reveals whether an account exists or what state it is in.
-export const GENERIC_SIGN_IN_ERROR =
-  "Email or password is incorrect, or the account is temporarily locked. Please try again later.";
+export const GENERIC_SIGN_IN_ERROR = KINDS.staff.error;
+export const GENERIC_MEMBER_SIGN_IN_ERROR = KINDS.member.error;
 
 const IP_RULE = { max: 10, windowSeconds: 15 * 60 };
 
-const credentialsSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email()),
-  password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
-});
+const credentialsSchema = {
+  email: z.object({ login: z.string().trim().toLowerCase().pipe(z.email()), password: z.string().min(1).max(PASSWORD_MAX_LENGTH) }),
+  username: z.object({ login: z.string().trim().toLowerCase().min(1).max(30), password: z.string().min(1).max(PASSWORD_MAX_LENGTH) }),
+};
 
-export async function signInWithPassword(kind: PasswordAccountKind, input: { email: unknown; password: unknown }, requestHeaders: Headers): Promise<void> {
+/** `login` is the email (staff) or the username (members). */
+export async function signInWithPassword(kind: PasswordAccountKind, input: { login: unknown; password: unknown }, requestHeaders: Headers): Promise<void> {
   const ip = clientIpFrom(requestHeaders, env().CLIENT_IP_HEADER) ?? "unknown";
   const limit = await consumeRateLimit(`${kind}-login:ip:${ip}`, IP_RULE);
   if (!limit.allowed) {
@@ -43,27 +44,29 @@ export async function signInWithPassword(kind: PasswordAccountKind, input: { ema
     );
   }
 
-  const parsed = credentialsSchema.safeParse(input);
-  if (!parsed.success) throw new UserFacingError(GENERIC_SIGN_IN_ERROR);
-  const { email, password } = parsed.data;
+  const { by, error: genericError } = KINDS[kind];
+  const parsed = credentialsSchema[by].safeParse(input);
+  if (!parsed.success) throw new UserFacingError(genericError);
+  const { login, password } = parsed.data;
 
   const now = new Date();
   const user = await db().user.findUnique({
-    where: { email },
-    select: { id: true, role: true, lockedUntil: true, disabledAt: true },
+    where: by === "email" ? { email: login } : { username: login },
+    select: { id: true, email: true, role: true, lockedUntil: true, disabledAt: true },
   });
 
   if (!user || !KINDS[kind].accepts(user.role) || user.disabledAt || isLocked(user.lockedUntil, now)) {
     await hashPassword(password); // same work as a real check, so timing reveals nothing either
-    throw new UserFacingError(GENERIC_SIGN_IN_ERROR);
+    throw new UserFacingError(genericError);
   }
 
   try {
-    await auth().api.signInEmail({ body: { email, password, rememberMe: KINDS[kind].rememberMe }, headers: requestHeaders });
+    // Better Auth checks the password against the account's email, whichever way it was found.
+    await auth().api.signInEmail({ body: { email: user.email, password, rememberMe: KINDS[kind].rememberMe }, headers: requestHeaders });
   } catch (error) {
     if (error instanceof APIError && error.status === "UNAUTHORIZED") {
       await recordFailure(user.id, now);
-      throw new UserFacingError(GENERIC_SIGN_IN_ERROR);
+      throw new UserFacingError(genericError);
     }
     throw error;
   }

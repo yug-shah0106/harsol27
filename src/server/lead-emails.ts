@@ -4,9 +4,13 @@ import { escapeHtml, type Email } from "./email";
 export type LeadForEmail = {
   id: string;
   fullName: string;
+  firstName?: string | null;
   fatherName: string | null;
   nativePlace: string | null;
   address: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
   website?: string | null;
   instagram?: string | null;
   mapsLink?: string | null;
@@ -33,15 +37,16 @@ function detailsTable(rows: [string, string][]): string {
 /** Sent to the person who filled in the lead form. */
 export function leadConfirmationEmail(lead: LeadForEmail): Email {
   const rows: [string, string][] = [
-    ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industries", lead.industryName],
-    ["Phone", lead.phone],
+    ["Category", categoryLabel(lead.businessCategory)],
+    ["Industry", lead.industryName],
+    ["WhatsApp number", lead.phone],
   ];
+  const name = lead.firstName ?? lead.fullName;
   return {
     to: lead.email,
     subject: "We have received your details · Harsol27",
     text: [
-      `Hello ${lead.fullName},`,
+      `Hello ${name},`,
       "",
       "Thank you for your interest in Harsol27. We have received your details and our team will contact you.",
       "",
@@ -50,7 +55,7 @@ export function leadConfirmationEmail(lead: LeadForEmail): Email {
       "If you did not fill in this form, you can ignore this email.",
     ].join("\n"),
     html: emailLayout(
-      `<p>Hello ${escapeHtml(lead.fullName)},</p><p>Thank you for your interest in Harsol27. We have received your details and our team will contact you.</p>${detailsTable(rows)}<p style="color:#5e5650">If you did not fill in this form, you can ignore this email.</p>`,
+      `<p>Hello ${escapeHtml(name)},</p><p>Thank you for your interest in Harsol27. We have received your details and our team will contact you.</p>${detailsTable(rows)}<p style="color:#5e5650">If you did not fill in this form, you can ignore this email.</p>`,
     ),
     idempotencyKey: `lead-confirmation/${lead.id}`,
   };
@@ -63,11 +68,14 @@ export function leadTeamAlertEmail(lead: LeadForEmail, to: string[], appUrl: str
     ["Name", lead.fullName],
     ["Father's name", lead.fatherName ?? "Not given"],
     ["Native place", lead.nativePlace ?? "Not given"],
-    ["Address or city", lead.address ?? "Not given"],
-    ["Phone", lead.phone],
+    ["Address", lead.address ?? "Not given"],
+    ["City", lead.city ?? "Not given"],
+    ["State", lead.state ?? "Not given"],
+    ["Pincode", lead.pincode ?? "Not given"],
+    ["WhatsApp number", lead.phone],
     ["Email", lead.email],
-    ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industries", lead.industryName],
+    ["Category", categoryLabel(lead.businessCategory)],
+    ["Industry", lead.industryName],
     ["Website", lead.website ?? "Not given"],
     ["Instagram", lead.instagram ? `@${lead.instagram}` : "Not given"],
     ["Google Maps", lead.mapsLink ?? "Not given"],

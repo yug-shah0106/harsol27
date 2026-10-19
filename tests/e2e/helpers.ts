@@ -50,16 +50,24 @@ export async function choose(page: Page, label: string, option: string) {
 }
 
 export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string }) {
-  await page.getByLabel("Full name").fill(values.name);
-  await page.getByLabel("Father's name").fill("Ramesh Patel");
+  await page.getByLabel("First name").fill(values.name);
+  await page.getByLabel("Father's name").fill("Ramesh");
+  await page.getByLabel("Last name").fill("Patel");
   await choose(page, "Native place", "Harsol");
-  await page.getByLabel("Address or city").fill("Talod, Sabarkantha");
-  await page.getByLabel("Phone number").fill(values.phone);
+  await fillAddress(page);
+  await page.getByLabel("WhatsApp number").fill(values.phone);
   await page.getByLabel("Email").fill(values.email);
-  await choose(page, "Business category", values.category);
-  await choose(page, "Industries", values.industry);
-  await page.keyboard.press("Escape"); // several can be chosen, so the list stays open until closed
+  await choose(page, "Category", values.category);
+  await choose(page, "Industry", values.industry);
   await addPaymentScreenshot(page);
+}
+
+/** The lead form's address, in its parts. */
+export async function fillAddress(page: Page, city = "Talod") {
+  await page.getByLabel("Address", { exact: true }).fill("12 Station Road");
+  await page.getByLabel("City").fill(city);
+  await choose(page, "State", "Gujarat");
+  await page.getByLabel("Pincode").fill("383 215");
 }
 
 /** Adds a tiny real PNG as the payment screenshot, and waits until it has reached storage. */

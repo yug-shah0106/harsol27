@@ -37,6 +37,23 @@ function addOneYear(day: Date): Date {
   return next.getUTCMonth() === day.getUTCMonth() ? next : new Date(Date.UTC(day.getUTCFullYear() + 1, day.getUTCMonth() + 1, 0));
 }
 
+/** The same day `months` later; the month's last day when it is shorter (31 Jan + 1 month → 28 Feb). */
+export function addMonths(day: Date, months: number): Date {
+  const next = new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + months, day.getUTCDate()));
+  return next.getUTCDate() === day.getUTCDate() ? next : new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + months + 1, 0));
+}
+
+/**
+ * A Seller registration's subscription: it starts the India-time day they registered (and paid) and runs
+ * `months` months, through the day before the same date (19 Oct 2026, 15 months → 18 Jan 2028).
+ */
+export function registrationSubscription(registeredAt: Date, months: number): { from: Date; until: Date; months: number } {
+  const from = new Date(`${new Date(registeredAt.getTime() + 5.5 * 3_600_000).toISOString().slice(0, 10)}T00:00:00.000Z`);
+  const end = addMonths(from, months);
+  // A shorter month already ends early (31 Jan + 1 month → 28 Feb): that day is the last one.
+  return { from, until: end.getUTCDate() === from.getUTCDate() ? addDays(end, -1) : end, months };
+}
+
 /**
  * The date the admin form suggests for a renewal (staff can change it). Renewing early adds a year
  * to the current paid-until date, so no paid days are lost; after a lapse the year starts today.

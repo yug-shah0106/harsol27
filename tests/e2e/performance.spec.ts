@@ -39,7 +39,7 @@ test("public pages are fast and stable on a mid-range phone over slow 4G", async
   const seller = await sellerOf(mobile.e164);
   const product = await makeProduct(seller.id, `Vitals Khakhra ${unique()}`);
 
-  for (const path of ["/search?q=khakhra", "/industries", "/industries/food-products", `/products/${product.slug}`, `/sellers/${seller.slug}`, "/Pre-Registration"]) {
+  for (const path of ["/search?q=khakhra", "/industries", "/industries/food-products", `/products/${product.slug}`, `/sellers/${seller.slug}`, "/Seller-Registration"]) {
     const { lcp, cls } = await vitals(browser, path);
     test.info().annotations.push({ type: path, description: `LCP ${Math.round(lcp)} ms · CLS ${cls.toFixed(3)}` });
     expect(lcp, `${path} LCP`).toBeLessThan(2500);

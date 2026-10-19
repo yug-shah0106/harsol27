@@ -16,11 +16,12 @@ function storageOrigin(): string {
  * header and attaches it to its own scripts, so no inline script without the nonce can run.
  */
 export function proxy(request: NextRequest) {
-  // The Pre-registration form's old address (/get-started) and other spellings (/pre-registration) lead to it.
-  // Here, not in next.config redirects: those ignore case, so "/pre-registration" would match itself and loop.
+  // The Seller registration form's old addresses (/get-started, /Pre-Registration) and other spellings
+  // (/seller-registration) lead to it. Here, not in next.config redirects: those ignore case, so
+  // "/seller-registration" would match itself and loop.
   const path = request.nextUrl.pathname;
-  if (path !== "/Pre-Registration" && ["/get-started", "/pre-registration"].includes(path.toLowerCase())) {
-    return NextResponse.redirect(new URL("/Pre-Registration", request.url), 308);
+  if (path !== "/Seller-Registration" && ["/get-started", "/pre-registration", "/seller-registration"].includes(path.toLowerCase())) {
+    return NextResponse.redirect(new URL("/Seller-Registration", request.url), 308);
   }
   const route = comingSoonRoute(path);
   if (route === "redirect") return NextResponse.redirect(new URL("/", request.url));

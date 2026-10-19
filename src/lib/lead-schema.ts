@@ -1,10 +1,11 @@
 import { parsePhoneNumberFromString } from "libphonenumber-js/min";
 import { z } from "zod";
+import { INDIAN_STATES } from "./indian-states";
 
 // Shared by the lead form (instant feedback in the browser) and the server (the source of truth).
 
 export const BUSINESS_CATEGORIES = [
-  { value: "MANUFACTURING", label: "Manufacturing" },
+  { value: "MANUFACTURING", label: "Manufacturers" },
   { value: "WHOLESALE", label: "Wholesale" },
   { value: "RETAIL", label: "Retail" },
   { value: "SERVICES", label: "Services" },
@@ -24,19 +25,21 @@ export const HONEYPOT_FIELD = "company_website";
  * country code is given. Normalised to E.164. The browser uses compact metadata (length checks);
  * the server re-checks with full metadata (see server/leads.ts).
  */
-export const phoneSchema = z
-  .string()
-  .trim()
-  .min(1, "Enter your phone number.")
-  .max(32, "That phone number is too long.")
-  .transform((value, ctx) => {
-    const phone = parsePhoneNumberFromString(value, "IN");
-    if (!phone?.isValid()) {
-      ctx.addIssue({ code: "custom", message: "Enter a valid phone number, for example 98765 43210." });
-      return z.NEVER;
-    }
-    return phone.number;
-  });
+const phoneNumber = (what: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `Enter your ${what}.`)
+    .max(32, `That ${what} is too long.`)
+    .transform((value, ctx) => {
+      const phone = parsePhoneNumberFromString(value, "IN");
+      if (!phone?.isValid()) {
+        ctx.addIssue({ code: "custom", message: `Enter a valid ${what}, for example 98765 43210.` });
+        return z.NEVER;
+      }
+      return phone.number;
+    });
+export const phoneSchema = phoneNumber("phone number");
 
 /** A required one-line text field: trimmed, 2 characters or more, no control characters (no header injection in emails). */
 const line = (missing: string, max: number) =>
@@ -46,6 +49,14 @@ const line = (missing: string, max: number) =>
     .min(2, missing)
     .max(max, `Please shorten it to ${max} characters.`)
     .regex(/^[^\p{Cc}]*$/u, "Use letters, numbers and punctuation only.");
+
+/** A person's whole name in one field (member sign-up; the lead form asks for its parts). */
+export const fullNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Enter your full name.")
+  .max(100, "Please shorten your name to 100 characters.")
+  .regex(/^[^\p{Cc}]*$/u, "Your name can only contain letters, spaces and punctuation.");
 
 /** The industry dropdown's "Other (not listed)": the visitor then types their industry. */
 export const OTHER_INDUSTRY = "other";
@@ -80,9 +91,6 @@ export const NATIVE_PLACES = [
 ] as const;
 export const OTHER_NATIVE_PLACE = "Other";
 
-/** Most industries one lead can name. */
-export const MAX_LEAD_INDUSTRIES = 5;
-
 /** An optional web address: "https://" is added when left off, and only http(s) addresses with a real host pass. */
 const optionalLink = (example: string) =>
   z
@@ -105,13 +113,9 @@ const optionalLink = (example: string) =>
 
 export const leadSchema = z
   .object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "Enter your full name.")
-    .max(100, "Please shorten your name to 100 characters.")
-    .regex(/^[^\p{Cc}]*$/u, "Your name can only contain letters, spaces and punctuation."),
-  fatherName: line("Enter your father's name.", 100),
+  firstName: line("Enter your first name.", 50),
+  fatherName: line("Enter your father's name.", 50),
+  lastName: line("Enter your last name.", 50),
   nativePlace: z.enum([...NATIVE_PLACES, OTHER_NATIVE_PLACE], { error: "Choose your native place." }),
   nativePlaceOther: z
     .string()
@@ -120,8 +124,15 @@ export const leadSchema = z
     .regex(/^[^\p{Cc}]*$/u, "Use letters, numbers and punctuation only.")
     .optional()
     .default(""),
-  address: line("Enter your address or city.", 300),
-  phone: phoneSchema,
+  address: line("Enter your address.", 300),
+  city: line("Enter your city.", 80),
+  state: z.enum(INDIAN_STATES, { error: "Choose your state." }),
+  // Six digits, not starting with 0 ("380 001" is fine too).
+  pincode: z
+    .string({ error: "Enter your pincode." })
+    .transform((value) => value.replace(/\s/g, ""))
+    .pipe(z.string().min(1, "Enter your pincode.").regex(/^[1-9]\d{5}$/, "Enter a 6-digit pincode, like 380001.")),
+  phone: phoneNumber("WhatsApp number"),
   email: z
     .string()
     .trim()
@@ -129,12 +140,14 @@ export const leadSchema = z
     .min(1, "Enter your email address.")
     .max(254, "That email address is too long.")
     .pipe(z.email("Enter a valid email address, like name@company.com.")),
-  businessCategory: z.enum(categoryValues, { error: "Choose a business category." }),
+  businessCategory: z.enum(categoryValues, { error: "Choose a category." }),
+  // One industry per registration (since 2026-10-19). Still a list, as a lead's industries are in the
+  // database: older leads named up to five.
   industryIds: z
     .array(z.union([z.uuid({ error: "Choose an industry." }), z.literal(OTHER_INDUSTRY, { error: "Choose an industry." })]), { error: "Choose an industry." })
     .min(1, "Choose an industry.")
     .transform((ids) => [...new Set(ids)])
-    .pipe(z.array(z.string()).max(MAX_LEAD_INDUSTRIES, `Choose up to ${MAX_LEAD_INDUSTRIES} industries.`)),
+    .pipe(z.array(z.string()).max(1, "Choose one industry.")),
   industryOther: z
     .string()
     .trim()
@@ -180,4 +193,18 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
     out[key] ??= issue.message;
   }
   return out;
+}
+
+/** A member login's username: 3 to 30 lowercase letters, numbers, dots or underscores, starting with a letter or number. */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .regex(/^[a-z0-9][a-z0-9._]{2,29}$/, "Use 3 to 30 letters, numbers, dots or underscores, starting with a letter or number.");
+
+/** A first suggestion for a registration's username: first and last name together, letters and numbers only ("yugshah"). */
+export function suggestUsername(lead: { firstName: string | null; lastName: string | null; fullName: string }): string {
+  const name = lead.firstName && lead.lastName ? `${lead.firstName}${lead.lastName}` : lead.fullName;
+  const plain = name.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30);
+  return plain.length >= 3 ? plain : `${plain}seller`.slice(0, 30);
 }

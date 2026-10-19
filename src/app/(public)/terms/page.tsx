@@ -4,7 +4,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms of use",
-  description: "The terms for using Harsol27, the directory that connects business buyers with sellers from Gujarat. Harsol27 is not a party to deals between them.",
+  description: "The terms for using Harsol27, the directory that connects business buyers with sellers from Harsol. Harsol27 is not a party to deals between them.",
   path: "/terms",
   keywords: ["Harsol27 terms"],
 });

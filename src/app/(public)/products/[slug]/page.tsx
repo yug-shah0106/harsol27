@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps<"/products/[slug]">
       title: `${product.name} · ${companyName}`,
       description: clip(`${product.name} from ${companyName}, ${city}. ${product.description}`),
       path: `/products/${product.slug}`,
-      keywords: [product.name, `${product.name} ${city}`, `${product.name} supplier Gujarat`, product.industry.name, companyName],
+      keywords: [product.name, `${product.name} ${city}`, `${product.name} supplier Harsol`, product.industry.name, companyName],
     }),
     robots: product.isPublic ? undefined : { index: false },
   };

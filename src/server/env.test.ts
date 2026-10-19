@@ -40,16 +40,9 @@ describe("envSchema", () => {
   });
 
   it("treats an empty optional setting (as Docker Compose passes it) as unset", () => {
-    const fromCompose = { ...valid, GOOGLE_CLIENT_ID: "", GOOGLE_CLIENT_SECRET: "", SMS_PROVIDER: "", S3_PUBLIC_ENDPOINT: "" };
+    const fromCompose = { ...valid, SMS_PROVIDER: "", S3_PUBLIC_ENDPOINT: "" };
     expect(envSchema.safeParse(fromCompose).success).toBe(false);
     expect(envSchema.safeParse(withoutEmpty(fromCompose)).success).toBe(true);
-  });
-
-  it("takes the Google sign-in key whole or not at all", () => {
-    const google = { GOOGLE_CLIENT_ID: "123-abc.apps.googleusercontent.com", GOOGLE_CLIENT_SECRET: "GOCSPX-secret" };
-    expect(envSchema.safeParse({ ...valid, ...google }).success).toBe(true);
-    expect(envSchema.safeParse({ ...valid, GOOGLE_CLIENT_ID: google.GOOGLE_CLIENT_ID }).success).toBe(false);
-    expect(envSchema.safeParse({ ...valid, GOOGLE_CLIENT_SECRET: google.GOOGLE_CLIENT_SECRET }).success).toBe(false);
   });
 
   it("requires every secret to be present", () => {

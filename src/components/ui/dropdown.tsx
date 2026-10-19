@@ -28,6 +28,8 @@ type DropdownProps = {
   required?: boolean
   disabled?: boolean
   className?: string
+  /** Restyles the button itself, e.g. as a status pill (merged over the field look). */
+  triggerClassName?: string
   "aria-invalid"?: boolean
   "aria-describedby"?: string
   /** For long lists: a search box at the top of the open list, e.g. { placeholder: "Search industries" }. */
@@ -73,6 +75,7 @@ function Dropdown({
   required,
   disabled,
   className,
+  triggerClassName,
   "aria-invalid": invalid,
   "aria-describedby": describedBy,
   searchable,
@@ -308,7 +311,10 @@ function Dropdown({
         onClick={() => (open ? close() : show(selectedIndex >= 0 ? selectedIndex : 0))}
         onKeyDown={onKeyDown}
         onBlur={onBlur}
-        className="flex h-10 w-full min-w-0 items-center rounded-lg border border-input bg-card py-1 pr-9 pl-3 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm"
+        className={cn(
+          "flex h-10 w-full min-w-0 items-center rounded-lg border border-input bg-card py-1 pr-9 pl-3 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm",
+          triggerClassName,
+        )}
       >
         {multiple ? (
           <span className={cn("truncate", !chosen.length && "text-muted-foreground")}>

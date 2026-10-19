@@ -1,6 +1,6 @@
 /**
  * The seller fee (client decisions, 2026-10-15): ₹1,000 for 15 months, or ₹500 when paid by
- * 24 November 2026 (India time). Paid to the team by UPI; the Pre-registration form shows it.
+ * 24 November 2026 (India time). Paid to the team by UPI; the Seller registration form shows it.
  */
 export const FEE = { months: 15, regular: 1000, offer: 500, offerLastDay: "2026-11-24" } as const;
 

@@ -53,7 +53,6 @@ Free, health check path `/api/health`, Docker command empty.
 - `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` (at least 12 characters): the first admin, created at
   the next start. Once the log says `Created ADMIN account`, delete `ADMIN_PASSWORD`; the account and
   its password stay. Staff sign in at `/staff/sign-in`.
-- Optional: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (redirect URI `<BETTER_AUTH_URL>/api/auth/callback/google`).
 
 Do not set `NODE_OPTIONS`: the start script gives it to the worker only, and the website does not start with it.
 

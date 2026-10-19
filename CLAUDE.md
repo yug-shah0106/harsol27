@@ -1,3 +1,9 @@
+## Git: never commit on a merged PR
+
+Once a pull request is merged, its branch is finished: never commit or push to it again. New work always
+goes on a new branch from the latest `main`, with a new pull request. Before committing, check with
+`gh pr list --head <branch> --state merged` (or the PR's state) that the current branch's PR is not merged.
+
 ## Design
 
 For any UI work, follow `DESIGN.md` (the Harsol27 design system: colours, type, components, do's and
