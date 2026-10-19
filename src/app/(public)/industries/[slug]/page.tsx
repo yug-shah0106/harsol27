@@ -4,11 +4,19 @@ import { notFound } from "next/navigation";
 import { Pagination } from "@/components/pagination";
 import { ProductGrid } from "@/components/product-card";
 import { SearchForm } from "@/components/search-form";
+import { pageMetadata } from "@/lib/seo";
 import { getActiveIndustryBySlug, searchParamsSchema, searchProducts } from "@/server/catalog";
 
 export async function generateMetadata({ params }: PageProps<"/industries/[slug]">): Promise<Metadata> {
   const industry = await getActiveIndustryBySlug((await params).slug);
-  return industry ? { title: industry.name, description: `${industry.name} suppliers from Gujarat on Harsol27.` } : {};
+  if (!industry) return {};
+  const { name } = industry;
+  return pageMetadata({
+    title: `${name} suppliers in Gujarat`,
+    description: `Find approved ${name} manufacturers, wholesalers and traders from Gujarat on Harsol27. Send an enquiry and talk to the seller directly.`,
+    path: `/industries/${industry.slug}`,
+    keywords: [`${name} suppliers Gujarat`, `${name} manufacturers Gujarat`, `${name} wholesalers Gujarat`, name],
+  });
 }
 
 export default async function IndustryPage({ params, searchParams }: PageProps<"/industries/[slug]">) {

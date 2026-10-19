@@ -149,11 +149,19 @@ enum LeadStatus {
 model Lead {
   id               String           @id @default(uuid(7)) @db.Uuid
   fullName         String
+  fatherName       String? // required on the form since 2026-10-11; older leads have none
+  nativePlace      String? // the village or town the family is from
+  address          String? // address or city
   phone            String // E.164
   email            String // lowercase
   businessCategory BusinessCategory
-  industryId       String           @db.Uuid
-  industry         Industry         @relation(fields: [industryId], references: [id], onDelete: Restrict)
+  industries       Industry[] // one or more from the list (none if they only chose "Other")
+  industryOther    String? // their own words, when their industry isn't in the list
+  website          String? // optional links to the business (http(s) only)
+  instagram        String? // handle, without the @
+  mapsLink         String? // a Google Maps link
+  paymentProofKey  String? // storage key of the payment screenshot (Pre-registration requires one since 2026-10-17)
+  paymentProofName String? // its file name as uploaded; display only
   status           LeadStatus       @default(NEW)
   sourceIp         String?          @db.Inet // staff-only; null if the proxy sent no client IP
   userAgent        String? // staff-only
@@ -164,7 +172,6 @@ model Lead {
   statusChanges LeadStatusChange[]
 
   @@index([status, createdAt(sort: Desc)])
-  @@index([industryId])
 }
 
 model LeadStatusChange {
@@ -338,14 +345,15 @@ model ProductPhoto {
 enum UploadPurpose {
   PRODUCT_PHOTO
   SELLER_DOCUMENT
+  LEAD_PAYMENT // a Pre-registration visitor's payment screenshot (no account, so no user)
 }
 
 /// Every signed upload URL we issue. A file can only be attached by the user it was signed for;
 /// unclaimed files are deleted by a nightly job.
 model Upload {
   key         String        @id
-  userId      String        @db.Uuid
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?       @db.Uuid // null for LEAD_PAYMENT: Pre-registration visitors have no account
+  user        User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
   purpose     UploadPurpose
   fileName    String // as chosen by the uploader; display only
   contentType String

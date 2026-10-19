@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BUSINESS_CATEGORIES } from "@/lib/lead-schema";
+import { BUSINESS_CATEGORIES, leadIndustryName, OTHER_INDUSTRY } from "@/lib/lead-schema";
 import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
 import { requireStaff } from "@/server/authz";
 import { listAllIndustries } from "@/server/industries";
@@ -59,7 +59,8 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
             name="industry"
             defaultValue={params.industry ?? ""}
             className="w-full"
-            options={[{ value: "", label: "Any" }, ...industries.map((i) => ({ value: i.id, label: i.name }))]}
+            searchable={{ placeholder: "Search industries" }}
+            options={[{ value: "", label: "Any", pinned: true }, ...industries.map((i) => ({ value: i.id, label: i.name })), { value: OTHER_INDUSTRY, label: "Other (typed by the visitor)", pinned: true }]}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -125,7 +126,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
                     <div>{lead.phone}</div>
                     <div className="text-muted-foreground">{lead.email}</div>
                   </TableCell>
-                  <TableCell>{lead.industry.name}</TableCell>
+                  <TableCell>{leadIndustryName(lead)}</TableCell>
                   <TableCell>{categoryLabel(lead.businessCategory)}</TableCell>
                   <TableCell>
                     <Badge variant={lead.status === "NEW" ? "default" : "secondary"}>{LEAD_STATUS_LABELS[lead.status]}</Badge>

@@ -1,6 +1,7 @@
 import type { Job, JobResult, PgBoss } from "pg-boss";
 // Worker code: never import modules that pull in Next.js (e.g. errors.ts → next/navigation); they
 // cannot load in the worker process.
+import { leadIndustryName } from "@/lib/lead-schema";
 import { db } from "./db";
 import { sendEmail, type Email, type EmailConfig } from "./email";
 import { addDays, daysUntil, dueReminder, EXPIRED_NOTICE_LATEST_DAYS, EXPIRING_SOON_DAYS, REMINDER_DAYS, toDateInput } from "@/lib/subscription";
@@ -32,8 +33,8 @@ export type WorkerConfig = { email: EmailConfig; teamAlertEmails: string[]; appU
 const WORK_OPTIONS = { batchSize: 10, perJobResults: true } as const;
 
 async function loadLead({ leadId }: LeadJob): Promise<LeadForEmail | null> {
-  const lead = await db().lead.findUnique({ where: { id: leadId }, include: { industry: { select: { name: true } } } });
-  return lead && { ...lead, industryName: lead.industry.name };
+  const lead = await db().lead.findUnique({ where: { id: leadId }, include: { industries: { select: { name: true }, orderBy: { sortOrder: "asc" } } } });
+  return lead && { ...lead, industryName: leadIndustryName(lead) };
 }
 
 function loadSellerChange({ changeId }: SellerChangeJob): Promise<SellerChangeForEmail | null> {

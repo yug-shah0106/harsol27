@@ -18,8 +18,12 @@ import { useEffect } from "react";
  *   data-slide="left"   a giant line that slides in from that side ("left" or "right") as it scrolls up
  *   data-stack          a list of CSS-sticky cards; each sinks back a little as the next slides over it
  *   data-marquee        a track holding its content twice, drifting sideways for ever; scrolling speeds it up
+ *   data-spin="140"     turns that many degrees while it crosses the screen (the coming-soon rangoli)
+ *   data-path           an SVG path (pathLength 1) that grows bit by bit as its drawing scrolls up the screen
+ *   data-light          its [data-lamp] items light up one after another as it scrolls by, like diyas
+ *   data-tilt           leans in 3D toward the pointer                                    (React Bits TiltedCard)
  *
- * The four React Bits effects are adapted from https://reactbits.dev (MIT + Commons Clause,
+ * The five React Bits effects are adapted from https://reactbits.dev (MIT + Commons Clause,
  * © David Haz) and rebuilt on GSAP: the originals set inline styles, which our CSP blocks.
  *
  * Rules that keep pages fast, readable and accessible:
@@ -29,7 +33,8 @@ import { useEffect } from "react";
  *   they show the real number until they count.
  * - prefers-reduced-motion: no animation and native scrolling, and these libraries are not even downloaded;
  *   gsap.matchMedia undoes everything if the setting changes after they have loaded. Pointer effects need a mouse (hover + fine pointer).
- * - Only transform, opacity and filter are animated; hidden items stay focusable and appear when focused.
+ * - Only transform, opacity and filter are animated (and an SVG stroke for data-path); hidden items stay
+ *   focusable and appear when focused.
  */
 // The running Lenis instance, if smooth scrolling is on (scrollToTop goes through it so the two don't fight).
 let smooth: { scrollTo: (target: number) => void } | undefined;
@@ -198,7 +203,42 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
           });
         }
 
+        // Turning, drawn paths and lamps (scroll-linked).
+        for (const el of all("[data-spin]")) {
+          gsap.to(el, { rotation: Number(el.dataset.spin) || 90, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
+        }
+        // The path grows bit by bit while its drawing moves from near the bottom of the screen to near the top.
+        // autoRound off: GSAP rounds px values, which on a path of length 1 jumps straight from hidden to drawn.
+        for (const path of all<SVGPathElement>("[data-path]")) {
+          gsap.fromTo(path, { strokeDashoffset: 1 }, { strokeDashoffset: 0, ease: "none", autoRound: false, scrollTrigger: { trigger: path.ownerSVGElement ?? path, start: "top 85%", end: "top 25%", scrub: 0.6 } });
+        }
+        for (const group of all("[data-light]").filter(offscreen)) {
+          gsap.fromTo(all("[data-lamp]", group), { opacity: 0.28, scale: 0.94 }, { opacity: 1, scale: 1, ease: "none", stagger: 0.06, scrollTrigger: { trigger: group, start: "top 85%", end: "bottom 60%", scrub: true } });
+        }
+
         if (mouse) {
+          // TiltedCard: leans toward the pointer; quickTo re-targets from wherever it is, so fast moves never jump.
+          for (const card of all("[data-tilt]")) {
+            gsap.set(card, { transformPerspective: 900 });
+            const rx = gsap.quickTo(card, "rotationX", { duration: 0.5, ease: "power3.out" });
+            const ry = gsap.quickTo(card, "rotationY", { duration: 0.5, ease: "power3.out" });
+            const move = (event: PointerEvent) => {
+              const box = card.getBoundingClientRect();
+              ry(((event.clientX - box.left) / box.width - 0.5) * 10);
+              rx(-((event.clientY - box.top) / box.height - 0.5) * 8);
+            };
+            const leave = () => {
+              rx(0);
+              ry(0);
+            };
+            card.addEventListener("pointermove", move);
+            card.addEventListener("pointerleave", leave);
+            cleanups.push(() => {
+              card.removeEventListener("pointermove", move);
+              card.removeEventListener("pointerleave", leave);
+            });
+          }
+
           // SpotlightCard: the light's position, as CSS variables the card's ::before/::after read (globals.css).
           const spotlight = (event: PointerEvent) => {
             const card = (event.target as Element | null)?.closest?.<HTMLElement>("[data-spotlight]");

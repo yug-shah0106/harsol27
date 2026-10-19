@@ -58,12 +58,12 @@ test("session cookies cannot be read by scripts or sent from other sites; staff 
 
 test("server actions refuse the same form posted from another site", async ({ request }) => {
   // The lead form's real action fields, as a browser without JavaScript would post them.
-  const html = await (await request.get("/get-started")).text();
+  const html = await (await request.get("/Pre-Registration")).text();
   const fields: Record<string, string> = { fullName: "Cross Site" };
   for (const [, name, value] of html.matchAll(/name="(\$ACTION[^"]*)"(?: value="([^"]*)")?/g)) fields[name!] = (value ?? "").replaceAll("&quot;", '"');
   expect(Object.keys(fields).some((k) => k.startsWith("$ACTION_1:"))).toBe(true);
 
-  const post = (origin: string) => request.post("/get-started", { headers: { Origin: origin }, multipart: fields });
+  const post = (origin: string) => request.post("/Pre-Registration", { headers: { Origin: origin }, multipart: fields });
   expect((await post("http://localhost:3217")).status()).toBe(200); // the site itself: the action runs
   expect((await post("https://evil.example")).status()).toBe(500); // another site: refused before it runs
 });

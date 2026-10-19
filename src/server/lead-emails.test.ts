@@ -5,6 +5,9 @@ import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./
 const lead: LeadForEmail = {
   id: "0199b5c0-0000-7000-8000-00000000abcd",
   fullName: `<script>alert("x")</script> Asha`,
+  fatherName: "Ramesh Patel",
+  nativePlace: "Harsol",
+  address: "Talod, Sabarkantha",
   phone: "+919876543210",
   email: "asha@example.com",
   businessCategory: "TRADING",
@@ -22,6 +25,16 @@ describe("lead emails", () => {
     expect(email.html).toContain("Food &amp; Snacks");
     expect(email.text).toContain(`Hello ${lead.fullName},`);
     expect(email.to).toBe("asha@example.com");
+  });
+
+  it("tells the team the father's name, native place and address too", () => {
+    const text = leadTeamAlertEmail(lead, ["team@example.com"], "https://x.test").text;
+    for (const line of ["Father's name: Ramesh Patel", "Native place: Harsol", "Address or city: Talod, Sabarkantha"]) expect(text).toContain(line);
+  });
+
+  it("tells the team whether a payment screenshot came with it", () => {
+    expect(leadTeamAlertEmail({ ...lead, paymentProofKey: "lead-payments/x.png" }, ["t@example.com"], "https://x.test").text).toContain("Payment screenshot: Added");
+    expect(leadTeamAlertEmail({ ...lead, paymentProofKey: null }, ["t@example.com"], "https://x.test").text).toContain("Payment screenshot: Not added");
   });
 
   it("uses a stable idempotency key per lead and email type, so retries cannot double-send", () => {

@@ -77,3 +77,33 @@ test("Tab chooses the highlighted option and moves on, like a native select", as
   await expect(state).not.toBeFocused();
   await expect(page.getByRole("listbox", { name: "State" })).toBeHidden();
 });
+
+test("a long list can be searched: typing narrows it, Enter chooses, Escape and Tab behave as usual", async ({ page }) => {
+  await page.goto("/search");
+  const industry = page.getByRole("combobox", { name: "Industry", exact: true });
+  const list = page.getByRole("listbox", { name: "Industry" });
+  const search = page.getByRole("searchbox", { name: "Search industries" });
+
+  await industry.click();
+  await expect(search).toBeFocused();
+  await search.fill("ceramic");
+  await expect(list.getByRole("option")).toHaveText(["All industries", "Ceramics & Tiles"]); // "All industries" always stays
+  await expectAccessible(page);
+  await page.emulateMedia({ reducedMotion: null });
+  await search.press("ArrowDown");
+  await search.press("Enter");
+  await expect(list).toBeHidden();
+  await expect(industry).toHaveText("Ceramics & Tiles");
+  await expect(industry).toBeFocused();
+
+  // Escape closes without choosing; a letter typed on the closed button starts the search.
+  await industry.press("Enter");
+  await search.press("Escape");
+  await expect(list).toBeHidden();
+  await expect(industry).toHaveText("Ceramics & Tiles");
+  await industry.press("f");
+  await expect(search).toHaveValue("f");
+  await search.press("Tab"); // chooses the highlighted option and moves on to the next field
+  await expect(list).toBeHidden();
+  await expect(page.getByRole("combobox", { name: "State", exact: true })).toBeFocused();
+});

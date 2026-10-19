@@ -56,6 +56,19 @@ test("the header button leans toward a nearby mouse, and comes back", async ({ b
   await expect.poll(() => button.evaluate((el) => el.style.transform)).toBe("translate(0px, 0px)");
 });
 
+test("coming soon: the line between the steps grows bit by bit as you scroll", async ({ browser }) => {
+  const page = await newPage(browser);
+  await page.goto("/coming-soon");
+  await page.waitForFunction(() => document.documentElement.classList.contains("lenis"));
+  const path = page.locator("[data-path]");
+  const drawn = () => path.evaluate((el) => 1 - parseFloat(getComputedStyle(el).strokeDashoffset));
+  expect(await drawn()).toBe(0);
+  // Halfway through its range (its drawing at 55% of the screen height), about half of it is drawn.
+  await path.evaluate((el) => window.scrollTo(0, (el as SVGPathElement).ownerSVGElement!.getBoundingClientRect().top + window.scrollY - window.innerHeight * 0.55));
+  await expect.poll(drawn).toBeGreaterThan(0.3);
+  expect(await drawn()).toBeLessThan(0.7);
+});
+
 test("reduced motion: nothing is hidden or moved, and scrolling stays native", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce" });
   const page = await context.newPage();

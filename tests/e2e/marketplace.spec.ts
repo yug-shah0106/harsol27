@@ -116,7 +116,10 @@ test("browse by industry and the sitemap only expose public pages", async ({ bro
   await expect(page.getByRole("link", { name: /Food Products/ })).toBeVisible();
   await expectAccessible(page);
   const robots = await page.request.get("/robots.txt");
-  expect(await robots.text()).toContain("Disallow: /admin");
+  const rules = await robots.text();
+  expect(rules).toContain("Disallow: /admin");
+  expect(rules).toMatch(/^Disallow: \/seller\/$/m); // the dashboard, not the public profiles at /sellers/…
+  expect(rules).not.toMatch(/^Disallow: \/seller$/m);
   const sitemap = await (await page.request.get("/sitemap.xml")).text();
   expect(sitemap).toContain("/industries/food-products");
   expect(sitemap).not.toContain("/admin");

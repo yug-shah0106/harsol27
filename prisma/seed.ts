@@ -1,6 +1,6 @@
 /**
- * Starting list of broad industries. Sellers pick one and describe their own products inside it
- * (e.g. khakhra and thepla under Food Products). Staff manage the list afterwards in /admin/industries.
+ * Starting list of broad industries (goods, then services). Sellers pick one and describe their own
+ * products or services inside it (e.g. khakhra and thepla under Food Products). Staff manage the list afterwards in /admin/industries.
  *
  * Safe to run repeatedly: only industries whose name is not already present are added, at the end
  * of the list, so edits made in the admin area are never overwritten.
@@ -29,6 +29,26 @@ export const STARTING_INDUSTRIES = [
   "Handicrafts",
   "Furniture",
   "Paper & Printing",
+  // Services (added 2026-10-11)
+  "Mehendi",
+  "Decoration",
+  "IT Services",
+  "Currency Exchange",
+  "Broker",
+  "LIC Agent",
+  "Investment Firm",
+  "CA Services",
+  "Lawyer Services",
+  "Teacher / Study",
+  "Education",
+  "Anchor",
+  "Event Management",
+  "Videography",
+  "Photography",
+  "Digital Media",
+  "Tours & Travels",
+  "Graphic Designer",
+  "Interior Designer",
 ];
 
 async function main() {
@@ -37,6 +57,11 @@ async function main() {
   const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
   try {
     const existing = new Set((await db.industry.findMany({ select: { nameKey: true } })).map((i) => i.nameKey));
+    // At every start on Render (scripts/render-start.sh): fill an empty list only, so industries staff removed stay removed.
+    if (process.argv.includes("--if-empty") && existing.size > 0) {
+      console.log("Industries: already set up.");
+      return;
+    }
     const { _max } = await db.industry.aggregate({ _max: { sortOrder: true } });
     let order = _max.sortOrder ?? 0;
     let added = 0;

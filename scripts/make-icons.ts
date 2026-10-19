@@ -7,20 +7,21 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import sharp from "sharp";
 
-const OLIVE = "#56664f";
-const BLUSH = "#f1d9ce";
-const LINEN = "#faf7f2";
+// The Marigold theme: a kumkum tile, a kite in marigold and cream.
+const KUMKUM = "#9c2f28";
+const MARIGOLD = "#ffd27a";
+const CREAM = "#fff9ef";
 
 /** `rounded`: a rounded square (favicon, "any" icons). `scale`: shrink the kite into a launcher's safe area. */
 function kiteIcon({ rounded, scale }: { rounded: boolean; scale: number }): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" ${rounded ? 'rx="112"' : ""} fill="${OLIVE}"/>
+  <rect width="512" height="512" ${rounded ? 'rx="112"' : ""} fill="${KUMKUM}"/>
   <g transform="translate(256 250) scale(${scale}) rotate(-10) translate(-256 -250)">
-    <path d="M256,250 Q330,380 470,540" fill="none" stroke="${LINEN}" stroke-opacity="0.6" stroke-width="5"/>
-    <path d="M256,96 L146,236 L256,356 Z" fill="${BLUSH}"/>
-    <path d="M256,96 L256,356 L366,236 Z" fill="${LINEN}"/>
-    <path d="M256,356 L230,408 L282,408 Z" fill="${BLUSH}"/>
-    <path d="M256,96 L256,356 M146,236 Q256,176 366,236" fill="none" stroke="${OLIVE}" stroke-opacity="0.55" stroke-width="6"/>
+    <path d="M256,250 Q330,380 470,540" fill="none" stroke="${CREAM}" stroke-opacity="0.6" stroke-width="5"/>
+    <path d="M256,96 L146,236 L256,356 Z" fill="${MARIGOLD}"/>
+    <path d="M256,96 L256,356 L366,236 Z" fill="${CREAM}"/>
+    <path d="M256,356 L230,408 L282,408 Z" fill="${MARIGOLD}"/>
+    <path d="M256,96 L256,356 M146,236 Q256,176 366,236" fill="none" stroke="${KUMKUM}" stroke-opacity="0.55" stroke-width="6"/>
   </g>
 </svg>`;
 }
