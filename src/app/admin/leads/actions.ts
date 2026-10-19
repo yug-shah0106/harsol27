@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/server/authz";
 import { runAction, type ActionResult } from "@/server/errors";
 import { changeLeadStatus, decideLead } from "@/server/leads";
-import { createLeadLogin } from "@/server/member-logins";
+import { createLeadLogin, resetLeadPassword } from "@/server/member-logins";
 
 export async function changeLeadStatusAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("changeLeadStatus", async () => {
@@ -31,13 +31,24 @@ export async function decideLeadAction(_prev: ActionResult | null, formData: For
   });
 }
 
-/** Makes the member login for an approved registration; the password comes back once, to send on WhatsApp. */
-export async function createLeadLoginAction(_prev: ActionResult<{ username: string; password: string }> | null, formData: FormData): Promise<ActionResult<{ username: string; password: string }>> {
+/** Makes the member login for an approved registration; the lead page then shows its username and password. */
+export async function createLeadLoginAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("createLeadLogin", async () => {
     const actor = await requireAdmin();
     const leadId = String(formData.get("leadId") ?? "");
-    const login = await createLeadLogin({ leadId, username: formData.get("username") }, actor);
+    await createLeadLogin({ leadId, username: formData.get("username") }, actor);
     revalidatePath(`/admin/leads/${leadId}`);
-    return { ok: true, data: login };
+    return { ok: true, data: undefined };
+  });
+}
+
+/** A new password for a seller who forgot theirs; the lead page then shows it. */
+export async function resetLeadPasswordAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return runAction("resetLeadPassword", async () => {
+    const actor = await requireAdmin();
+    const leadId = String(formData.get("leadId") ?? "");
+    await resetLeadPassword({ leadId }, actor);
+    revalidatePath(`/admin/leads/${leadId}`);
+    return { ok: true, data: undefined };
   });
 }

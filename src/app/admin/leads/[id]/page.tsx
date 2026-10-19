@@ -11,6 +11,7 @@ import { leadIndustryName, suggestUsername } from "@/lib/lead-schema";
 import { pickUtm } from "@/lib/utm";
 import { requireStaff } from "@/server/authz";
 import { getLead } from "@/server/leads";
+import { openPassword } from "@/server/member-logins";
 import { canWrite } from "@/server/staff-policy";
 import { changeLeadStatusAction } from "../actions";
 import { LeadDecision } from "../decision";
@@ -79,7 +80,8 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
           leadId={lead.id}
           firstName={lead.firstName ?? lead.fullName}
           approved={lead.decision === "APPROVED"}
-          login={lead.user}
+          login={lead.user && { username: lead.user.username, disabledAt: lead.user.disabledAt }}
+          password={canWrite(staff) ? openPassword(lead.user?.issuedPassword) : null}
           suggestion={suggestUsername(lead)}
           canCreate={canWrite(staff)}
         />

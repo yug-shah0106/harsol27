@@ -109,8 +109,8 @@ test("the overview shows seller registrations by approval, and its cards open th
   await expect(page.getByRole("row").nth(1).getByRole("combobox", { name: /^Approval for/ })).toHaveText("Pending");
 });
 
-test("an approved registration gets a login from the team; the seller signs in with it until it is rejected", async ({ browser }) => {
-  test.setTimeout(90_000); // deliberately slow password hashes (argon2id)
+test("an approved registration gets a login from the team; an admin can reset its password; it stops working once rejected", async ({ browser }) => {
+  test.setTimeout(150_000); // deliberately slow password hashes (argon2id)
   const name = `Lead Login ${unique()}`;
   const visitor = await newPage(browser);
   await submitLead(visitor, name, `login.${unique()}@example.test`);
@@ -124,7 +124,7 @@ test("an approved registration gets a login from the team; the seller signs in w
   const login = page.getByRole("region", { name: "Seller login" });
   await expect(login).toContainText("A login can be made once the registration is approved.");
 
-  // Approve, then make the login: the username is suggested from the name; the password is shown once.
+  // Approve, then make the login: the username is suggested from the name; the password is generated.
   await approval.click();
   const saved = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
   await page.getByRole("option", { name: "Approved" }).click();
@@ -139,8 +139,8 @@ test("an approved registration gets a login from the team; the seller signs in w
   await expect(login.getByRole("button", { name: "Copy username and password" })).toBeVisible();
   await expectAccessible(page);
   await page.reload();
-  await expect(login).toContainText(`Username ${username}`); // the password is never shown again
-  await expect(login).not.toContainText(password);
+  await expect(login.locator("dd").nth(0)).toHaveText(username); // both stay for admins
+  await expect(login.locator("dd").nth(1)).toHaveText(password);
 
   // The seller signs in with it, and sees their registration.
   const seller = await newPage(browser);
@@ -153,6 +153,36 @@ test("an approved registration gets a login from the team; the seller signs in w
   await expect(registration).toContainText("Approved");
   await expect(registration).toContainText(/15 months, \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}/);
 
+  // Forgotten password: only an admin can reset it. The new one replaces the old, which stops working, and
+  // the seller is signed out.
+  await login.getByRole("button", { name: "Reset password" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Reset password" }).click();
+  await expect(login).toContainText("Password reset. Send the new one to", { timeout: 20_000 });
+  const newPassword = (await login.locator("dd").nth(1).innerText()).trim();
+  expect(newPassword).toMatch(/^[a-zA-Z2-9]{12}$/);
+  expect(newPassword).not.toBe(password);
+  await page.reload();
+  await expect(login.locator("dd").nth(1)).toHaveText(newPassword);
+
+  // A viewer sees the username, never the password.
+  const viewer = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
+  await signInAs(viewer, STAFF.viewer);
+  await viewer.goto(page.url());
+  const viewerLogin = viewer.getByRole("region", { name: "Seller login" });
+  await expect(viewerLogin).toContainText(username);
+  await expect(viewerLogin).not.toContainText(newPassword);
+  await expect(viewerLogin.getByRole("button")).toHaveCount(0);
+  await seller.goto("/account");
+  await expect(seller).toHaveURL(/\/sign-in\?next=%2Faccount$/);
+  await seller.getByLabel("Username").fill(username);
+  await seller.getByLabel("Password", { exact: true }).fill(password);
+  await seller.getByRole("button", { name: "Sign in" }).click();
+  await expect(seller.getByRole("main").getByRole("alert")).toContainText("Username or password is incorrect", { timeout: 20_000 });
+  await seller.getByLabel("Password", { exact: true }).fill(newPassword);
+  await seller.getByRole("button", { name: "Sign in" }).click();
+  await expect(seller).toHaveURL(/\/account$/, { timeout: 20_000 });
+  await page.reload();
+
   // Rejected: the login stops working at once, even for the open session.
   await approval.click();
   const rejected = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
@@ -161,7 +191,7 @@ test("an approved registration gets a login from the team; the seller signs in w
   await seller.goto("/account");
   await expect(seller).toHaveURL(/\/sign-in\?next=%2Faccount$/);
   await seller.getByLabel("Username").fill(username);
-  await seller.getByLabel("Password", { exact: true }).fill(password);
+  await seller.getByLabel("Password", { exact: true }).fill(newPassword);
   await seller.getByRole("button", { name: "Sign in" }).click();
   await expect(seller.getByRole("main").getByRole("alert")).toContainText("Username or password is incorrect", { timeout: 20_000 });
 });

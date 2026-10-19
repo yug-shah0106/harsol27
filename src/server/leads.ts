@@ -201,7 +201,7 @@ export function getLead(id: string) {
       industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
       statusChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
       decisionChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
-      user: { select: { username: true, createdAt: true, disabledAt: true } },
+      user: { select: { username: true, createdAt: true, disabledAt: true, issuedPassword: true } },
     },
   });
 }

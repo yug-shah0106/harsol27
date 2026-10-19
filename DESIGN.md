@@ -316,8 +316,10 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   password? Contact the Harsol27 team." and, below, "No login yet? Register as a seller" (to Seller
   registration). No "Create an account" and no Google: the team makes every login.
 - **Seller login** (admin lead page): an approved registration gets a username field (suggested from the
-  name) and "Create login"; the generated password then shows once, in a green box with a Copy button,
-  to send on WhatsApp. Afterwards only "Username <name> · active / switched off" shows.
+  name) and "Create login". Then a card stays: Username, Password and Status (Active / Switched off),
+  "Copy username and password" for WhatsApp, and an outline "Reset password" (it asks first) for an
+  active login. Admins see the password (client, 2026-10-19); viewers see the username only. Only admins
+  reset seller passwords.
 
 ## 5. Layout principles
 

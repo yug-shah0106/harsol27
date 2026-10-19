@@ -27,6 +27,7 @@ model User {
   phoneNumberVerified Boolean?
   mobile              String? // E.164, typed at sign-up and not verified (no SMS yet). Sent to sellers with inquiries.
   username            String?   @unique // lowercase; members sign in with it (given by the team since 2026-10-19)
+  issuedPassword      String? // the password an admin issued, encrypted (server/member-logins.ts) so admins can see it again; sign-in checks only Account.password
   role                Role      @default(MEMBER)
   failedLoginCount    Int       @default(0)
   lockedUntil         DateTime?
