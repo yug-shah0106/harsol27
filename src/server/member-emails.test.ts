@@ -6,8 +6,8 @@ describe("password reset email", () => {
 
   it("links to our reset page with the token, in the text and the button", () => {
     expect(email.to).toBe("meera@example.test");
-    expect(email.text).toContain("https://harsol27.example/reset-password?token=tok_ABC123");
-    expect(email.html).toContain('href="https://harsol27.example/reset-password?token=tok_ABC123"');
+    expect(email.text).toContain("https://harsol27.example/staff/reset-password?token=tok_ABC123");
+    expect(email.html).toContain('href="https://harsol27.example/staff/reset-password?token=tok_ABC123"');
   });
 
   it("escapes the name in HTML and keeps the token out of the idempotency key", () => {

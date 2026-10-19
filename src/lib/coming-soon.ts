@@ -4,9 +4,10 @@
  */
 export const isComingSoon = () => process.env.COMING_SOON !== "false";
 
-// Still open while the site is closed: the Pre-registration form (the Get started form after launch), the legal
-// pages, and the staff area (sign-in, admin and the files it shows).
-const OPEN = ["/coming-soon", "/Pre-Registration", "/privacy", "/terms", "/staff", "/admin", "/media", "/serwist"];
+// Still open while the site is closed: the Seller registration form (the Get started form after launch), the legal
+// pages, sign-in and the account page for registered sellers the team gave a login, and the staff area
+// (sign-in, admin and the files it shows).
+const OPEN = ["/coming-soon", "/Seller-Registration", "/privacy", "/terms", "/sign-in", "/account", "/staff", "/admin", "/media", "/serwist"];
 
 /** While closed: "/" shows the coming-soon page, other pages send visitors to "/", files load as usual. */
 export function comingSoonRoute(pathname: string): "rewrite" | "redirect" | null {

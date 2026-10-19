@@ -48,14 +48,14 @@ describe("email pipeline: form → queue → worker → Resend", () => {
     expect((await fetch(ticket.uploadUrl, { method: "PUT", body: png, headers: { "Content-Type": "image/png" } })).ok).toBe(true);
 
     const form = new FormData();
-    for (const [k, v] of Object.entries({ fullName: "Worker Test", fatherName: "Father Test", nativePlace: "Harsol", address: "Ahmedabad", phone: "9876543210", email, businessCategory: "RETAIL", industryIds: industryId, paymentProof: ticket.key })) form.set(k, v);
+    for (const [k, v] of Object.entries({ firstName: "Worker", fatherName: "Father", lastName: "Test", nativePlace: "Harsol", address: "1 Relief Road", city: "Ahmedabad", state: "Gujarat", pincode: "380001", phone: "9876543210", email, businessCategory: "RETAIL", industryIds: industryId, paymentProof: ticket.key })) form.set(k, v);
     await submitLead(form, new Headers({ "x-forwarded-for": "198.51.100.9" }));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
 
     await expect.poll(() => sent.filter((s) => s.key?.endsWith(lead.id)).length, { timeout: 15_000 }).toBe(2);
     const mine = sent.filter((s) => s.key?.endsWith(lead.id));
     expect(mine).toContainEqual({ to: email, subject: "We have received your details · Harsol27", key: `lead-confirmation/${lead.id}` });
-    expect(mine).toContainEqual({ to: ["team@example.test"], subject: `New lead: Worker Test (Worker ${run})`, key: `lead-team-alert/${lead.id}` });
+    expect(mine).toContainEqual({ to: ["team@example.test"], subject: `New lead: Worker Father Test (Worker ${run})`, key: `lead-team-alert/${lead.id}` });
   }, 20_000);
 });
 

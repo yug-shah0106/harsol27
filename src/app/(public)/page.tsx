@@ -11,15 +11,15 @@ import { listActiveIndustries } from "@/server/industries";
 
 export const metadata: Metadata = pageMetadata({
   title: { absolute: "Harsol27 · Harsol Sattavis Jain community B2B marketplace" },
-  description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Gujarat and talk to the seller directly.",
+  description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Harsol and talk to the seller directly.",
   path: "/",
-  keywords: ["find suppliers in Gujarat", "buy from Gujarat manufacturers", "wholesale suppliers Gujarat"],
+  keywords: ["find suppliers in Harsol", "buy from Harsol manufacturers", "wholesale suppliers Harsol"],
 });
 
 const STEPS = [
   {
     title: "Search",
-    body: "Look up a product or browse by industry to find approved sellers from across Gujarat.",
+    body: "Look up a product or browse by industry to find approved sellers from across Harsol.",
   },
   {
     title: "Send an enquiry",
@@ -36,7 +36,7 @@ const REASONS = [
   { title: "Approved sellers only", body: "Sellers apply to join, and our team approves each one before they appear on Harsol27." },
   { title: "Straight to the seller", body: "Send an enquiry and you see the seller's phone number and email, so you can speak to them yourself." },
   { title: "Your deal, your terms", body: "No cart and no online payment. Price, quantity, delivery and payment are agreed between you and the seller." },
-  { title: "From khakhra to steel", body: "Gujarat makes and trades almost everything. Search for a product, or browse by industry." },
+  { title: "From khakhra to steel", body: "Harsol makes and trades almost everything. Search for a product, or browse by industry." },
 ];
 // The stacked cards stick a little lower each, and lean a little, so the pile fans out.
 const STACK = ["top-24 -rotate-1", "top-28 rotate-1", "top-32 -rotate-1", "top-36 rotate-1"];
@@ -54,7 +54,7 @@ export default async function HomePage() {
       <section aria-labelledby="hero-heading" className="kite-sky relative isolate overflow-hidden">
         <div className="mx-auto flex max-w-6xl flex-col gap-7 px-4 pt-12 sm:px-6 sm:pt-16 lg:min-h-[calc(100svh-4rem)] lg:justify-center lg:pt-12 lg:pb-40">
           <p className="w-fit rounded-full border border-primary/25 bg-card/70 px-3.5 py-1 text-xs font-semibold tracking-[0.18em] text-primary uppercase animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both">
-            B2B marketplace for Gujarat
+            B2B marketplace for Harsol
           </p>
           {/* The headline only slides (never fades): it is the largest paint, which must not wait. */}
           <h1
@@ -114,7 +114,7 @@ export default async function HomePage() {
 
       <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-36">
         <ScrollText
-          text="Gujarat is full of businesses that make and trade almost everything. Harsol27 helps buyers find the right one and talk to them directly."
+          text="Harsol is full of businesses that make and trade almost everything. Harsol27 helps buyers find the right one and talk to them directly."
           className="max-w-5xl font-display text-4xl leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
         />
       </div>
@@ -124,7 +124,7 @@ export default async function HomePage() {
           <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
             <BlurText id="why-heading" text="Why Harsol27?" className={DISPLAY_HEADING} />
             <p data-reveal className="max-w-md text-lg text-muted-foreground">
-              A business-to-business marketplace for Gujarat&apos;s manufacturers, wholesalers and traders.
+              A business-to-business marketplace for Harsol&apos;s manufacturers, wholesalers and traders.
             </p>
           </div>
           <ol data-stack className="flex flex-col gap-[14vh]">
@@ -223,8 +223,8 @@ export default async function HomePage() {
             <p className="max-w-xl text-lg">
               Share a few details about your business and our team will get in touch, or apply as a seller right away.
             </p>
-            <Button asChild size="lg" data-magnet className="w-fit rounded-full px-8">
-              <Link href="/Pre-Registration">Get started</Link>
+            <Button asChild size="lg" className="w-fit rounded-full px-8">
+              <Link href="/Seller-Registration">Get started</Link>
             </Button>
           </div>
         </div>

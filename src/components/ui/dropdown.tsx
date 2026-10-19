@@ -28,6 +28,8 @@ type DropdownProps = {
   required?: boolean
   disabled?: boolean
   className?: string
+  /** Restyles the button itself, e.g. as a status pill (merged over the field look). */
+  triggerClassName?: string
   "aria-invalid"?: boolean
   "aria-describedby"?: string
   /** For long lists: a search box at the top of the open list, e.g. { placeholder: "Search industries" }. */
@@ -53,7 +55,7 @@ const TYPEAHEAD_MS = 600
  *   Tab chooses and moves on; typing letters jumps to a matching option ("gu" → Gujarat)
  * - screen readers: the label names it, the chosen value and the highlighted option are announced
  * - forms: a hidden input carries the value, so GET filters, server actions and form reset work
- * Focus stays on the button while the list is open (aria-activedescendant). No inline styles (CSP).
+ * Focus stays on the button while the list is open  (aria-activedescendant). No inline styles in the markup (CSP); the open list is placed from script.
  *
  * `searchable` (long lists): opening it puts the focus in a search box above the options, and typing
  * narrows them (matching anywhere in the label). ↓ ↑ Enter Escape and Tab work from the box; pinned
@@ -73,6 +75,7 @@ function Dropdown({
   required,
   disabled,
   className,
+  triggerClassName,
   "aria-invalid": invalid,
   "aria-describedby": describedBy,
   searchable,
@@ -89,6 +92,7 @@ function Dropdown({
   const wrapper = React.useRef<HTMLDivElement>(null)
   const button = React.useRef<HTMLButtonElement>(null)
   const list = React.useRef<HTMLDivElement>(null)
+  const popup = React.useRef<HTMLDivElement>(null)
   const typed = React.useRef({ text: "", at: 0 })
   const searchBox = React.useRef<HTMLInputElement>(null)
   const [query, setQuery] = React.useState("")
@@ -135,6 +139,30 @@ function Dropdown({
     document.addEventListener("pointerdown", outside)
     return () => document.removeEventListener("pointerdown", outside)
   }, [open])
+
+  // The list opens in the top layer (a popover), so a table or card that scrolls sideways can't clip it.
+  // It is placed against the button from script (CSSOM, which the CSP allows) and follows it on scroll.
+  React.useLayoutEffect(() => {
+    const pop = popup.current
+    if (!pop || !open) return
+    pop.showPopover()
+    const place = () => {
+      const rect = button.current?.getBoundingClientRect()
+      if (!rect) return
+      pop.style.width = `${rect.width}px`
+      pop.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - pop.offsetWidth - 8))}px`
+      pop.style.top = above ? "auto" : `${rect.bottom + 4}px`
+      pop.style.bottom = above ? `${window.innerHeight - rect.top + 4}px` : "auto"
+    }
+    place()
+    window.addEventListener("scroll", place, true)
+    window.addEventListener("resize", place)
+    return () => {
+      window.removeEventListener("scroll", place, true)
+      window.removeEventListener("resize", place)
+      if (pop.matches(":popover-open")) pop.hidePopover()
+    }
+  }, [open, above])
 
   // A searchable list takes the focus into its search box as it opens.
   React.useEffect(() => {
@@ -308,7 +336,10 @@ function Dropdown({
         onClick={() => (open ? close() : show(selectedIndex >= 0 ? selectedIndex : 0))}
         onKeyDown={onKeyDown}
         onBlur={onBlur}
-        className="flex h-10 w-full min-w-0 items-center rounded-lg border border-input bg-card py-1 pr-9 pl-3 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm"
+        className={cn(
+          "flex h-10 w-full min-w-0 items-center rounded-lg border border-input bg-card py-1 pr-9 pl-3 text-left text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm",
+          triggerClassName,
+        )}
       >
         {multiple ? (
           <span className={cn("truncate", !chosen.length && "text-muted-foreground")}>
@@ -323,9 +354,10 @@ function Dropdown({
         />
       </button>
       <div
-        hidden={!open}
+        ref={popup}
+        popover="manual"
         data-side={above ? "top" : "bottom"}
-        className="absolute inset-x-0 z-50 min-w-40 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 ease-out data-[side=bottom]:top-full data-[side=bottom]:mt-1 data-[side=bottom]:slide-in-from-top-1 data-[side=bottom]:origin-top data-[side=top]:bottom-full data-[side=top]:mb-1 data-[side=top]:slide-in-from-bottom-1 data-[side=top]:origin-bottom"
+        className="inset-auto m-0 min-w-40 rounded-lg border border-border bg-popover p-0 text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95 duration-150 ease-out data-[side=bottom]:slide-in-from-top-1 data-[side=bottom]:origin-top data-[side=top]:slide-in-from-bottom-1 data-[side=top]:origin-bottom"
       >
         {searchable && (
           <div className="border-b border-border p-2">

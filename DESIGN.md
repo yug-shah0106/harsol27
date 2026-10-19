@@ -92,11 +92,11 @@ phone, and many read Gujarati. So the design is:
 - **Soft serif headings.** Fraunces in its soft, slightly wonky cut, with italics for emphasis ("*take
   off*" over a hand-drawn marigold underline), over Hind Vadodara for everything you read and use.
 - **Festive where it welcomes, calm where you work.** The coming-soon page is the full festival; forms,
-  Pre-registration, staff sign-in and the admin keep a compact toran and the palette, and stay plain.
+  Seller registration, staff sign-in and the admin keep a compact toran and the palette, and stay plain.
 - **Generous space.** Plenty of room, short plain-English copy, hairlines rather than boxes.
 
 The site is closed until launch (`COMING_SOON`, `src/lib/coming-soon.ts`): visitors see only the
-coming-soon page, Pre-registration and the legal pages. The rest of the site is built and kept, behind
+coming-soon page, Seller registration and the legal pages. The rest of the site is built and kept, behind
 that switch; this file still describes it, in the Marigold palette.
 
 ## 2. Colour palette & roles
@@ -145,7 +145,7 @@ headings are kumkum. The offline page uses the system font, because the web font
 | Role | Size | Weight | Notes |
 |---|---|---|---|
 | Coming-soon headline | 46px → 112px (`clamp`) | 400 | Fraunces, `leading-[0.96]`, `text-balance`; "*take off*" in kumkum italic over a hand-drawn marigold underline that draws itself |
-| Page title (h1) | 60px (36px phones) | 400 | Fraunces, kumkum, on Pre-registration and marketing pages. Forms and dashboards keep Hind 30px/700 |
+| Page title (h1) | 60px (36px phones) | 400 | Fraunces, kumkum, on Seller registration and marketing pages. Forms and dashboards keep Hind 30px/700 |
 | Section heading (h2) | 60px (48px phones) | 400 | Fraunces, kumkum |
 | Gujarati line | 16–18px | 600 | Hind Vadodara, kumkum, often in a cream pill, with `lang="gu"` |
 | Eyebrow | 12px | 700 | Hind, uppercase, `tracking-[0.22em]` |
@@ -176,18 +176,24 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - The list is a white popover: radius 16px, `shadow-lg`, 4px padding, up to 288px tall, scrolling inside.
   - Options are 14px. The highlighted one has a turmeric background; the chosen one is semibold with an kumkum check.
   - It opens upwards when there's no room below.
+  - The list floats above the page (a popover in the top layer), so a table or card that scrolls sideways
+    never cuts it off; it follows its button when the page scrolls.
   - Long lists (industries) are `searchable`: opening puts the cursor in a search box at the top of the
     list ("Search industries"), typing narrows the options, and `pinned` options ("All industries",
     "Other (not listed)") always stay listed.
-  - `multiple` (Get started's "Industries"): each option has a tick box and toggles; the list stays open
-    while choosing (Escape, Tab or a click outside closes it), and the button lists the choices,
-    comma-separated. Up to 5 industries.
+  - `multiple`: each option has a tick box and toggles; the list stays open while choosing (Escape, Tab or
+    a click outside closes it), and the button lists the choices, comma-separated. Not used at present:
+    Seller registration's "Industry" became a single choice on 2026-10-19 (one industry per person).
   - "Other (not listed)" (Get started form): choosing it shows a "Your industry" field where the visitor
     types their own; staff see it as "Other: …".
+- **Fields in parts** (Seller registration): the name as First name, Father's name, Last name, three
+  across from 640px (stacked on phones); the address as Address (full width), then City and State (a
+  searchable dropdown of India's states and union territories) side by side, and Pincode (6 digits) under
+  City. The phone field is "WhatsApp number"; the category dropdown is labelled "Category".
 - **Optional group** (Get started's "Links to your business"): a `<fieldset>` whose legend says
   "(optional)" in muted text: Website, Instagram (any of @name, name or a link) and Google Maps link.
   Links are tidied ("https://" added) and only http(s) addresses are kept.
-- **Payment** (Pre-registration's "Pay the fee", `src/lib/fee.ts`): a turmeric panel with the client's UPI QR
+- **Payment** (Seller registration's "Pay the fee", `src/lib/fee.ts`): a turmeric panel with the client's UPI QR
   code on a white tile beside the price. The QR is their printed bank code module for module (never
   re-encoded, never a logo over it), in brown ink with kumkum corner markers and a white margin. Beside it: the regular price struck through
   in muted serif, the offer price in large kumkum serif, "for 15 months", a marigold "Offer price till …" pill
@@ -217,6 +223,27 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
 - **Call-to-action section**: marigold, a giant two-line serif heading ("Sell everything on" in brown ink, "*Harsol27*"
   in kumkum italic), then a hairline, a line of text and an kumkum pill "Get started".
 - **Badge** (`badge.tsx`): 20px tall, fully rounded, 12px. Default (kumkum) for "new", secondary (turmeric) for other statuses.
+- **Admin header** (`admin/layout.tsx`): the logo and name on the left (no "Admin" label); on the right,
+  the staff member's initials in a 40px kumkum circle, then their name with a small "Sign out" (icon and
+  underlined text, 24px tall) beneath it.
+- **Admin overview** (`admin/page.tsx`), top to bottom:
+  - a greeting band (cream to marigold wash; the rangoli whole on the right from 768px, turning slowly
+    unless reduced motion): the India-time date, "Good morning/afternoon/
+    evening, <first name>" in the serif, the access line, and a pill to the pending registrations;
+  - "Seller registrations": four cards, two across on phones (All, in kumkum; Pending, Approved, Rejected
+    with a coloured dot), then a thin bar of the approval split;
+  - "Registrations, last 14 days" (an SVG bar a day, today in marigold) beside "Waiting for approval" (the
+    five waiting longest);
+  - "Top native places" and "By category" as thin bars;
+  - "Marketplace": the seller, inquiry and subscription counts as small cards ("opens after launch" before then).
+  Charts are SVG with sizes as attributes (the CSP blocks inline styles). The pending marigold is #f2a20c,
+  the toran's, because `accent` turns dark brown in dark mode. Each card opens the filtered list; the leads
+  list has an Approval filter for that.
+- **Approval pill** (admin leads, `admin/leads/decision.tsx`): in the list's Approval column and on a lead's
+  page, a status-style pill: Pending (turmeric), Approved (green tint), Rejected (red tint). Admins click it
+  to open a small list (Pending, Approved, Rejected) and the choice is saved at once; viewers see the pill only.
+  It is the Dropdown with `triggerClassName` restyling its button. Separate from the contact status; each
+  change is in the lead's history ("Approval: Pending → Approved").
 - **Table** (`table.tsx`): sits in a ScrollArea that scrolls sideways on phones. Pass `scrollLabel`
   so keyboard users can reach it.
 - **ScrollArea** (`scroll-area.tsx`): use it for anything that scrolls inside a page.
@@ -226,24 +253,27 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
 - **Header**: under a compact toran (not sticky), sticky itself (it stays at the top), white at 85% with a blur, bottom hairline, full width with the
   page gutters (16px, 24px, 40px from 1024px), like the footer.
   - In the left corner, the Harsol Sattavis Jain Yuvak Trust's logo (`public/logo.webp`, 52px, reaching into
-    the header's padding so the header stays 65px; 44px under 360px), then the wordmark, smaller beside it
-    (Fraunces 22px; 20px on phones, 18px under 360px). The same pair heads the admin and staff sign-in.
+    the header's padding so the header stays 65px; 44px under 360px), then the trust's name in two lines
+    no taller than the button: "Harsol27" (Fraunces 22px; 18px on phones) over "Jain Yuvak Trust, Bhayander"
+    (Hind 12px/600, `muted-foreground`; 10px and wrapping on phones). The same lockup heads the admin and
+    staff sign-in. The footer reads "© <year> Harsol27 Jain Yuvak Trust, Bhayander".
   - In the right corner: 14px/500 text links (Home, Search, About, Sign in or Your account) that underline
     on hover, the dark-mode toggle (moon/sun), then an kumkum pill "Get started" button.
   - Below 640px the links and the toggle move into a **menu** (a "Menu" button that opens a panel under the
     header with the links in serif; Escape closes it). "Get started" stays visible.
   - A 2px kumkum **reading-progress line** along its bottom edge, driven by the scroll in CSS
     (`.scroll-progress`, scroll-driven animations; browsers without them don't show it).
-  - Until launch, every public page (Pre-registration, Terms, Privacy) uses the coming-soon page's
-    `blend` form: clear at the top, frosting into a cream bar as you scroll. Pre-registration's page starts
+  - Until launch, every public page (Seller registration, Terms, Privacy) uses the coming-soon page's
+    `blend` form: clear at the top, frosting into a cream bar as you scroll. Seller registration's page starts
     under it (65px), so its rangoli runs up to the toran.
 - **Footer**: turmeric, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px):
-  one slim row (20px padding), all on the left: the copyright in `muted-foreground`, then text links
-  (About, FAQ, Terms, Privacy). The right is left clear for the floating buttons; phones keep 96px of
-  bottom padding for them.
+  one slim row (20px padding): the copyright in `muted-foreground` on the left, the text links (About,
+  FAQ, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
 - **Floating buttons** (bottom right, every public page): an kumkum pill "Talk to us" (to the Get started
   form, our only public contact so far; hidden on that page), and above it a round "Back to top" that
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
+  Sticky at the end of the main content, not fixed: they ride 16–24px above the bottom of the screen, and
+  at the end of the page stop the same distance above the footer, never over it.
 - **Cookie notice**: a white card, bottom left (full width on phones), until "OK" (a form post, so it works
   without JavaScript; remembered for a year). It says what is true: essential cookies only. If analytics or
   advertising cookies are ever added, it must become a real choice first.
@@ -269,9 +299,9 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     sign-in and the admin.
   - **Rangoli** (`<Rangoli>`): three rings of soft petals (kumkum, gold, leaf), a ring of gold dots and a
     centre. It draws itself ring by ring on load and turns with the scroll (`data-spin`). Behind the
-    coming-soon headline (35%), in its closing card (25%), and faint in Pre-registration's corner.
+    coming-soon headline (35%), in its closing card (25%), and faint in Seller registration's corner.
   - **Jharokha arch cards**: fully round tops, an inner outline, a kumkum, marigold or leaf wash; they rise
-    in and lean toward the mouse (`data-tilt`). The three promises.
+    in. The three promises.
   - **Diya chips**: every industry as a cream pill with a glowing gold dot; they light up one after another
     as the section scrolls by (`data-light`).
   - **Step medallions**: gold discs with a large Fraunces number, joined by a gold path that draws itself
@@ -282,7 +312,16 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     2.2s; hidden from screen readers, which get the whole sentence.
   - **Closing card**: fixed kumkum with marigold in both modes, a turning rangoli, and floating petals.
 - **Staff sign-in**: compact toran, the wordmark, a Fraunces "Staff sign in", and the form on a white
-  card with a kumkum pill button.
+  card with a kumkum pill button; "Forgot password?" under it. /staff/forgot-password and
+  /staff/reset-password share that layout (staff only: members cannot reset their own password).
+- **Member sign-in** (`/sign-in`): the auth card with "Username" and "Password", the line "Forgot your
+  password? Contact the Harsol27 team." and, below, "No login yet? Register as a seller" (to Seller
+  registration). No "Create an account" and no Google: the team makes every login.
+- **Seller login** (admin lead page): an approved registration gets a username field (suggested from the
+  name) and "Create login". Then a card stays: Username, Password and Status (Active / Switched off),
+  "Copy username and password" for WhatsApp, and an outline "Reset password" (it asks first) for an
+  active login. Admins see the password (client, 2026-10-19); viewers see the username only. Only admins
+  reset seller passwords.
 
 ## 5. Layout principles
 
@@ -300,21 +339,21 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   search and links sit under it on the left. From 1024px the kites fly on the right, behind the headline,
   faded towards it so the words stay clear. Below 1024px the kites come after the copy.
 - Coming soon (`src/app/coming-soon`, shown at `/` until `COMING_SOON=false`): the full Marigold
-  festival, under the toran and the site header (wordmark left; Home, the theme toggle and "Pre-register"
+  festival, under the toran and the site header (wordmark left; Home, the theme toggle and "Seller registration" ("Register" on phones)
   right) in its `blend` form: clear at the top, with no hairline, and the hero slides up under it so the
   rangoli runs up to the toran; it frosts into a cream bar over the first 120px of scroll (CSS scroll
   timeline, `.header-blend`). Then, top to bottom:
   - **Hero**, centred on the rangoli: a Gujarati pill, "Coming soon", the headline, the rotating word,
-    one paragraph and a large "Pre-register your business" pill.
+    one paragraph and a large "Register your business" pill.
   - **Why Harsol27?**: three arch cards.
   - **A festival of trades**: the diya chips, on turmeric.
   - **How it works**: three medallions on the drawn path.
   - **The offer**: the ticket.
-  - **Closing card**, then a one-line footer with Privacy and Terms.
+  - **Closing card**, then the site footer, the same as on Seller registration (Terms, Privacy).
 
-  Until launch the Get started form is called Pre-registration (at `/Pre-Registration`; `/get-started`
-  and `/pre-registration` redirect there), and the header and footer link only what is open (Home,
-  Pre-register, Terms, Privacy).
+  Until launch the Get started form is called Seller registration (at `/Seller-Registration`; `/get-started`,
+  `/Pre-Registration` and other spellings redirect there), and the header and footer link only what is
+  open (Home, Sign in or Your account, Seller registration, Terms, Privacy).
 - Grids:
   - industries: 2 → 3 → 4 columns;
   - products: 1 → 2 → 3 → 4 columns;
@@ -341,8 +380,6 @@ Motion is built on GSAP, ScrollTrigger and Lenis smooth scrolling. All of it is 
 | `data-reveal` | Rises 32px and fades in when scrolled to, 0.8s `power3.out`. Items arriving together stagger 0.08s. Use on cards, list items and sections below the fold. |
 | `data-blur-text` (via `<BlurText>`) | Heading words go from blurred and above to sharp, one after another. Use on section headings, never the page's main headline. |
 | `data-count` (via `<CountUp>`) | A number counts up from 0 when it appears. |
-| `data-spotlight` + `.spotlight` | A soft kumkum light, plus a brighter rim, follows the mouse over a card. Use on clickable cards. |
-| `data-magnet` | Leans a quarter of the way toward a mouse within 48px. Main calls to action only: at most two per screen. Never on the Pre-register buttons. |
 | `data-parallax="10"` | Drifts by that percent of its height as the page scrolls past. Only the hero's kite panel. |
 | `data-draw` | A line that draws itself as its section scrolls by. |
 | `data-scroll-text` (via `<ScrollText>`) | A statement whose words go from faint to full while it crosses the screen (as on lenis.dev). |
@@ -352,9 +389,9 @@ Motion is built on GSAP, ScrollTrigger and Lenis smooth scrolling. All of it is 
 | `data-spin="140"` | Turns that many degrees while it crosses the screen. The rangolis. |
 | `data-path` | An SVG path (`pathLength={1}`, class `drawn-path`) that grows bit by bit as you scroll, from when its drawing is near the bottom of the screen (85%) until it is near the top (25%). The steps' path. |
 | `data-light` | Its `[data-lamp]` items go from dim to lit one after another as it scrolls by. The diya chips. |
-| `data-tilt` | Leans in 3D toward the mouse (up to 10°), smoothly re-targeting. Arch cards and the ticket. |
 
-BlurText, CountUp, SpotlightCard, Magnet and TiltedCard are adapted from React Bits (reactbits.dev), rebuilt on GSAP.
+BlurText and CountUp are adapted from React Bits (reactbits.dev), rebuilt on GSAP. Nothing follows the mouse: the
+spotlight, magnet and tilt effects were removed at the client's request (2026-10-19). Don't add pointer-following effects.
 CSS-only festival motion (`globals.css`): the toran sways, the rangoli and the hand underline draw
 themselves once (`stroke-draw`), the rotating word slides (300ms, strong ease-out), and the petals float.
 All of it stops for reduced motion. Curves are `--ease-out` and `--ease-in-out` on `:root`.
@@ -388,7 +425,7 @@ Rules:
 - Don't use inline `style` attributes or `<style>` tags. The site's Content Security Policy blocks them,
   so they silently do nothing. Use Tailwind classes; arbitrary values like `fill-[#c3cdb9]` are fine.
 - Don't use marigold as a text colour (it is a background), or bold the serif.
-- Keep the festival on the welcoming pages. The coming-soon page carries the full set; Pre-registration
+- Keep the festival on the welcoming pages. The coming-soon page carries the full set; Seller registration
   gets the compact toran and a faint corner rangoli; staff sign-in and the admin get only the compact
   toran. No gradients or glows elsewhere, apart from the spotlight's hover light on cards.
 - Don't hide anything that is on screen at load until a script runs, and never fade the main headline.

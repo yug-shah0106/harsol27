@@ -17,9 +17,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <SiteHeader blend={isComingSoon()} />
       <main id="main" className="flex-1 outline-none">
         {children}
+        <FloatingActions />
       </main>
       <SiteFooter />
-      <FloatingActions />
       <CookieNotice />
       <UtmCapture />
       <Suspense fallback={null}>

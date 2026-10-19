@@ -22,9 +22,8 @@ export function configChecks(env: Env): Check[] {
   check(appUrl.startsWith("https://") && !LOCAL_HOST.test(hostOf(appUrl)), "The site is served over HTTPS at a public address", `APP_URL is "${appUrl}"`);
   check(!/\.ngrok(-free)?\.(app|dev|io)$/.test(hostOf(appUrl)), "The site uses its own domain", "Still on the ngrok staging address", "warn");
 
-  // Members sign in with email and password; sign-in by SMS code is switched off (docs/FUTURE.md).
+  // Members sign in with the username and password the team gave them; sign-in by SMS code is switched off (docs/FUTURE.md).
   check(env.SMS_PROVIDER !== "console" && env.ALLOW_CONSOLE_SMS !== "true", "Log-only sign-in codes are switched off", "Remove SMS_PROVIDER and ALLOW_CONSOLE_SMS from the server settings");
-  check(!!env.GOOGLE_CLIENT_ID && !!env.GOOGLE_CLIENT_SECRET, '"Continue with Google" is set up', "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not set, so the Google button is hidden", "warn");
 
   const from = env.EMAIL_FROM ?? "";
   const fromDomain = /@([^>\s]+)>?\s*$/.exec(from)?.[1] ?? "";

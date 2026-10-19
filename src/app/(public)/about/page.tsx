@@ -20,7 +20,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: "How do I list my business?",
     a: (
       <>
-        Share a few details on <Link href="/Pre-Registration" className="font-medium text-primary underline">Get started</Link> and our team will get in
+        Share a few details on <Link href="/Seller-Registration" className="font-medium text-primary underline">Get started</Link> and our team will get in
         touch, or apply as a seller right away.
       </>
     ),
@@ -29,16 +29,16 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
 
 export const metadata: Metadata = pageMetadata({
   title: "About Harsol27 and how it works",
-  description: "How Harsol27, by the Harsol Sattavis (27) Jain community, works: approved Gujarati sellers, direct enquiries, no online payment, and common questions.",
+  description: "How Harsol27, by the Harsol Sattavis (27) Jain community, works: approved Harsol sellers, direct enquiries, no online payment, and common questions.",
   path: "/about",
   keywords: ["how Harsol27 works", "Harsol27 FAQ", "sell on Harsol27"],
 });
 
 export default function AboutPage() {
   return (
-    <ProsePage title="About Harsol27" lead="A business-to-business marketplace for Gujarat's manufacturers, wholesalers and traders.">
+    <ProsePage title="About Harsol27" lead="A business-to-business marketplace for Harsol's manufacturers, wholesalers and traders.">
       <p>
-        Gujarat is full of businesses that make and trade almost everything, from khakhra and thepla to steel parts and
+        Harsol is full of businesses that make and trade almost everything, from khakhra and thepla to steel parts and
         ceramic tiles. Harsol27 helps buyers find the right one and talk to them directly.
       </p>
       <h2>For buyers</h2>
@@ -57,7 +57,7 @@ export default function AboutPage() {
         directly between buyer and seller.
       </p>
       <p>
-        Want to join? <Link href="/Pre-Registration" className="font-medium text-primary underline">Get started here</Link>.
+        Want to join? <Link href="/Seller-Registration" className="font-medium text-primary underline">Get started here</Link>.
       </p>
 
       <h2 id="faq">Questions</h2>

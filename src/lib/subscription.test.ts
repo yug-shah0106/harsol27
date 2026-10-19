@@ -1,16 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fieldErrors } from "./lead-schema";
-import {
-  daysUntil,
-  dueReminder,
-  EXPIRED_NOTICE,
-  formatDay,
-  formatRupees,
-  paymentSchema,
-  rupeesToPaise,
-  subscriptionState,
-  suggestPaidUntil,
-} from "./subscription";
+import { addMonths, daysUntil, dueReminder, EXPIRED_NOTICE, formatDay, formatRupees, paymentSchema, registrationSubscription, rupeesToPaise, subscriptionState, suggestPaidUntil } from "./subscription";
 
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
@@ -95,5 +85,22 @@ describe("paymentSchema", () => {
       paidOn: "Enter a valid payment date.",
     });
     expect(paymentSchema.safeParse({ ...valid, paidUntil: "1999-01-01" }).success).toBe(false);
+  });
+});
+
+describe("a Seller registration's subscription", () => {
+  const day = (ymd: string) => new Date(`${ymd}T00:00:00.000Z`);
+
+  it("runs from the India-time day they registered, through the day before the same date months later", () => {
+    expect(registrationSubscription(new Date("2026-10-19T07:00:00Z"), 15)).toEqual({ from: day("2026-10-19"), until: day("2028-01-18"), months: 15 });
+    // 5:00 am in India on 19 Oct is still 18 Oct in UTC: it counts as the 19th.
+    expect(registrationSubscription(new Date("2026-10-18T23:30:00Z"), 15).from).toEqual(day("2026-10-19"));
+  });
+
+  it("ends on a shorter month's last day", () => {
+    expect(addMonths(day("2027-01-31"), 1)).toEqual(day("2027-02-28"));
+    expect(addMonths(day("2027-11-30"), 3)).toEqual(day("2028-02-29")); // a leap year
+    expect(registrationSubscription(new Date("2027-01-31T06:00:00Z"), 1).until).toEqual(day("2027-02-28"));
+    expect(registrationSubscription(new Date("2027-03-01T06:00:00Z"), 1).until).toEqual(day("2027-03-31"));
   });
 });

@@ -6,14 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
-import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
-import { leadIndustryName } from "@/lib/lead-schema";
+import { LEAD_DECISION_LABELS, LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
+import { leadIndustryName, suggestUsername } from "@/lib/lead-schema";
 import { pickUtm } from "@/lib/utm";
 import { requireStaff } from "@/server/authz";
 import { getLead } from "@/server/leads";
+import { openPassword } from "@/server/member-logins";
 import { canWrite } from "@/server/staff-policy";
 import { changeLeadStatusAction } from "../actions";
-import { categoryLabel, formatIst } from "../format";
+import { LeadDecision } from "../decision";
+import { LeadLogin } from "./login";
+import { categoryLabel, formatIst, subscriptionText } from "../format";
 
 export const metadata: Metadata = { title: "Lead" };
 
@@ -24,13 +27,18 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
 
   const utm = lead.utm && typeof lead.utm === "object" ? pickUtm((key) => (lead.utm as Record<string, unknown>)[key]) : null;
   const details: [string, React.ReactNode][] = [
-    ["Phone", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
+    ["Approval", <LeadDecision key="d" lead={lead} canDecide={canWrite(staff)} />],
+    ["Subscription", subscriptionText(lead)],
+    ["WhatsApp number", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],
     ["Father's name", lead.fatherName ?? "Not given"],
     ["Native place", lead.nativePlace ?? "Not given"],
-    ["Address or city", lead.address ?? "Not given"],
-    ["Business category", categoryLabel(lead.businessCategory)],
-    ["Industries", leadIndustryName(lead)],
+    ["Address", lead.address ?? "Not given"],
+    ["City", lead.city ?? "Not given"],
+    ["State", lead.state ?? "Not given"],
+    ["Pincode", lead.pincode ?? "Not given"],
+    ["Category", categoryLabel(lead.businessCategory)],
+    ["Industry", leadIndustryName(lead)],
     // Stored only as http(s) addresses (lib/lead-schema.ts), so they are safe to link; opened in a new tab.
     ["Website", lead.website ? <ExternalLink key="w" href={lead.website} /> : "Not given"],
     ["Instagram", lead.instagram ? <ExternalLink key="i" href={`https://www.instagram.com/${lead.instagram}/`} label={`@${lead.instagram}`} /> : "Not given"],
@@ -63,6 +71,21 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
           </div>
         ))}
       </dl>
+
+      <section aria-labelledby="login-heading" className="flex max-w-xl flex-col gap-3">
+        <h2 id="login-heading" className="text-lg font-semibold">
+          Seller login
+        </h2>
+        <LeadLogin
+          leadId={lead.id}
+          firstName={lead.firstName ?? lead.fullName}
+          approved={lead.decision === "APPROVED"}
+          login={lead.user && { username: lead.user.username, disabledAt: lead.user.disabledAt }}
+          password={canWrite(staff) ? openPassword(lead.user?.issuedPassword) : null}
+          suggestion={suggestUsername(lead)}
+          canCreate={canWrite(staff)}
+        />
+      </section>
 
       {canWrite(staff) ? (
         <section aria-labelledby="status-heading" className="flex max-w-xl flex-col gap-3">
@@ -104,17 +127,21 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
             <p className="font-medium">Lead received · {LEAD_STATUS_LABELS.NEW}</p>
             <p className="text-sm text-muted-foreground">{formatIst(lead.createdAt)} IST · from the website</p>
           </li>
-          {lead.statusChanges.map((change) => (
-            <li key={change.id}>
-              <p className="font-medium">
-                {LEAD_STATUS_LABELS[change.fromStatus]} → {LEAD_STATUS_LABELS[change.toStatus]}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {formatIst(change.createdAt)} IST · by {change.actor.name}
-              </p>
-              {change.note && <p className="mt-1 whitespace-pre-line">{change.note}</p>}
-            </li>
-          ))}
+          {/* Status changes and approval decisions, in the order they happened. */}
+          {[
+            ...lead.statusChanges.map((c) => ({ ...c, what: `${LEAD_STATUS_LABELS[c.fromStatus]} → ${LEAD_STATUS_LABELS[c.toStatus]}` })),
+            ...lead.decisionChanges.map((c) => ({ ...c, note: null, what: `Approval: ${LEAD_DECISION_LABELS[c.fromDecision]} → ${LEAD_DECISION_LABELS[c.toDecision]}` })),
+          ]
+            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+            .map((change) => (
+              <li key={change.id}>
+                <p className="font-medium">{change.what}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatIst(change.createdAt)} IST · by {change.actor.name}
+                </p>
+                {change.note && <p className="mt-1 whitespace-pre-line">{change.note}</p>}
+              </li>
+            ))}
         </ol>
       </section>
     </div>

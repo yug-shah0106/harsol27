@@ -16,7 +16,7 @@ export function SearchForm({ values = {}, industries, action = "/search", compac
           Search products
         </Label>
         <Input id="hero-q" name="q" type="search" placeholder="Search products, e.g. khakhra or SS pipe" defaultValue={values.q} maxLength={100} className="h-12 rounded-full px-5 text-base" />
-        <Button type="submit" size="lg" data-magnet className="rounded-full">
+        <Button type="submit" size="lg" className="rounded-full">
           <Search aria-hidden="true" />
           Search
         </Button>
@@ -56,7 +56,7 @@ export function SearchForm({ values = {}, industries, action = "/search", compac
         <Label htmlFor="city">City</Label>
         <Input id="city" name="city" defaultValue={values.city} maxLength={80} />
       </div>
-      <Button type="submit" data-magnet className="sm:col-span-2 lg:col-span-5 lg:w-fit">
+      <Button type="submit" className="sm:col-span-2 lg:col-span-5 lg:w-fit">
         <Search aria-hidden="true" />
         Search
       </Button>

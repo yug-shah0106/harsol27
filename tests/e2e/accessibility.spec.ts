@@ -51,10 +51,9 @@ test("visitor pages", async ({ browser }) => {
     `/products/${product.slug}`,
     `/sellers/${sellerSlug}`,
     "/sign-in",
-    "/sign-up",
-    "/forgot-password",
-    "/reset-password?token=not-a-real-token",
     "/staff/sign-in",
+    "/staff/forgot-password",
+    "/staff/reset-password?token=not-a-real-token",
     "/this-page-does-not-exist",
   ]);
 });

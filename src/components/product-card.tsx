@@ -20,8 +20,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
   return (
     <Link
       href={`/products/${product.slug}`}
-      data-spotlight
-      className="spotlight group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card no-underline transition-transform duration-300 hover:-translate-y-1 hover:border-primary"
+      className="group flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card no-underline transition-transform duration-300 hover:-translate-y-1 hover:border-primary"
     >
       <div className="aspect-[4/3] overflow-hidden bg-secondary">
         {photo ? (

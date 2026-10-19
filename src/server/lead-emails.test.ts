@@ -4,10 +4,14 @@ import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./
 
 const lead: LeadForEmail = {
   id: "0199b5c0-0000-7000-8000-00000000abcd",
-  fullName: `<script>alert("x")</script> Asha`,
-  fatherName: "Ramesh Patel",
+  fullName: "Asha Ramesh Patel",
+  firstName: `<script>alert("x")</script> Asha`,
+  fatherName: "Ramesh",
   nativePlace: "Harsol",
-  address: "Talod, Sabarkantha",
+  address: "12 Station Road",
+  city: "Talod",
+  state: "Gujarat",
+  pincode: "383215",
   phone: "+919876543210",
   email: "asha@example.com",
   businessCategory: "TRADING",
@@ -23,13 +27,14 @@ describe("lead emails", () => {
     expect(email.html).not.toContain("<script>");
     expect(email.html).toContain("&lt;script&gt;");
     expect(email.html).toContain("Food &amp; Snacks");
-    expect(email.text).toContain(`Hello ${lead.fullName},`);
+    expect(email.text).toContain(`Hello ${lead.firstName},`); // by first name
+    expect(email.text).toContain("WhatsApp number: +919876543210");
     expect(email.to).toBe("asha@example.com");
   });
 
-  it("tells the team the father's name, native place and address too", () => {
+  it("tells the team the whole name, father's name, native place and address too", () => {
     const text = leadTeamAlertEmail(lead, ["team@example.com"], "https://x.test").text;
-    for (const line of ["Father's name: Ramesh Patel", "Native place: Harsol", "Address or city: Talod, Sabarkantha"]) expect(text).toContain(line);
+    for (const line of ["Name: Asha Ramesh Patel", "Father's name: Ramesh", "Native place: Harsol", "Address: 12 Station Road", "City: Talod", "State: Gujarat", "Pincode: 383215", "Category: Trading"]) expect(text).toContain(line);
   });
 
   it("tells the team whether a payment screenshot came with it", () => {

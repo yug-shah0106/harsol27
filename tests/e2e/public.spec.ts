@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { addPaymentScreenshot, choose, expectAccessible, fillLeadForm, sendClientIp, unique, watchCsp } from "./helpers";
+import { addPaymentScreenshot, choose, fillAddress, expectAccessible, fillLeadForm, sendClientIp, unique, watchCsp } from "./helpers";
 import { withDb } from "./member";
 
 test.beforeEach(async ({ context }) => {
@@ -14,7 +14,7 @@ test("home page: real HTML hero, seeded industries, how it works, call to action
   await expect(page.getByRole("listitem").filter({ hasText: "Food Products" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
   await page.getByRole("link", { name: "Get started" }).first().click();
-  await expect(page).toHaveURL(/\/Pre-Registration$/);
+  await expect(page).toHaveURL(/\/Seller-Registration$/);
   expect(csp).toEqual([]);
 });
 
@@ -27,7 +27,7 @@ test("the first Tab press reaches the skip link, which jumps to the main content
   await expect(page).toHaveURL(/#main$/);
 });
 
-for (const path of ["/", "/about", "/terms", "/privacy", "/Pre-Registration"]) {
+for (const path of ["/", "/about", "/terms", "/privacy", "/Seller-Registration"]) {
   test(`${path} has no detectable WCAG A/AA violations`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);
@@ -35,27 +35,30 @@ for (const path of ["/", "/about", "/terms", "/privacy", "/Pre-Registration"]) {
 }
 
 test("lead form: client-side errors are announced with text and focus the first problem", async ({ page }) => {
-  await page.goto("/Pre-Registration");
+  await page.goto("/Seller-Registration");
   await page.getByRole("button", { name: "Submit" }).click();
-  await expect(page.getByLabel("Full name")).toBeFocused();
-  await expect(page.getByText("Enter your full name.")).toBeVisible();
-  await expect(page.getByText("Choose an industry.")).toBeVisible();
-  await expect(page.getByLabel("Full name")).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByLabel("First name")).toBeFocused();
+  for (const message of ["Enter your first name.", "Enter your last name.", "Enter your city.", "Choose your state.", "Enter your pincode.", "Choose a category.", "Choose an industry."]) {
+    await expect(page.getByText(message)).toBeVisible();
+  }
+  await expect(page.getByLabel("First name")).toHaveAttribute("aria-invalid", "true");
   await expectAccessible(page); // error state must be accessible too
 
-  await page.getByLabel("Phone number").fill("12345");
+  await page.getByLabel("WhatsApp number").fill("12345");
+  await page.getByLabel("Pincode").fill("38001");
   await page.getByRole("button", { name: "Submit" }).click();
-  await expect(page.getByText("Enter a valid phone number")).toBeVisible();
+  await expect(page.getByText("Enter a valid WhatsApp number")).toBeVisible();
+  await expect(page.getByText("Enter a 6-digit pincode, like 380001.")).toBeVisible();
 });
 
 test("lead form: a valid submission shows a confirmation", async ({ page }) => {
   const csp = watchCsp(page);
-  await page.goto("/Pre-Registration");
+  await page.goto("/Seller-Registration");
   await fillLeadForm(page, {
     name: "Public Journey",
     phone: "98250 12345",
     email: `public.${unique()}@example.test`,
-    category: "Manufacturing",
+    category: "Manufacturers",
     industry: "Food Products",
   });
   await page.getByRole("button", { name: "Submit" }).click();
@@ -65,7 +68,7 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
 
 test("public pages tell search engines and link previews what they are", async ({ page }) => {
   // [page, its canonical address]; /coming-soon is served at "/" before launch.
-  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Pre-Registration", "/Pre-Registration"], ["/about", "/about"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
+  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Seller-Registration", "/Seller-Registration"], ["/about", "/about"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
     await page.goto(path);
     const meta = (name: string) => page.locator(`meta[name="${name}"], meta[property="${name}"]`).getAttribute("content");
     const title = await page.title();
@@ -74,7 +77,7 @@ test("public pages tell search engines and link previews what they are", async (
     const description = (await meta("description"))!;
     expect(description.length, `${path} description: ${description}`).toBeGreaterThanOrEqual(100);
     expect(description.length, `${path} description: ${description}`).toBeLessThanOrEqual(160);
-    expect(await meta("keywords"), path).toContain("B2B marketplace Gujarat");
+    expect(await meta("keywords"), path).toContain("B2B marketplace Harsol");
     expect(await page.locator('link[rel="canonical"]').getAttribute("href"), path).toMatch(new RegExp(`^https?://[^/]+${canonical === "/" ? "/?" : canonical}$`));
     expect(await meta("og:title"), path).toContain("Harsol27");
     expect(await meta("og:description"), path).toBe(description);
@@ -84,16 +87,16 @@ test("public pages tell search engines and link previews what they are", async (
   expect(image.headers()["content-type"]).toBe("image/png");
 });
 
-test("the Pre-registration form is at /Pre-Registration, and its old and lowercase addresses lead there", async ({ page }) => {
-  for (const path of ["/get-started", "/pre-registration", "/Pre-Registration"]) {
+test("the Seller registration form is at /Seller-Registration, and its old and lowercase addresses lead there", async ({ page }) => {
+  for (const path of ["/get-started", "/Pre-Registration", "/pre-registration", "/seller-registration", "/Seller-Registration"]) {
     await page.goto(path);
-    await expect(page).toHaveURL(/\/Pre-Registration$/);
+    await expect(page).toHaveURL(/\/Seller-Registration$/);
     await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
   }
 });
 
 test("lead form: the fee is paid by the client's UPI QR code, UPI ID or bank account, and the QR code can be saved for a UPI app", async ({ page }) => {
-  await page.goto("/Pre-Registration");
+  await page.goto("/Seller-Registration");
   const qr = page.getByRole("img", { name: "UPI QR code for paying Shree Harsol Sattavis Jain Yuvak Trust" });
   await expect.poll(() => qr.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   for (const detail of ["9152000352m@pnb", "09952191031725", "PUNB0099510"]) await expect(page.getByText(detail, { exact: true })).toBeVisible();
@@ -104,27 +107,25 @@ test("lead form: the fee is paid by the client's UPI QR code, UPI ID or bank acc
 
 test("lead form: a native place and an industry that aren't listed are chosen as Other and typed in", async ({ page }) => {
   const email = `other.${unique()}@example.test`;
-  await page.goto("/Pre-Registration");
-  await page.getByLabel("Full name").fill("Kiran Shah");
-  await page.getByLabel("Father's name").fill("Mahesh Shah");
+  await page.goto("/Seller-Registration");
+  await page.getByLabel("First name").fill("Kiran");
+  await page.getByLabel("Father's name").fill("Mahesh");
+  await page.getByLabel("Last name").fill("Shah");
   await choose(page, "Native place", "Other (not listed)");
   await page.getByLabel("Your native place").fill("Talod");
-  await page.getByLabel("Address or city").fill("Himatnagar");
-  await page.getByLabel("Phone number").fill("98250 54321");
+  await fillAddress(page, "Himatnagar");
+  await page.getByLabel("WhatsApp number").fill("98250 54321");
   await page.getByLabel("Email").fill(email);
-  await choose(page, "Business category", "Services");
+  await choose(page, "Category", "Services");
 
-  // Several industries: a listed one, and "Other" for what isn't listed.
-  const industries = page.getByRole("combobox", { name: "Industries", exact: true });
-  await industries.click();
-  const search = page.getByRole("searchbox", { name: "Search industries" });
-  await search.fill("photo");
-  await page.keyboard.press("Enter"); // Photography (the list stays open)
-  await search.fill("solar");
-  await expect(page.getByRole("listbox", { name: "Industries" }).getByRole("option")).toHaveText(["Other (not listed)"]); // nothing matches, Other stays
-  await page.keyboard.press("Enter");
-  await page.keyboard.press("Escape");
-  await expect(industries).toHaveText("Photography, Other (not listed)");
+  // One industry: searching finds nothing for it, so "Other" (always listed) and their own words.
+  const industry = page.getByRole("combobox", { name: "Industry", exact: true });
+  await industry.click();
+  await page.getByRole("searchbox", { name: "Search industries" }).fill("solar");
+  await expect(page.getByRole("listbox", { name: "Industry" }).getByRole("option")).toHaveText(["Other (not listed)"]); // nothing matches, Other stays
+  await page.keyboard.press("Enter"); // chooses it and closes the list
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(industry).toHaveText("Other (not listed)");
   const own = page.getByLabel("Your industry");
   await addPaymentScreenshot(page);
 
@@ -140,10 +141,10 @@ test("lead form: a native place and an industry that aren't listed are chosen as
 
   const { rows } = await withDb((db) =>
     db.query(
-      `SELECT l."nativePlace", l."industryOther", l."instagram", array_agg(i."name") AS industries FROM "Lead" l
-       JOIN "_IndustryToLead" li ON li."B" = l."id" JOIN "Industry" i ON i."id" = li."A" WHERE l."email" = $1 GROUP BY l."id"`,
+      `SELECT l."nativePlace", l."industryOther", l."instagram", (SELECT count(*)::int FROM "_IndustryToLead" li WHERE li."B" = l."id") AS industries
+       FROM "Lead" l WHERE l."email" = $1`,
       [email],
     ),
   );
-  expect(rows).toEqual([{ nativePlace: "Talod", industryOther: "Solar panels", instagram: "kiran.solar", industries: ["Photography"] }]);
+  expect(rows).toEqual([{ nativePlace: "Talod", industryOther: "Solar panels", instagram: "kiran.solar", industries: 0 }]);
 });

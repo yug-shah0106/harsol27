@@ -44,16 +44,21 @@ test("the marquee drifts on its own", async ({ browser }) => {
   await expect.poll(x).not.toBe(start); // (it wraps round, so it can jump either way)
 });
 
-test("the header button leans toward a nearby mouse, and comes back", async ({ browser }) => {
+test("nothing follows the mouse: buttons and cards stay put under the pointer", async ({ browser }) => {
   const page = await newPage(browser);
-  await page.goto("/");
+  await page.goto("/industries");
   await page.waitForFunction(() => document.documentElement.classList.contains("lenis"));
-  const button = page.locator("header [data-magnet]");
-  const box = (await button.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 20);
-  await expect.poll(() => button.evaluate((el) => el.style.transform)).toMatch(/translate\((?!0px, 0px)/);
-  await page.mouse.move(10, 600);
-  await expect.poll(() => button.evaluate((el) => el.style.transform)).toBe("translate(0px, 0px)");
+  const button = page.getByRole("banner").getByRole("link", { name: "Get started" });
+  const card = page.getByRole("link", { name: /Food Products/ });
+  for (const target of [button, card]) {
+    const box = (await target.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2 + 30, box.y + box.height / 2 + 10);
+    await page.mouse.move(box.x + 5, box.y + 5);
+  }
+  await page.waitForTimeout(600); // longer than any easing would take
+  for (const target of [button, card]) {
+    expect(await target.evaluate((el) => [el.style.transform, el.style.getPropertyValue("--spot-x")])).toEqual(["", ""]);
+  }
 });
 
 test("coming soon: the line between the steps grows bit by bit as you scroll", async ({ browser }) => {

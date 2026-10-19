@@ -8,8 +8,8 @@ import { MobileForm } from "../../sign-in/forms";
 export const metadata: Metadata = { title: "Your mobile number", robots: { index: false } };
 
 /**
- * Asks for the mobile number sellers get with inquiries. Every Google sign-in passes through here
- * (with ?next=) and moves straight on when there is one; ?change=1 (from the account page) edits it.
+ * Asks for the mobile number sellers get with inquiries, of an account that has none (with ?next=, moving
+ * straight on when there is one); ?change=1 (from the account page) edits it.
  */
 export default async function MobilePage({ searchParams }: PageProps<"/account/mobile">) {
   const params = await searchParams;

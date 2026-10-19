@@ -44,8 +44,10 @@ Free, health check path `/api/health`, Docker command empty.
 - `BETTER_AUTH_URL`: the public address, no trailing slash: `https://<name>.onrender.com`, or the custom domain once added.
 - `BETTER_AUTH_SECRET`: `openssl rand -base64 32`. Changing it later signs everyone out.
 - `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the Cloudflare R2 bucket (see `deploy/.env.example`).
-- `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_ALERT_EMAILS`. Until a domain is verified in Resend, use
-  `EMAIL_FROM=Harsol27 <onboarding@resend.dev>`; Resend then delivers only to the Resend account's own address.
+- `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_ALERT_EMAILS=harsol27helpdesk@gmail.com` (every Seller registration
+  is emailed there, and a confirmation to the person who registered). Until a domain is verified in Resend, use
+  `EMAIL_FROM=Harsol27 <onboarding@resend.dev>`; Resend then delivers only to the Resend account's own address,
+  so neither the helpdesk nor registrants get anything.
 - `CLIENT_IP_HEADER=cf-connecting-ip`. Render sits behind Cloudflare and appends to `X-Forwarded-For`
   without clearing it, so the right-most entry is a proxy, not the visitor. Check it once after the
   first deploy: sign-in rate limits must not lock out everyone at once.
@@ -53,7 +55,6 @@ Free, health check path `/api/health`, Docker command empty.
 - `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` (at least 12 characters): the first admin, created at
   the next start. Once the log says `Created ADMIN account`, delete `ADMIN_PASSWORD`; the account and
   its password stay. Staff sign in at `/staff/sign-in`.
-- Optional: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (redirect URI `<BETTER_AUTH_URL>/api/auth/callback/google`).
 
 Do not set `NODE_OPTIONS`: the start script gives it to the worker only, and the website does not start with it.
 

@@ -9,20 +9,20 @@ import { listActiveIndustries } from "@/server/industries";
 import { indiaToday } from "@/server/visibility";
 import { LeadForm } from "./lead-form";
 
-// Before launch this form is the one thing open on the site, called Pre-registration (src/lib/coming-soon.ts).
+// Before launch this form is the one thing open on the site, called Seller registration (src/lib/coming-soon.ts).
 export function generateMetadata(): Metadata {
-  const keywords = ["register business Gujarat", "list my business", "sell to businesses in Gujarat", "Harsol27 seller", ...NATIVE_PLACES];
+  const keywords = ["register business Harsol", "list my business", "sell to businesses in Harsol", "Harsol27 seller", ...NATIVE_PLACES];
   return isComingSoon()
     ? pageMetadata({
-        title: "Pre-register your business",
-        description: "Pre-register your business on Harsol27, the B2B marketplace by the Harsol Sattavis (27) Jain community for Gujarat's manufacturers, wholesalers and traders.",
-        path: "/Pre-Registration",
-        keywords: ["Harsol27 pre-registration", ...keywords],
+        title: "Seller registration",
+        description: "Register as a seller on Harsol27, the B2B marketplace by the Harsol Sattavis (27) Jain community for Harsol's manufacturers, wholesalers and traders.",
+        path: "/Seller-Registration",
+        keywords: ["Harsol27 seller registration", ...keywords],
       })
     : pageMetadata({
         title: "Get started as a seller",
-        description: "List your business on Harsol27, the B2B marketplace by the Harsol Sattavis (27) Jain community for Gujarat's manufacturers, wholesalers and traders.",
-        path: "/Pre-Registration",
+        description: "List your business on Harsol27, the B2B marketplace by the Harsol Sattavis (27) Jain community for Harsol's manufacturers, wholesalers and traders.",
+        path: "/Seller-Registration",
         keywords,
       });
 }
@@ -45,11 +45,11 @@ export default async function GetStartedPage() {
       <div className="flex flex-col gap-2">
         {closed && (
           <p lang="gu" className="w-fit rounded-full bg-card/85 px-3 py-0.5 font-semibold text-primary">
-            પ્રી-રજીસ્ટ્રેશન શરૂ થઈ ગયું છે
+            સેલર રજીસ્ટ્રેશન શરૂ થઈ ગયું છે
           </p>
         )}
         <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl animate-in slide-in-from-bottom-2 duration-500 ease-out">
-          {closed ? "Pre-registration is open" : "Get started with Harsol27"}
+          {closed ? "Seller registration is open" : "Get started with Harsol27"}
         </h1>
         <p className="text-muted-foreground">
           {closed

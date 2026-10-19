@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { hash } from "@node-rs/argon2";
 import { Client } from "pg";
 
 /** A random, valid Indian mobile number: "98xxxxxxxx" (local form) and its E.164 form. */
@@ -18,30 +19,46 @@ export async function withDb<T>(fn: (client: Client) => Promise<T>): Promise<T> 
 }
 
 export const MEMBER_PASSWORD = "kite-season-2026";
-/** The email the test account for a mobile number signs up with. */
+/** The email and username of the test account for a mobile number. */
 export const emailFor = (mobile: { local: string }) => `member.${mobile.local}@example.test`;
+export const usernameFor = (mobile: { local: string }) => `m${mobile.local}`;
+
+let passwordHash: Promise<string> | undefined; // argon2id is slow by design: hash the shared test password once
 
 /**
- * Creates a buyer/seller account through the real "Create an account" form, starting from the sign-in
- * page (where a protected page sends you), and lands wherever sign-in was meant to go. The mobile
- * number identifies the member in the database helpers below.
+ * Makes a buyer/seller login straight in the database, as the team would from an approved registration
+ * (admin-leads.spec.ts covers that page): a username, a "credential" account with MEMBER_PASSWORD, and
+ * the mobile number that identifies the member in the database helpers below.
  */
-export async function completeSignIn(page: Page, mobile: { local: string; e164: string }) {
-  await page.getByRole("link", { name: "Create an account" }).click();
-  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible({ timeout: 20_000 });
-  await page.getByLabel("Your name").fill("Meera Desai");
-  await page.getByLabel("Email").fill(emailFor(mobile));
-  await page.getByLabel("Mobile number").fill(mobile.local);
-  await page.getByLabel("Password", { exact: true }).fill(MEMBER_PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
-  await expect(page).not.toHaveURL(/\/(sign-in|sign-up)/, { timeout: 20_000 }); // signed in and sent on (password hashing is slow by design)
+export async function makeMemberLogin(mobile: { local: string; e164: string }, name = "Meera Desai"): Promise<void> {
+  passwordHash ??= hash(MEMBER_PASSWORD, { memoryCost: 19456, timeCost: 2, parallelism: 1 });
+  const digest = await passwordHash;
+  await withDb(async (db) => {
+    const { rows } = await db.query(
+      `INSERT INTO "User" ("id","name","email","username","mobile","role","updatedAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, 'MEMBER', now()) RETURNING "id"`,
+      [name, emailFor(mobile), usernameFor(mobile), mobile.e164],
+    );
+    const id = (rows[0] as { id: string }).id;
+    await db.query(`INSERT INTO "Account" ("id","accountId","providerId","userId","password","updatedAt") VALUES (gen_random_uuid(), $1::text, 'credential', $1::uuid, $2, now())`, [id, digest]);
+  });
 }
 
-/** Signs an existing member in with email and password (the page must be on /sign-in). */
-export async function signInMember(page: Page, email: string, password = MEMBER_PASSWORD) {
-  await page.getByLabel("Email").fill(email);
+/**
+ * Makes a login for a new member and signs in with it on the sign-in page (where a protected page sends
+ * you), landing wherever sign-in was meant to go.
+ */
+export async function completeSignIn(page: Page, mobile: { local: string; e164: string }) {
+  await makeMemberLogin(mobile);
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible({ timeout: 20_000 });
+  await signInMember(page, usernameFor(mobile));
+  await expect(page).not.toHaveURL(/\/sign-in/, { timeout: 20_000 }); // signed in and sent on (password hashing is slow by design)
+}
+
+/** Signs an existing member in with username and password (the page must be on /sign-in). */
+export async function signInMember(page: Page, username: string, password = MEMBER_PASSWORD) {
+  await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
 }
 
 export const PDF_FILE = (name: string) => ({ name, mimeType: "application/pdf", buffer: Buffer.from(`%PDF-1.4\n% ${name}\n`) });

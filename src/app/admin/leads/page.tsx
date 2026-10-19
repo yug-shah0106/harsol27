@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BUSINESS_CATEGORIES, leadIndustryName, OTHER_INDUSTRY } from "@/lib/lead-schema";
-import { LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
+import { LEAD_DECISION_LABELS, LEAD_DECISIONS, LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
 import { requireStaff } from "@/server/authz";
+import { canWrite } from "@/server/staff-policy";
 import { listAllIndustries } from "@/server/industries";
-import { leadListParamsSchema, listLeads, type LeadListParams } from "@/server/leads";
-import { categoryLabel, formatIst } from "./format";
+import { leadListParamsSchema, leadsStamp, listLeads, type LeadListParams } from "@/server/leads";
+import { LiveLeads } from "../live-leads";
+import { LeadDecision } from "./decision";
+import { categoryLabel, formatIst, subscriptionEnds } from "./format";
 
 export const metadata: Metadata = { title: "Leads" };
 
@@ -27,17 +30,18 @@ function pageHref(params: LeadListParams, page: number): string {
 }
 
 export default async function LeadsPage({ searchParams }: PageProps<"/admin/leads">) {
-  await requireStaff();
+  const staff = await requireStaff();
   const params = leadListParamsSchema.parse(await searchParams);
-  const [{ items, total, pageCount }, industries] = await Promise.all([listLeads(params), listAllIndustries()]);
-  const filtered = Boolean(params.status || params.industry || params.category || params.q);
+  const [stamp, { items, total, pageCount }, industries] = await Promise.all([leadsStamp(), listLeads(params), listAllIndustries()]);
+  const filtered = Boolean(params.status || params.decision || params.industry || params.category || params.q);
 
   return (
     <div className="flex flex-col gap-6">
+      <LiveLeads stamp={stamp} />
       <h1 className="text-2xl font-bold">Leads</h1>
 
       {/* Plain GET form: filters live in the URL, so a filtered view can be bookmarked or shared. */}
-      <form method="get" className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end" role="search" aria-label="Filter leads">
+      <form method="get" className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 lg:grid-cols-7 lg:items-end" role="search" aria-label="Filter leads">
         <div className="flex flex-col gap-1 lg:col-span-2">
           <Label htmlFor="q">Search name, email or phone</Label>
           <Input id="q" name="q" type="search" defaultValue={params.q ?? ""} maxLength={100} />
@@ -50,6 +54,16 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
             defaultValue={params.status ?? ""}
             className="w-full"
             options={[{ value: "", label: "Any" }, ...LEAD_STATUSES.map((s) => ({ value: s, label: LEAD_STATUS_LABELS[s] }))]}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="decision">Approval</Label>
+          <Dropdown
+            id="decision"
+            name="decision"
+            defaultValue={params.decision ?? ""}
+            className="w-full"
+            options={[{ value: "", label: "Any" }, ...LEAD_DECISIONS.map((d) => ({ value: d, label: LEAD_DECISION_LABELS[d] }))]}
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -87,7 +101,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
             ]}
           />
         </div>
-        <div className="flex gap-2 sm:col-span-2 lg:col-span-6">
+        <div className="flex gap-2 sm:col-span-2 lg:col-span-7">
           <Button type="submit">Apply</Button>
           {filtered && (
             <Button asChild variant="outline">
@@ -111,6 +125,8 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
                 <TableHead scope="col">Industry</TableHead>
                 <TableHead scope="col">Category</TableHead>
                 <TableHead scope="col">Status</TableHead>
+                <TableHead scope="col">Approval</TableHead>
+                <TableHead scope="col">Subscription</TableHead>
                 <TableHead scope="col">Received (IST)</TableHead>
               </TableRow>
             </TableHeader>
@@ -130,6 +146,12 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
                   <TableCell>{categoryLabel(lead.businessCategory)}</TableCell>
                   <TableCell>
                     <Badge variant={lead.status === "NEW" ? "default" : "secondary"}>{LEAD_STATUS_LABELS[lead.status]}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <LeadDecision lead={lead} canDecide={canWrite(staff)} />
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {subscriptionEnds(lead) ? `Till ${subscriptionEnds(lead)}` : <span className="text-muted-foreground">None</span>}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{formatIst(lead.createdAt)}</TableCell>
                 </TableRow>

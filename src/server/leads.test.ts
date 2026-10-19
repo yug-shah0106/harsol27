@@ -3,7 +3,9 @@ import { HONEYPOT_FIELD } from "@/lib/lead-schema";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
-import { changeLeadStatus, createPaymentUpload, LEAD_IP_RULE, listLeads, leadListParamsSchema, submitLead } from "./leads";
+import { changeLeadStatus, countPerIndiaDay, createPaymentUpload, decideLead, indiaDay, LEAD_IP_RULE, leadListParamsSchema, listLeads, submitLead } from "./leads";
+import { createLeadLogin, generatePassword } from "./member-logins";
+import { verifyPassword } from "./password";
 import type { StaffUser } from "./staff-policy";
 
 const run = crypto.randomUUID().slice(0, 8);
@@ -28,10 +30,14 @@ async function paymentUpload(bytes: Uint8Array = PNG, contentType = "image/png")
 async function form(overrides: Record<string, string | string[]> = {}) {
   const fd = new FormData();
   const values = {
-    fullName: "Asha Patel",
-    fatherName: "Ramesh Patel",
+    firstName: "Asha",
+    fatherName: "Ramesh",
+    lastName: "Patel",
     nativePlace: "Harsol",
-    address: "Talod, Sabarkantha",
+    address: "12 Station Road",
+    city: "Talod",
+    state: "Gujarat",
+    pincode: "383 215",
     phone: "98765 43210",
     email: `Asha.${run}@Example.com`,
     businessCategory: "MANUFACTURING",
@@ -71,6 +77,10 @@ describe("submitLead", () => {
     await submitLead(await form(), headersFor("203.0.113.7"));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
     expect(lead).toMatchObject({ phone: "+919876543210", status: "NEW", sourceIp: "203.0.113.7", userAgent: "vitest" });
+    // The name in its parts, and whole (as staff see it); the address in its parts.
+    expect(lead).toMatchObject({ firstName: "Asha", fatherName: "Ramesh", lastName: "Patel", fullName: "Asha Ramesh Patel" });
+    expect(lead).toMatchObject({ address: "12 Station Road", city: "Talod", state: "Gujarat", pincode: "383215" });
+    expect(lead.tenureMonths).toBe(15); // the subscription the fee bought (lib/fee.ts), from today
 
     const jobs = await db().$queryRaw<{ name: string }[]>`
       SELECT name FROM pgboss.job WHERE data->>'leadId' = ${lead.id} ORDER BY name`;
@@ -97,14 +107,16 @@ describe("submitLead", () => {
     await expectFieldError(submitLead(await form({ email: `other2.${run}@example.com`, industryIds: ["other"] }), headersFor(uniqueIp())), "industryOther");
   });
 
-  it("saves every chosen industry, plus the optional links", async () => {
-    const email = `multi.${run}@example.com`;
+  it("saves the one chosen industry, plus the optional links, and refuses a second industry", async () => {
+    const email = `one.${run}@example.com`;
+    await submitLead(await form({ email, industryIds: [industryId], website: "shah.example", instagram: "@shah", mapsLink: "" }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email }, include: { industries: { select: { id: true } } } });
+    expect(lead.industries.map((i) => i.id)).toEqual([industryId]);
+    expect(lead).toMatchObject({ website: "https://shah.example/", instagram: "shah", mapsLink: null, industryOther: null });
+
     // Its own second industry: CI's database holds only the one the tests create.
     const second = (await db().industry.create({ data: { name: `Second ${run}`, nameKey: `second ${run}`, slug: `second-${run}`, sortOrder: 999 } })).id;
-    await submitLead(await form({ email, industryIds: [industryId, second], website: "shah.example", instagram: "@shah", mapsLink: "" }), headersFor(uniqueIp()));
-    const lead = await db().lead.findFirstOrThrow({ where: { email }, include: { industries: { select: { id: true } } } });
-    expect(lead.industries.map((i) => i.id).sort()).toEqual([industryId, second].sort());
-    expect(lead).toMatchObject({ website: "https://shah.example/", instagram: "shah", mapsLink: null, industryOther: null });
+    await expectFieldError(submitLead(await form({ email: `two.${run}@example.com`, industryIds: [industryId, second] }), headersFor(uniqueIp())), "industryIds");
   });
 
   it("needs a real, unused payment screenshot", async () => {
@@ -130,6 +142,98 @@ describe("submitLead", () => {
     const ip = uniqueIp();
     for (let i = 0; i < LEAD_IP_RULE.max; i++) await submitLead(await form({ email: `rl${i}.${run}@example.com` }), headersFor(ip));
     await expect(submitLead(await form({ email: `rl-over.${run}@example.com` }), headersFor(ip))).rejects.toThrow(/Too many submissions/);
+  });
+});
+
+describe("the overview's days", () => {
+  it("counts registrations per India-time day, ending today", () => {
+    const now = new Date("2026-10-19T10:00:00Z"); // 3:30 pm in India
+    expect(indiaDay(new Date("2026-10-18T18:29:00Z"))).toBe("2026-10-18"); // 11:59 pm in India
+    expect(indiaDay(new Date("2026-10-18T18:30:00Z"))).toBe("2026-10-19"); // midnight in India
+    const dates = ["2026-10-18T18:30:00Z", "2026-10-19T09:00:00Z", "2026-10-18T10:00:00Z", "2026-10-01T10:00:00Z"].map((d) => new Date(d));
+    expect(countPerIndiaDay(dates, now, 3)).toEqual([
+      { day: "2026-10-17", count: 0 },
+      { day: "2026-10-18", count: 1 },
+      { day: "2026-10-19", count: 2 }, // the one older than three days is left out
+    ]);
+  });
+});
+
+describe("decideLead", () => {
+  it("approves a lead, lets the decision be changed later (back to pending too), and records each change", async () => {
+    const email = `decide.${run}@example.com`;
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email } });
+    expect(lead.decision).toBe("PENDING");
+
+    await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
+    await decideLead({ leadId: lead.id, decision: "PENDING" }, admin);
+    await decideLead({ leadId: lead.id, decision: "REJECTED" }, admin);
+
+    const history = await db().leadDecisionChange.findMany({ where: { leadId: lead.id }, orderBy: { createdAt: "asc" } });
+    expect(history.map((h) => [h.fromDecision, h.toDecision, h.actorId])).toEqual([
+      ["PENDING", "APPROVED", admin.id],
+      ["APPROVED", "PENDING", admin.id],
+      ["PENDING", "REJECTED", admin.id],
+    ]);
+    expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).decision).toBe("REJECTED");
+    expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).status).toBe("NEW"); // the contact status is separate
+
+    await expect(decideLead({ leadId: lead.id, decision: "REJECTED" }, admin)).rejects.toThrow(/already rejected/);
+    await expectFieldError(decideLead({ leadId: lead.id, decision: "MAYBE" }, admin), "decision");
+    await expect(decideLead({ leadId: crypto.randomUUID(), decision: "APPROVED" }, admin)).rejects.toThrow(/no longer exists/);
+  });
+});
+
+describe("member logins", () => {
+  it("are made by an admin for an approved registration, once, with a unique username and a password shown only then", async () => {
+    const email = `login.${run}@example.com`;
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email } });
+    const username = `asha.${run}`;
+
+    await expect(createLeadLogin({ leadId: lead.id, username }, admin)).rejects.toThrow(/once the registration is approved/);
+    await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
+    await expectFieldError(createLeadLogin({ leadId: lead.id, username: "A b" }, admin), "username");
+
+    const login = await createLeadLogin({ leadId: lead.id, username: username.toUpperCase() }, admin); // stored lowercase
+    expect(login.username).toBe(username);
+    expect(login.password).toMatch(/^[a-zA-Z2-9]{12}$/);
+    const user = await db().user.findUniqueOrThrow({ where: { username }, include: { accounts: true } });
+    expect(user).toMatchObject({ role: "MEMBER", email, name: "Asha Ramesh Patel", mobile: "+919876543210", disabledAt: null });
+    expect(await verifyPassword({ hash: user.accounts[0]!.password!, password: login.password })).toBe(true); // only its hash is kept
+    expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).userId).toBe(user.id);
+    expect(await db().auditLog.count({ where: { action: "MEMBER_LOGIN_CREATED", entityId: lead.id } })).toBe(1);
+
+    await expect(createLeadLogin({ leadId: lead.id, username: `other.${run}` }, admin)).rejects.toThrow(/already has a login/);
+
+    // A second registration can't take the same username.
+    const second = `login2.${run}@example.com`;
+    await submitLead(await form({ email: second }), headersFor(uniqueIp()));
+    const other = await db().lead.findFirstOrThrow({ where: { email: second } });
+    await decideLead({ leadId: other.id, decision: "APPROVED" }, admin);
+    await expectFieldError(createLeadLogin({ leadId: other.id, username }, admin), "username");
+  });
+
+  it("works only while the registration is approved: rejecting switches it off and signs it out, approving turns it back on", async () => {
+    const email = `switch.${run}@example.com`;
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email } });
+    await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
+    await createLeadLogin({ leadId: lead.id, username: `switch.${run}` }, admin);
+    const { userId } = await db().lead.findUniqueOrThrow({ where: { id: lead.id }, select: { userId: true } });
+    await db().session.create({ data: { userId: userId!, token: `t-${run}`, expiresAt: new Date(Date.now() + 3_600_000) } });
+
+    await decideLead({ leadId: lead.id, decision: "REJECTED" }, admin);
+    expect((await db().user.findUniqueOrThrow({ where: { id: userId! } })).disabledAt).not.toBeNull();
+    expect(await db().session.count({ where: { userId: userId! } })).toBe(0);
+
+    await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
+    expect((await db().user.findUniqueOrThrow({ where: { id: userId! } })).disabledAt).toBeNull();
+  });
+
+  it("generates passwords without look-alike characters", () => {
+    for (let i = 0; i < 50; i++) expect(generatePassword()).toMatch(/^[a-hjkmnp-zA-HJ-NP-Z2-9]{12}$/);
   });
 });
 

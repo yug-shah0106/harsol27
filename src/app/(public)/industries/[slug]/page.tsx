@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: PageProps<"/industries/[slug]
   if (!industry) return {};
   const { name } = industry;
   return pageMetadata({
-    title: `${name} suppliers in Gujarat`,
-    description: `Find approved ${name} manufacturers, wholesalers and traders from Gujarat on Harsol27. Send an enquiry and talk to the seller directly.`,
+    title: `${name} suppliers in Harsol`,
+    description: `Find approved ${name} manufacturers, wholesalers and traders from Harsol on Harsol27. Send an enquiry and talk to the seller directly.`,
     path: `/industries/${industry.slug}`,
-    keywords: [`${name} suppliers Gujarat`, `${name} manufacturers Gujarat`, `${name} wholesalers Gujarat`, name],
+    keywords: [`${name} suppliers Harsol`, `${name} manufacturers Harsol`, `${name} wholesalers Harsol`, name],
   });
 }
 

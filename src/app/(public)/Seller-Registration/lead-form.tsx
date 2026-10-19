@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
 import { PAYMENT_ACCOUNT, PAYMENT_QR_DOWNLOAD, PAYMENT_QR_SRC, longDate, rupees, type FeeToday } from "@/lib/fee";
 import { DOCUMENT_TYPES } from "@/lib/file-type";
-import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, MAX_LEAD_INDUSTRIES, NATIVE_PLACES, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "@/lib/lead-schema";
+import { INDIAN_STATES } from "@/lib/indian-states";
+import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, NATIVE_PLACES, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "@/lib/lead-schema";
 import { DOCUMENT_MAX_BYTES } from "@/lib/seller-schema";
 import { UTM_STORAGE_KEY } from "@/lib/utm";
 import { createPaymentUploadAction, submitLeadAction } from "./actions";
@@ -18,12 +19,12 @@ import { createPaymentUploadAction, submitLeadAction } from "./actions";
 type Industry = { id: string; name: string };
 type UploadState = { status: "idle" } | { status: "uploading" } | { status: "done"; key: string; fileName: string } | { status: "error"; message: string };
 
-const FIELD_ORDER = ["fullName", "fatherName", "phone", "email", "nativePlace", "nativePlaceOther", "address", "businessCategory", "industryIds", "industryOther", "website", "instagram", "mapsLink", "paymentProof"];
+const FIELD_ORDER = ["firstName", "fatherName", "lastName", "phone", "email", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "businessCategory", "industryIds", "industryOther", "website", "instagram", "mapsLink", "paymentProof"];
 
 export function LeadForm({ industries, fee }: { industries: Industry[]; fee: FeeToday }) {
   const [state, formAction, pending] = useActionState(submitLeadAction, null);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
-  const [chosenIndustries, setChosenIndustries] = useState<string[]>([]);
+  const [industry, setIndustry] = useState("");
   const [nativePlace, setNativePlace] = useState("");
   const [proof, setProof] = useState<UploadState>({ status: "idle" });
   const formRef = useRef<HTMLFormElement>(null);
@@ -104,20 +105,25 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
       {state && !state.ok && <FormAlert kind="error">{state.error}</FormAlert>}
 
       <FieldGroup>
-        <Field data-invalid={!!errors.fullName}>
-          <FieldLabel htmlFor="fullName">Full name</FieldLabel>
-          <Input id="fullName" name="fullName" autoComplete="name" required maxLength={100} aria-invalid={!!errors.fullName} aria-describedby={describe("fullName")} onChange={clear("fullName")} />
-          <FieldMessage id="fullName-error" message={errors.fullName} />
-        </Field>
-
-        <Field data-invalid={!!errors.fatherName}>
-          <FieldLabel htmlFor="fatherName">Father&apos;s name</FieldLabel>
-          <Input id="fatherName" name="fatherName" required maxLength={100} aria-invalid={!!errors.fatherName} aria-describedby={describe("fatherName")} onChange={clear("fatherName")} />
-          <FieldMessage id="fatherName-error" message={errors.fatherName} />
-        </Field>
+        {/* The name in its three parts, side by side from 640px. */}
+        <div className="grid gap-6 sm:grid-cols-3 sm:gap-4">
+          {(
+            [
+              ["firstName", "First name", "given-name"],
+              ["fatherName", "Father's name", "additional-name"],
+              ["lastName", "Last name", "family-name"],
+            ] as const
+          ).map(([name, label, autoComplete]) => (
+            <Field key={name} data-invalid={!!errors[name]}>
+              <FieldLabel htmlFor={name}>{label}</FieldLabel>
+              <Input id={name} name={name} autoComplete={autoComplete} required maxLength={50} aria-invalid={!!errors[name]} aria-describedby={describe(name)} onChange={clear(name)} />
+              <FieldMessage id={`${name}-error`} message={errors[name]} />
+            </Field>
+          ))}
+        </div>
 
         <Field data-invalid={!!errors.phone}>
-          <FieldLabel htmlFor="phone">Phone number</FieldLabel>
+          <FieldLabel htmlFor="phone">WhatsApp number</FieldLabel>
           <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="98765 43210" aria-invalid={!!errors.phone} aria-describedby={["phone-hint", describe("phone")].filter(Boolean).join(" ")} onChange={clear("phone")} />
           <p id="phone-hint" className="text-sm text-muted-foreground">
             Indian numbers need no country code. For other countries, start with + and the code.
@@ -169,13 +175,43 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         )}
 
         <Field data-invalid={!!errors.address}>
-          <FieldLabel htmlFor="address">Address or city</FieldLabel>
+          <FieldLabel htmlFor="address">Address</FieldLabel>
           <Input id="address" name="address" autoComplete="street-address" required maxLength={300} aria-invalid={!!errors.address} aria-describedby={describe("address")} onChange={clear("address")} />
           <FieldMessage id="address-error" message={errors.address} />
         </Field>
 
+        {/* City and state side by side from 640px, the pincode under the city. */}
+        <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
+          <Field data-invalid={!!errors.city}>
+            <FieldLabel htmlFor="city">City</FieldLabel>
+            <Input id="city" name="city" autoComplete="address-level2" required maxLength={80} aria-invalid={!!errors.city} aria-describedby={describe("city")} onChange={clear("city")} />
+            <FieldMessage id="city-error" message={errors.city} />
+          </Field>
+          <Field data-invalid={!!errors.state}>
+            <FieldLabel htmlFor="state">State</FieldLabel>
+            <Dropdown
+              id="state"
+              name="state"
+              required
+              placeholder="Choose your state"
+              className="w-full"
+              aria-invalid={!!errors.state}
+              aria-describedby={describe("state")}
+              onValueChange={clear("state")}
+              searchable={{ placeholder: "Search states" }}
+              options={INDIAN_STATES.map((s) => ({ value: s, label: s }))}
+            />
+            <FieldMessage id="state-error" message={errors.state} />
+          </Field>
+          <Field data-invalid={!!errors.pincode}>
+            <FieldLabel htmlFor="pincode">Pincode</FieldLabel>
+            <Input id="pincode" name="pincode" inputMode="numeric" autoComplete="postal-code" required maxLength={7} placeholder="380001" aria-invalid={!!errors.pincode} aria-describedby={describe("pincode")} onChange={clear("pincode")} />
+            <FieldMessage id="pincode-error" message={errors.pincode} />
+          </Field>
+        </div>
+
         <Field data-invalid={!!errors.businessCategory}>
-          <FieldLabel htmlFor="businessCategory">Business category</FieldLabel>
+          <FieldLabel htmlFor="businessCategory">Category</FieldLabel>
           <Dropdown
             id="businessCategory"
             name="businessCategory"
@@ -191,30 +227,26 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         </Field>
 
         <Field data-invalid={!!errors.industryIds}>
-          <FieldLabel htmlFor="industryIds">Industries</FieldLabel>
+          <FieldLabel htmlFor="industryIds">Industry</FieldLabel>
           <Dropdown
             id="industryIds"
             name="industryIds"
-            multiple
             required
-            placeholder="Choose one or more industries"
+            placeholder="Choose your industry"
             className="w-full"
             aria-invalid={!!errors.industryIds}
-            aria-describedby={["industryIds-hint", describe("industryIds")].filter(Boolean).join(" ")}
-            onValuesChange={(values) => {
-              setChosenIndustries(values);
+            aria-describedby={describe("industryIds")}
+            onValueChange={(value) => {
+              setIndustry(value);
               clear("industryIds")();
             }}
             searchable={{ placeholder: "Search industries" }}
             options={[...industries.map((i) => ({ value: i.id, label: i.name })), { value: OTHER_INDUSTRY, label: "Other (not listed)", pinned: true }]}
           />
-          <p id="industryIds-hint" className="text-sm text-muted-foreground">
-            Choose everything your business does (up to {MAX_LEAD_INDUSTRIES}).
-          </p>
           <FieldMessage id="industryIds-error" message={errors.industryIds} />
         </Field>
 
-        {chosenIndustries.includes(OTHER_INDUSTRY) && (
+        {industry === OTHER_INDUSTRY && (
           <Field data-invalid={!!errors.industryOther}>
             <FieldLabel htmlFor="industryOther">Your industry</FieldLabel>
             <Input

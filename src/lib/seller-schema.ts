@@ -1,15 +1,9 @@
 import { z } from "zod";
 import { DOCUMENT_TYPES, type DocumentContentType } from "./file-type";
+import { INDIAN_STATES } from "./indian-states";
 import { phoneSchema } from "./lead-schema";
 
-export const INDIAN_STATES = [
-  "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chandigarh",
-  "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Goa", "Gujarat", "Haryana",
-  "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Lakshadweep",
-  "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry",
-  "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand",
-  "West Bengal",
-] as const;
+export { INDIAN_STATES };
 
 /**
  * The documents a seller uploads when applying (client decisions, 2026-10-08). GST is optional:

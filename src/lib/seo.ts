@@ -6,12 +6,12 @@ import type { Metadata } from "next";
  */
 export const SITE_KEYWORDS = [
   "Harsol27",
-  "B2B marketplace Gujarat",
-  "Gujarat manufacturers",
-  "Gujarat wholesalers",
-  "Gujarat traders",
-  "Gujarat suppliers",
-  "Gujarati business directory",
+  "B2B marketplace Harsol",
+  "Harsol manufacturers",
+  "Harsol wholesalers",
+  "Harsol traders",
+  "Harsol suppliers",
+  "Harsol business directory",
   "B2B directory India",
   "Harsol Sattavis Jain",
   "Harsol 27 Jain community",
@@ -19,8 +19,8 @@ export const SITE_KEYWORDS = [
   "Jain business directory",
   "હરસોલ સત્તાવીસ જૈન સમાજ",
   "હરસોલ સત્તાવીસ જૈન યુવક ટ્રસ્ટ",
-  "ગુજરાતી વેપારી",
-  "જથ્થાબંધ વેપાર ગુજરાત",
+  "હરસોલ વેપારી",
+  "જથ્થાબંધ વેપાર હરસોલ",
 ];
 
 /**
@@ -31,7 +31,7 @@ export const SHARE_IMAGE = {
   url: "/og-image.png",
   width: 1200,
   height: 630,
-  alt: "Harsol27, by the Harsol Sattavis (27) Jain community: the B2B marketplace for Gujarat's manufacturers, wholesalers and traders",
+  alt: "Harsol27, by the Harsol Sattavis (27) Jain community: the B2B marketplace for Harsol's manufacturers, wholesalers and traders",
 };
 
 /** Shortens text to `max` characters or fewer, at a word break, so search results show it whole. */

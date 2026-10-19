@@ -26,10 +26,13 @@ model User {
   phoneNumber         String?   @unique // E.164
   phoneNumberVerified Boolean?
   mobile              String? // E.164, typed at sign-up and not verified (no SMS yet). Sent to sellers with inquiries.
+  username            String?   @unique // lowercase; members sign in with it (given by the team since 2026-10-19)
+  issuedPassword      String? // the password an admin issued, encrypted (server/member-logins.ts) so admins can see it again; sign-in checks only Account.password
   role                Role      @default(MEMBER)
   failedLoginCount    Int       @default(0)
   lockedUntil         DateTime?
-  disabledAt          DateTime? // staff who have left; checked on every request
+  disabledAt          DateTime? // staff who have left, members whose registration was rejected; checked on every request
+  lead                Lead? // the Seller registration this member login was made for
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -40,6 +43,7 @@ model User {
   uploads   Upload[]
 
   leadStatusChanges   LeadStatusChange[]
+  leadDecisionChanges LeadDecisionChange[]
   sellerStatusChanges SellerStatusChange[]
   subscriptionChanges SubscriptionChange[]
   auditLogs           AuditLog[]
@@ -146,12 +150,25 @@ enum LeadStatus {
   CLOSED
 }
 
+/// The team's decision on a Seller registration, after checking its details and payment (separate from the
+/// contact status above). Can be changed later; every change is recorded in LeadDecisionChange.
+enum LeadDecision {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Lead {
   id               String           @id @default(uuid(7)) @db.Uuid
-  fullName         String
+  fullName         String // "First Father Last" since 2026-10-19 (shown everywhere); typed whole before then
+  firstName        String? // the form asks for the name in parts since 2026-10-19; older leads have none
   fatherName       String? // required on the form since 2026-10-11; older leads have none
+  lastName         String?
   nativePlace      String? // the village or town the family is from
-  address          String? // address or city
+  address          String? // street address (before 2026-10-19: "address or city")
+  city             String?
+  state            String? // one of lib/indian-states.ts
+  pincode          String? // six digits
   phone            String // E.164
   email            String // lowercase
   businessCategory BusinessCategory
@@ -160,18 +177,36 @@ model Lead {
   website          String? // optional links to the business (http(s) only)
   instagram        String? // handle, without the @
   mapsLink         String? // a Google Maps link
+  tenureMonths     Int? // months the fee bought (lib/fee.ts when they registered); runs from the registration day
   paymentProofKey  String? // storage key of the payment screenshot (Pre-registration requires one since 2026-10-17)
   paymentProofName String? // its file name as uploaded; display only
   status           LeadStatus       @default(NEW)
   sourceIp         String?          @db.Inet // staff-only; null if the proxy sent no client IP
   userAgent        String? // staff-only
+  userId           String?          @unique @db.Uuid // the member login the team made for it, once approved
+  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
   utm              Json? // campaign tags of the link the visitor arrived by (lib/utm.ts), if any
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
   statusChanges LeadStatusChange[]
+  decision        LeadDecision         @default(PENDING)
+  decisionChanges LeadDecisionChange[]
 
   @@index([status, createdAt(sort: Desc)])
+}
+
+model LeadDecisionChange {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  leadId       String       @db.Uuid
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromDecision LeadDecision
+  toDecision   LeadDecision
+  actorId      String       @db.Uuid
+  actor        User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt    DateTime     @default(now())
+
+  @@index([leadId, createdAt])
 }
 
 model LeadStatusChange {

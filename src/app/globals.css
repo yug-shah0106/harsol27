@@ -366,40 +366,6 @@ html.lenis body {
 
 /* In the components layer, so a page's own classes (e.g. [--scroll-bg:var(--card)]) win over these defaults. */
 @layer components {
-  /*
-   * SpotlightCard (React Bits, rebuilt; components/motion.tsx sets --spot-x/--spot-y as the pointer
-   * moves): a soft kumkum light inside the card and a brighter rim where the pointer is near its edge.
-   * Shows only on hover; without a mouse or JavaScript the card is unchanged.
-   */
-  .spotlight {
-    position: relative;
-    isolation: isolate;
-  }
-  .spotlight::before,
-  .spotlight::after {
-    content: "";
-    position: absolute;
-    border-radius: inherit;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 300ms ease;
-  }
-  .spotlight::before {
-    inset: 0;
-    z-index: -1;
-    background: radial-gradient(240px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%);
-  }
-  .spotlight::after {
-    inset: -1px;
-    padding: 1px;
-    background: radial-gradient(160px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in srgb, var(--primary) 70%, transparent), transparent 70%);
-    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  }
-  .spotlight:hover::before,
-  .spotlight:hover::after {
-    opacity: 1;
-  }
-
   /* How far down the page you are: a hairline under the sticky header, driven by the scroll itself (no script).
      Browsers without scroll-driven animations simply don't show it. */
   .scroll-progress {
