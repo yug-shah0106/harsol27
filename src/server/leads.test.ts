@@ -99,7 +99,8 @@ describe("submitLead", () => {
 
   it("saves every chosen industry, plus the optional links", async () => {
     const email = `multi.${run}@example.com`;
-    const second = (await db().industry.findFirstOrThrow({ where: { isActive: true, id: { not: industryId } } })).id;
+    // Its own second industry: CI's database holds only the one the tests create.
+    const second = (await db().industry.create({ data: { name: `Second ${run}`, nameKey: `second ${run}`, slug: `second-${run}`, sortOrder: 999 } })).id;
     await submitLead(await form({ email, industryIds: [industryId, second], website: "shah.example", instagram: "@shah", mapsLink: "" }), headersFor(uniqueIp()));
     const lead = await db().lead.findFirstOrThrow({ where: { email }, include: { industries: { select: { id: true } } } });
     expect(lead.industries.map((i) => i.id).sort()).toEqual([industryId, second].sort());
