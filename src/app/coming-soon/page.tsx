@@ -1,8 +1,7 @@
-import { BadgeCheck, Handshake, PhoneCall } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Rangoli, Toran } from "@/components/festive";
+import { CallArt, DealArt, Rangoli, SealArt, Toran } from "@/components/festive";
 import { pageMetadata } from "@/lib/seo";
 import { Motion } from "@/components/motion";
 import { CountUp } from "@/components/motion-text";
@@ -27,9 +26,9 @@ const INTRO =
   "Harsol27, the B2B marketplace for Harsol's manufacturers, wholesalers and traders, is almost ready. Soon you can find approved sellers from across Harsol and talk to them directly.";
 // What is coming, in the About page's words (the home page's "Why Harsol27?").
 const PROMISES = [
-  { title: "Approved sellers only", body: "Sellers apply to join, and our team approves each one before they appear on Harsol27.", icon: BadgeCheck, tint: "arch-kumkum" },
-  { title: "Straight to the seller", body: "Send an enquiry and you see the seller's phone number and email, so you can speak to them yourself.", icon: PhoneCall, tint: "arch-marigold" },
-  { title: "Your deal, your terms", body: "No cart and no online payment. Price, quantity, delivery and payment are agreed between you and the seller.", icon: Handshake, tint: "arch-leaf" },
+  { title: "Approved sellers only", body: "Sellers apply to join, and our team approves each one before they appear on Harsol27.", Art: SealArt, tint: "arch-kumkum" },
+  { title: "Straight to the seller", body: "Send an enquiry and you see the seller's phone number and email, so you can speak to them yourself.", Art: CallArt, tint: "arch-marigold" },
+  { title: "Your deal, your terms", body: "No cart and no online payment. Price, quantity, delivery and payment are agreed between you and the seller.", Art: DealArt, tint: "arch-leaf" },
 ];
 const STEPS = [
   { title: "Search", body: "Look up a product or browse by industry to find approved sellers from across Harsol." },
@@ -94,20 +93,19 @@ export default async function ComingSoonPage() {
           </div>
         </section>
 
-        {/* Jharokha arches: the three promises, rising in and leaning toward the pointer. */}
+        {/* Jharokha arches: the three promises, each with an illustration in the arch, rising in. */}
         <section aria-labelledby="why-heading" className="mx-auto max-w-6xl px-4 pb-28 sm:px-6">
           <h2 id="why-heading" data-reveal className="text-center font-display text-5xl tracking-tight text-primary sm:text-6xl">
             Why Harsol27?
           </h2>
           <ul className="mt-14 grid gap-6 sm:grid-cols-3">
-            {PROMISES.map(({ title, body, icon: Icon, tint }) => (
-              <li key={title} data-reveal className={`arch relative flex min-h-[26rem] flex-col items-center justify-end gap-4 px-7 pt-24 pb-9 text-center ${tint}`}>
+            {PROMISES.map(({ title, body, Art, tint }) => (
+              <li key={title} data-reveal className={`arch relative flex flex-col items-center gap-4 p-3 pb-9 text-center ${tint}`}>
                 <span aria-hidden="true" className="arch-inner absolute inset-3" />
-                <span className="relative grid size-14 place-items-center rounded-full bg-card text-primary shadow-md">
-                  <Icon aria-hidden="true" className="size-6" />
-                </span>
-                <h3 className="relative font-display text-3xl leading-tight tracking-tight">{title}</h3>
-                <p className="relative text-muted-foreground">{body}</p>
+                {/* The same 4:3 box in every arch, so all three are the same size. */}
+                <Art className="relative aspect-[4/3] w-full" />
+                <h3 className="relative px-4 font-display text-3xl leading-tight tracking-tight">{title}</h3>
+                <p className="relative px-4 text-muted-foreground">{body}</p>
               </li>
             ))}
           </ul>
@@ -174,8 +172,8 @@ export default async function ComingSoonPage() {
               )}
             </div>
             <div className="ticket-body flex flex-col justify-center gap-2 px-8 py-8">
-              <p lang="gu" className="font-semibold text-primary">
-                સેલર રજીસ્ટ્રેશન ઓફર
+              <p className="font-semibold text-primary">
+                <span lang="gu">સેલર રજીસ્ટ્રેશન ઓફર</span> · Seller registration offer
               </p>
               <h2 id="offer-heading" className="font-display text-3xl tracking-tight sm:text-4xl">
                 {fee.months} months on Harsol27

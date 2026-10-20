@@ -49,9 +49,25 @@ export function addMonths(day: Date, months: number): Date {
  */
 export function registrationSubscription(registeredAt: Date, months: number): { from: Date; until: Date; months: number } {
   const from = new Date(`${new Date(registeredAt.getTime() + 5.5 * 3_600_000).toISOString().slice(0, 10)}T00:00:00.000Z`);
+  return { from, until: subscriptionEnd(from, months), months };
+}
+
+/** The last day of a subscription starting on `from` for `months` months: the day before the same date. */
+export function subscriptionEnd(from: Date, months: number): Date {
   const end = addMonths(from, months);
   // A shorter month already ends early (31 Jan + 1 month → 28 Feb): that day is the last one.
-  return { from, until: end.getUTCDate() === from.getUTCDate() ? addDays(end, -1) : end, months };
+  return end.getUTCDate() === from.getUTCDate() ? addDays(end, -1) : end;
+}
+
+export type LeadSubscriptionFields = { createdAt: Date; tenureMonths: number | null; subscriptionFrom: Date | null; subscriptionUntil: Date | null };
+
+/**
+ * A Seller registration's subscription: the dates an admin set, or else from the registration day for its
+ * tenure. Null for registrations from before the fee. It counts only once the payment is approved.
+ */
+export function leadSubscription(lead: LeadSubscriptionFields): { from: Date; until: Date; months: number | null } | null {
+  if (lead.subscriptionFrom && lead.subscriptionUntil) return { from: lead.subscriptionFrom, until: lead.subscriptionUntil, months: lead.tenureMonths };
+  return lead.tenureMonths ? registrationSubscription(lead.createdAt, lead.tenureMonths) : null;
 }
 
 /**

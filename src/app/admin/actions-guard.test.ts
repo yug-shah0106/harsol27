@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 // requireAdmin() itself, so a viewer (or anyone replaying a request) is refused on the server.
 const ADMIN_DIR = import.meta.dirname;
 const ALLOWED_WITHOUT_ADMIN = new Set(["signOutAction"]);
+// Read-only actions that viewers may call too (the admin pages poll for new registrations): staff only.
+const READ_ONLY = new Set(["leadsStampAction"]);
 
 function actionFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -26,6 +28,12 @@ describe("admin server actions", () => {
     for (const body of bodies) {
       const name = body.slice(0, body.indexOf("("));
       if (ALLOWED_WITHOUT_ADMIN.has(name)) continue;
+      if (READ_ONLY.has(name)) {
+        it(`${path.relative(ADMIN_DIR, file)} › ${name} (read-only) calls requireStaff()`, () => {
+          expect(body).toContain("requireStaff()");
+        });
+        continue;
+      }
       it(`${path.relative(ADMIN_DIR, file)} › ${name} calls requireAdmin()`, () => {
         expect(body).toContain("requireAdmin()");
       });

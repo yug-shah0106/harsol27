@@ -6,12 +6,12 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 /**
  * Scrolls sideways on narrow screens (ScrollArea). Tables sit in cards, so the edge shadows blend
- * with the card. Give `scrollLabel` when the table has no links or buttons, so keyboard users can
+ * with the card, and the scroll area takes the card's rounded corners (its square background stuck out). Give `scrollLabel` when the table has no links or buttons, so keyboard users can
  * still reach and scroll it.
  */
 function Table({ className, scrollLabel, ...props }: React.ComponentProps<"table"> & { scrollLabel?: string }) {
   return (
-    <ScrollArea data-slot="table-container" orientation="horizontal" label={scrollLabel} className="relative w-full [--scroll-bg:var(--card)]">
+    <ScrollArea data-slot="table-container" orientation="horizontal" label={scrollLabel} className="relative w-full rounded-[inherit] [--scroll-bg:var(--card)]">
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}

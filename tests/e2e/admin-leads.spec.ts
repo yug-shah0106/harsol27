@@ -45,14 +45,13 @@ test("admin finds a new lead, sees staff-only details, and changes its status wi
     await expect(approval).toHaveText(choice);
     await page.reload();
     await expect(approval).toHaveText(choice);
-    // Approved: the subscription's end date in the list (15 months from today); otherwise none.
-    if (choice === "Approved") await expect(row.getByText(/^Till \d{1,2} \w{3} \d{4}$/)).toBeVisible();
-    else await expect(row.getByText("None", { exact: true })).toBeVisible();
+    // The subscription waits for an admin to check the payment (none once the registration is rejected).
+    await expect(row.getByText(choice === "Rejected" ? "None" : "Payment to check", { exact: true })).toBeVisible();
   }
 
   await page.getByRole("link", { name }).click();
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
-  await expect(page.getByText(/^15 months: \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}, once approved$/)).toBeVisible(); // pending again
+  await expect(page.getByText(/^15 months: \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}, once the payment is approved$/)).toBeVisible();
   await expect(page.getByText(ip)).toBeVisible(); // source IP is shown to staff
   await expect(page.getByText("source: newsletter · campaign: diwali")).toBeVisible(); // the campaign it came from
   await expect(page.getByText("Ceramics & Tiles")).toBeVisible();
@@ -131,6 +130,11 @@ test("an approved registration gets a login from the team; an admin can reset it
   const saved = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
   await page.getByRole("option", { name: "Approved" }).click();
   await saved;
+  // The payment is checked separately: the subscription counts from then on.
+  await page.getByRole("combobox", { name: /^Payment for/ }).click();
+  const paid = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
+  await page.getByRole("option", { name: "Approved" }).click();
+  await paid;
   await page.reload();
   const username = `${name.split(" ")[2]!.toLowerCase()}`; // the unique part, so no other test has it
   await login.getByLabel("Username").fill(username);
@@ -206,6 +210,46 @@ test("a new registration shows on the open leads list without a reload", async (
   const visitor = await newPage(browser);
   await submitLead(visitor, name, `live.${unique()}@example.test`);
   await expect(page.getByRole("link", { name })).toBeVisible({ timeout: 25_000 }); // checked every 10 seconds
+});
+
+test("an admin approves the payment, sets the subscription by hand, and the seller is listed under Subscriptions", async ({ browser }) => {
+  const name = `Lead Paid ${unique()}`;
+  const visitor = await newPage(browser);
+  await submitLead(visitor, name, `paid.${unique()}@example.test`);
+  await visitor.close();
+  const page = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
+  await signInAs(page, STAFF.admin);
+  await page.goto(`/admin/leads?q=${encodeURIComponent(name)}`);
+  await page.getByRole("link", { name }).click();
+  await expect(page.getByText(/, once the payment is approved$/)).toBeVisible();
+
+  // Payment: Pending → Approved, from the pill next to the screenshot.
+  const payment = page.getByRole("combobox", { name: `Payment for ${name}` });
+  await payment.click();
+  const saved = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
+  await page.getByRole("option", { name: "Approved" }).click();
+  await saved;
+  await page.reload();
+  await expect(payment).toHaveText("Approved");
+  await expect(page.getByText(/^15 months: \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}$/)).toBeVisible();
+  await expect(page.getByRole("region", { name: "Status history" }).getByText("Payment: Pending → Approved")).toBeVisible();
+
+  // Set by hand: a 12-month tenure from 1 Nov 2026 fills in the end date, which is saved with it.
+  const subscription = page.getByRole("region", { name: "Subscription" });
+  await subscription.getByLabel("Start date").fill("2026-11-01");
+  await subscription.getByLabel("Tenure (months)").fill("12");
+  await expect(subscription.getByLabel("End date")).toHaveValue("2027-10-31");
+  await subscription.getByRole("button", { name: "Save subscription" }).click();
+  await expect(subscription.getByRole("status")).toContainText("Subscription saved.");
+  await expect(page.getByText("12 months: 1 Nov 2026 to 31 Oct 2027", { exact: true })).toBeVisible();
+  await expectAccessible(page);
+
+  // Listed under Subscriptions with those dates.
+  await page.goto("/admin/subscriptions");
+  const row = page.getByRole("region", { name: "Seller registrations" }).getByRole("row", { name: new RegExp(name) });
+  await expect(row).toContainText("1 Nov 2026");
+  await expect(row).toContainText("31 Oct 2027");
+  await expect(row).toContainText("12 months");
 });
 
 test("lead pages are staff-only", async ({ page }) => {

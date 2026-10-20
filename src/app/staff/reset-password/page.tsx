@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Toran } from "@/components/festive";
-import { Wordmark } from "@/components/site-header";
 import { STAFF_PASSWORD_MIN_LENGTH } from "@/server/password";
 import { ResetPasswordForm } from "../password-forms";
 
@@ -12,10 +10,8 @@ export default async function StaffResetPasswordPage({ searchParams }: PageProps
   const { token } = await searchParams;
   return (
     <>
-      <Toran />
       <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
         <div className="flex flex-col items-center gap-3 text-center">
-          <Wordmark />
           <h1 className="font-display text-4xl tracking-tight text-primary">Choose a new password</h1>
         </div>
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/10">

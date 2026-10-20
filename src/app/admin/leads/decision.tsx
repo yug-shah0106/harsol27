@@ -19,17 +19,27 @@ const PILL: Record<LeadDecisionValue, string> = {
  * choice straight away, and goes back if the change is refused); viewers see the pill only. Its label
  * names the lead, for screen readers in the list.
  */
-export function LeadDecision({ lead, canDecide }: { lead: { id: string; fullName: string; decision: LeadDecisionValue }; canDecide: boolean }) {
+export function LeadDecision({
+  lead,
+  canDecide,
+  subject = "APPROVAL",
+}: {
+  lead: { id: string; fullName: string; decision: LeadDecisionValue; payment?: LeadDecisionValue };
+  canDecide: boolean;
+  /** The registration itself, or its payment (checked against the screenshot): the same pill, decided separately. */
+  subject?: "APPROVAL" | "PAYMENT";
+}) {
+  const current = subject === "PAYMENT" ? (lead.payment ?? "PENDING") : lead.decision;
   const [state, action, pending] = useActionState(decideLeadAction, null);
-  const [shown, show] = useOptimistic(lead.decision);
+  const [shown, show] = useOptimistic(current);
 
-  if (!canDecide) return <Badge className={PILL[lead.decision]}>{LEAD_DECISION_LABELS[lead.decision]}</Badge>;
+  if (!canDecide) return <Badge className={PILL[current]}>{LEAD_DECISION_LABELS[current]}</Badge>;
 
-  const id = `decision-${lead.id}`;
+  const id = `${subject === "PAYMENT" ? "payment" : "decision"}-${lead.id}`;
   return (
     <div className="flex flex-col items-start gap-1">
       <label htmlFor={id} className="sr-only">
-        Approval for {lead.fullName}
+        {subject === "PAYMENT" ? "Payment" : "Approval"} for {lead.fullName}
       </label>
       <Dropdown
         id={id}
@@ -42,6 +52,7 @@ export function LeadDecision({ lead, canDecide }: { lead: { id: string; fullName
             const form = new FormData();
             form.set("leadId", lead.id);
             form.set("decision", value);
+            form.set("subject", subject);
             action(form);
           })
         }

@@ -77,5 +77,7 @@ are set, add this under the bucket's **Settings → CORS Policy** in Cloudflare 
 - **Backups:** Aiven backs the database up itself; the `backup` service does not run here. Until that
   is settled, `/api/health/full` reports `degraded` and the daily check emails "No database backup has
   succeeded yet".
-- **Connections:** Aiven's free plan allows 20. The website can open up to 12 and the worker up to
-  15, which is fine at low traffic but can fail under load. Use a paid plan, or lower the pool sizes, before launch.
+- **Connections:** Aiven's free plan allows 20. The website opens at most 7 (5 for pages, 2 for jobs) and
+  the worker at most 10 (5 + 5), so both fit (`src/server/db.ts`, `src/server/jobs.ts`). A page waits up to
+  10 seconds for a free connection: the free instance has a tenth of a CPU, and the first page after it
+  wakes can be slow (before 2026-10-21 Prisma gave up after 2 seconds and the admin overview failed).

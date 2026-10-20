@@ -133,16 +133,17 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
             <TableBody>
               {items.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell className="font-medium">
+                  {/* Long names, emails and industries wrap, and the date sits above the time, so the table fits its card on a laptop. */}
+                  <TableCell className="font-medium whitespace-normal">
                     <Link href={`/admin/leads/${lead.id}`} className="text-primary underline">
                       {lead.fullName}
                     </Link>
                   </TableCell>
-                  <TableCell>
-                    <div>{lead.phone}</div>
-                    <div className="text-muted-foreground">{lead.email}</div>
+                  <TableCell className="whitespace-normal">
+                    <div className="whitespace-nowrap">{lead.phone}</div>
+                    <div className="whitespace-nowrap text-muted-foreground">{lead.email}</div>
                   </TableCell>
-                  <TableCell>{leadIndustryName(lead)}</TableCell>
+                  <TableCell className="whitespace-normal">{leadIndustryName(lead)}</TableCell>
                   <TableCell>{categoryLabel(lead.businessCategory)}</TableCell>
                   <TableCell>
                     <Badge variant={lead.status === "NEW" ? "default" : "secondary"}>{LEAD_STATUS_LABELS[lead.status]}</Badge>
@@ -151,9 +152,13 @@ export default async function LeadsPage({ searchParams }: PageProps<"/admin/lead
                     <LeadDecision lead={lead} canDecide={canWrite(staff)} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {subscriptionEnds(lead) ? `Till ${subscriptionEnds(lead)}` : <span className="text-muted-foreground">None</span>}
+                    {subscriptionEnds(lead) ? (
+                      `Till ${subscriptionEnds(lead)}`
+                    ) : (
+                      <span className="text-muted-foreground">{lead.payment === "PENDING" && lead.decision !== "REJECTED" && lead.tenureMonths ? "Payment to check" : "None"}</span>
+                    )}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">{formatIst(lead.createdAt)}</TableCell>
+                  <TableCell className="whitespace-pre-line">{formatIst(lead.createdAt).replace(", ", "\n")}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

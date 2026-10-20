@@ -6,7 +6,7 @@ import { isComingSoon } from "@/lib/coming-soon";
 import { BUSINESS_CATEGORIES, leadIndustryName } from "@/lib/lead-schema";
 import { LEAD_DECISION_LABELS } from "@/lib/lead-status";
 import { SELLER_STATUS_LABELS } from "@/lib/seller-status";
-import { formatDay, registrationSubscription } from "@/lib/subscription";
+import { formatDay, leadSubscription } from "@/lib/subscription";
 import { requireMember } from "@/server/authz";
 import { db } from "@/server/db";
 import { memberSignOutAction } from "./actions";
@@ -20,12 +20,30 @@ export default async function AccountPage() {
     // The Seller registration the team made this login from (none for older, self-made accounts).
     db().lead.findUnique({
       where: { userId: member.id },
-      select: { decision: true, createdAt: true, tenureMonths: true, businessCategory: true, industryOther: true, industries: { select: { name: true } } },
+      select: {
+        decision: true,
+        payment: true,
+        createdAt: true,
+        tenureMonths: true,
+        subscriptionFrom: true,
+        subscriptionUntil: true,
+        businessCategory: true,
+        industryOther: true,
+        industries: { select: { name: true } },
+      },
     }),
   ]);
   // Before launch the buying and selling pages are closed, so only the registration is shown.
   const closed = isComingSoon();
-  const subscription = lead?.tenureMonths ? registrationSubscription(lead.createdAt, lead.tenureMonths) : null;
+  const subscription = lead ? leadSubscription(lead) : null;
+  // The subscription counts once the team has checked the payment screenshot.
+  const subscriptionLine = !lead || !subscription
+    ? "None"
+    : lead.payment === "APPROVED"
+      ? `${subscription.months ? `${subscription.months} months, ` : ""}${formatDay(subscription.from)} to ${formatDay(subscription.until)}`
+      : lead.payment === "REJECTED"
+        ? "None: we could not confirm your payment. Please contact the Harsol27 team."
+        : "Starts once our team has checked your payment.";
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
@@ -51,7 +69,7 @@ export default async function AccountPage() {
               <Badge variant="secondary">{LEAD_DECISION_LABELS[lead.decision]}</Badge>
             </dd>
             <dt className="text-muted-foreground">Subscription</dt>
-            <dd>{subscription ? `${subscription.months} months, ${formatDay(subscription.from)} to ${formatDay(subscription.until)}` : "None"}</dd>
+            <dd>{subscriptionLine}</dd>
             <dt className="text-muted-foreground">Category</dt>
             <dd>{BUSINESS_CATEGORIES.find((c) => c.value === lead.businessCategory)?.label}</dd>
             <dt className="text-muted-foreground">Industry</dt>

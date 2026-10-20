@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fieldErrors } from "./lead-schema";
-import { addMonths, daysUntil, dueReminder, EXPIRED_NOTICE, formatDay, formatRupees, paymentSchema, registrationSubscription, rupeesToPaise, subscriptionState, suggestPaidUntil } from "./subscription";
+import { addMonths, daysUntil, dueReminder, EXPIRED_NOTICE, formatDay, formatRupees, leadSubscription, paymentSchema, registrationSubscription, rupeesToPaise, subscriptionState, suggestPaidUntil } from "./subscription";
 
 const d = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 
@@ -102,5 +102,12 @@ describe("a Seller registration's subscription", () => {
     expect(addMonths(day("2027-11-30"), 3)).toEqual(day("2028-02-29")); // a leap year
     expect(registrationSubscription(new Date("2027-01-31T06:00:00Z"), 1).until).toEqual(day("2027-02-28"));
     expect(registrationSubscription(new Date("2027-03-01T06:00:00Z"), 1).until).toEqual(day("2027-03-31"));
+  });
+
+  it("uses the dates an admin set, else the registration day and tenure, else none (before the fee)", () => {
+    const registered = { createdAt: new Date("2026-10-19T07:00:00Z"), tenureMonths: 15, subscriptionFrom: null, subscriptionUntil: null };
+    expect(leadSubscription(registered)).toEqual({ from: day("2026-10-19"), until: day("2028-01-18"), months: 15 });
+    expect(leadSubscription({ ...registered, tenureMonths: 12, subscriptionFrom: day("2026-11-01"), subscriptionUntil: day("2027-12-31") })).toEqual({ from: day("2026-11-01"), until: day("2027-12-31"), months: 12 });
+    expect(leadSubscription({ ...registered, tenureMonths: null })).toBeNull();
   });
 });

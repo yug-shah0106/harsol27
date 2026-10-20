@@ -7,16 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDay, subscriptionState } from "@/lib/subscription";
 import { requireStaff } from "@/server/authz";
+import { listPaidLeads } from "@/server/leads";
 import { countSubscriptionViews, listSubscriptions, SUBSCRIPTION_VIEWS, subscriptionListParamsSchema, type SubscriptionView } from "@/server/subscriptions";
 import { indiaToday } from "@/server/visibility";
-import { formatIst } from "../leads/format";
+import { categoryLabel, formatIst } from "../leads/format";
 
 export const metadata: Metadata = { title: "Subscriptions" };
 
 export default async function SubscriptionsPage({ searchParams }: PageProps<"/admin/subscriptions">) {
   await requireStaff();
   const params = subscriptionListParamsSchema.parse(await searchParams);
-  const [{ items, total, pageCount }, counts] = await Promise.all([listSubscriptions(params), countSubscriptionViews()]);
+  const [{ items, total, pageCount }, counts, paidLeads] = await Promise.all([listSubscriptions(params), countSubscriptionViews(), listPaidLeads()]);
   const today = indiaToday();
 
   const remaining = (paidUntil: Date | null) => {
@@ -28,8 +29,56 @@ export default async function SubscriptionsPage({ searchParams }: PageProps<"/ad
 
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold">Subscriptions</h1>
+
+      {/* Seller registrations whose payment an admin approved (on the lead's page), ending soonest first. */}
+      <section aria-labelledby="paid-registrations-heading" className="flex flex-col gap-3">
+        <div>
+          <h2 id="paid-registrations-heading" className="text-lg font-semibold">
+            Seller registrations
+          </h2>
+          <p className="mt-1 text-muted-foreground">Registrations whose payment was approved. Open one to change its dates or tenure.</p>
+        </div>
+        {paidLeads.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No approved payments yet.</p>
+        ) : (
+          <div className="rounded-xl border border-border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col">Name</TableHead>
+                  <TableHead scope="col">WhatsApp number</TableHead>
+                  <TableHead scope="col">Category</TableHead>
+                  <TableHead scope="col">Start</TableHead>
+                  <TableHead scope="col">End</TableHead>
+                  <TableHead scope="col">Tenure</TableHead>
+                  <TableHead scope="col">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paidLeads.map((lead) => (
+                  <TableRow key={lead.id}>
+                    <TableCell className="font-medium whitespace-normal">
+                      <Link href={`/admin/leads/${lead.id}#subscription-heading`} className="text-primary underline">
+                        {lead.fullName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{lead.phone}</TableCell>
+                    <TableCell>{categoryLabel(lead.businessCategory)}</TableCell>
+                    <TableCell>{formatDay(lead.subscription!.from)}</TableCell>
+                    <TableCell>{formatDay(lead.subscription!.until)}</TableCell>
+                    <TableCell>{lead.subscription!.months ? `${lead.subscription!.months} months` : "—"}</TableCell>
+                    <TableCell>{remaining(lead.subscription!.until)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </section>
+
       <div>
-        <h1 className="text-2xl font-bold">Subscriptions</h1>
+        <h2 className="text-lg font-semibold">Marketplace sellers</h2>
         <p className="mt-1 text-muted-foreground">
           Approved sellers by paid-until date. Open a seller to record a payment. Sellers get reminder emails 30, 7 and 1 days before their date.
         </p>

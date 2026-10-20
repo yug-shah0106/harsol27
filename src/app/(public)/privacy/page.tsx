@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DraftNotice, ProsePage } from "@/components/prose-page";
 import { isComingSoon } from "@/lib/coming-soon";
+import { CONTACT } from "@/lib/contact";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -10,8 +11,8 @@ export const metadata: Metadata = pageMetadata({
   keywords: ["Harsol27 privacy"],
 });
 
-// Draft written from what the code actually collects. The contact for privacy requests is still to be
-// decided by the client; legal review is required before launch (see docs/FUTURE.md).
+// Draft written from what the code actually collects. Questions go to the team's contact (lib/contact.ts,
+// client, 2026-10-20); legal review is required before launch (see docs/FUTURE.md).
 export default function PrivacyPage() {
   return (
     <ProsePage title="Privacy policy" updated="2026-10-17">
@@ -46,6 +47,15 @@ export default function PrivacyPage() {
       <p>
         We use only essential cookies: to keep you signed in, and to remember your settings (dark mode, and that you
         have seen our cookie notice). We do not use advertising or tracking cookies.
+      </p>
+      <h2>Questions</h2>
+      <p>
+        Questions about this policy or your information? Email us at <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> or
+        WhatsApp us on{" "}
+        <a href={CONTACT.whatsappLink} target="_blank" rel="noopener noreferrer">
+          {CONTACT.whatsapp}
+        </a>
+        , and our team will get back to you.
       </p>
     </ProsePage>
   );

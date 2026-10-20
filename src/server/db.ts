@@ -20,8 +20,13 @@ const globalForPrisma = globalThis as unknown as { prisma?: Db };
  */
 export function db(): Db {
   globalForPrisma.prisma ??= new PrismaClient({
-    adapter: new PrismaPg({ connectionString: baseEnv().DATABASE_URL }),
+    // ponytail: 5 connections per process (the website and the worker each have one, plus pg-boss's own)
+    // keeps both under Aiven's free plan limit of 20; raise it with a bigger database plan.
+    adapter: new PrismaPg({ connectionString: baseEnv().DATABASE_URL, max: 5 }),
     omit: OMIT,
+    // Prisma waits 2 s for a connection by default. On Render's free plan (a tenth of a CPU) the first page
+    // after waking took longer, and the admin overview failed with P2028 (2026-10-21).
+    transactionOptions: { maxWait: 10_000, timeout: 15_000 },
   });
   return globalForPrisma.prisma;
 }

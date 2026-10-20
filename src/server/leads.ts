@@ -5,6 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { DOCUMENT_TYPES, detectDocumentType } from "@/lib/file-type";
 import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE, type BusinessCategoryValue } from "@/lib/lead-schema";
 import { FEE } from "@/lib/fee";
+import { leadSubscription } from "@/lib/subscription";
 import { LEAD_DECISIONS, LEAD_DECISION_LABELS, LEAD_STATUSES } from "@/lib/lead-status";
 import { uploadRequestSchema } from "@/lib/seller-schema";
 import { parseUtm } from "@/lib/utm";
@@ -183,7 +184,10 @@ export async function listLeads(params: LeadListParams) {
         businessCategory: true,
         status: true,
         decision: true,
+        payment: true,
         tenureMonths: true,
+        subscriptionFrom: true,
+        subscriptionUntil: true,
         createdAt: true,
         industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
         industryOther: true,
@@ -234,29 +238,72 @@ export async function changeLeadStatus(input: Record<string, unknown>, actor: St
 const decisionSchema = z.object({
   leadId: z.uuid(),
   decision: z.enum(LEAD_DECISIONS, { error: "Choose Pending, Approved or Rejected." }),
+  // The registration itself, or its payment (an admin checks the screenshot): the same three choices, separate.
+  subject: z.enum(["APPROVAL", "PAYMENT"]).default("APPROVAL"),
 });
 
 /** Approves or rejects a lead, or puts it back to pending, and records who did it and when, atomically. */
 export async function decideLead(input: Record<string, unknown>, actor: StaffUser): Promise<void> {
   const parsed = decisionSchema.safeParse(input);
   if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
-  const { leadId, decision } = parsed.data;
+  const { leadId, decision, subject } = parsed.data;
+  const payment = subject === "PAYMENT";
 
   await db().$transaction(async (tx) => {
-    const lead = await tx.lead.findUnique({ where: { id: leadId }, select: { decision: true, userId: true } });
+    const lead = await tx.lead.findUnique({ where: { id: leadId }, select: { decision: true, payment: true, userId: true } });
     if (!lead) throw new UserFacingError("This lead no longer exists.");
-    if (lead.decision === decision) throw new UserFacingError(`This lead is already ${LEAD_DECISION_LABELS[decision].toLowerCase()}.`);
+    const current = payment ? lead.payment : lead.decision;
+    if (current === decision) throw new UserFacingError(`This ${payment ? "payment" : "lead"} is already ${LEAD_DECISION_LABELS[decision].toLowerCase()}.`);
     // Conditional update: if someone else decided since we read it, nothing happens.
-    const { count } = await tx.lead.updateMany({ where: { id: leadId, decision: lead.decision }, data: { decision } });
+    const { count } = await tx.lead.updateMany({
+      where: payment ? { id: leadId, payment: current } : { id: leadId, decision: current },
+      data: payment ? { payment: decision } : { decision },
+    });
     if (count === 0) throw new UserFacingError("Someone else changed this lead a moment ago. Reload the page to see the latest decision.");
-    await tx.leadDecisionChange.create({ data: { leadId, fromDecision: lead.decision, toDecision: decision, actorId: actor.id } });
+    await tx.leadDecisionChange.create({ data: { leadId, subject, fromDecision: current, toDecision: decision, actorId: actor.id } });
     // A login made for it works only while the registration is approved: switched off (and signed out
     // everywhere) when it is rejected or put back to pending, on again when approved.
-    if (lead.userId) {
+    if (!payment && lead.userId) {
       await tx.user.update({ where: { id: lead.userId }, data: { disabledAt: decision === "APPROVED" ? null : new Date() } });
       if (decision !== "APPROVED") await tx.session.deleteMany({ where: { userId: lead.userId } });
     }
   });
+}
+
+const DATE_INPUT = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a date.").transform((v) => new Date(`${v}T00:00:00.000Z`)).refine((d) => !Number.isNaN(d.getTime()), "Choose a date.");
+const subscriptionSchema = z
+  .object({
+    leadId: z.uuid(),
+    from: DATE_INPUT,
+    months: z.coerce.number({ error: "Enter the number of months." }).int("Enter whole months.").min(1, "At least 1 month.").max(120, "At most 120 months."),
+    until: DATE_INPUT,
+  })
+  .refine((v) => v.until >= v.from, { path: ["until"], message: "The end date must be on or after the start date." });
+
+/** Sets a registration's subscription by hand: start, tenure in months and end date (recorded in the audit log). */
+export async function updateLeadSubscription(input: Record<string, unknown>, actor: StaffUser): Promise<void> {
+  const parsed = subscriptionSchema.safeParse(input);
+  if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
+  const { leadId, from, months, until } = parsed.data;
+  await db().$transaction(async (tx) => {
+    const { count } = await tx.lead.updateMany({ where: { id: leadId }, data: { subscriptionFrom: from, subscriptionUntil: until, tenureMonths: months } });
+    if (count === 0) throw new UserFacingError("This lead no longer exists.");
+    const day = (d: Date) => d.toISOString().slice(0, 10);
+    await tx.auditLog.create({ data: { actorId: actor.id, action: "LEAD_SUBSCRIPTION_CHANGED", entityType: "Lead", entityId: leadId, details: { from: day(from), months, until: day(until) } } });
+  });
+}
+
+/** Paid registrations for the Subscriptions tab: payment approved (and not rejected), ending soonest first. */
+export async function listPaidLeads() {
+  const leads = await db().lead.findMany({
+    where: { payment: "APPROVED", decision: { not: "REJECTED" } },
+    select: { id: true, fullName: true, phone: true, businessCategory: true, createdAt: true, tenureMonths: true, subscriptionFrom: true, subscriptionUntil: true },
+  });
+  // ponytail: sorted in memory (dates may be computed, not stored); page it if this grows past a few hundred.
+  return leads
+    .map((lead) => ({ ...lead, subscription: leadSubscription(lead) }))
+    .filter((lead) => lead.subscription)
+    .sort((a, b) => a.subscription!.until.getTime() - b.subscription!.until.getTime());
 }
 
 // ───────────── Staff: the overview ─────────────
