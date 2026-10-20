@@ -27,7 +27,7 @@ test("the first Tab press reaches the skip link, which jumps to the main content
   await expect(page).toHaveURL(/#main$/);
 });
 
-for (const path of ["/", "/about", "/terms", "/privacy", "/Seller-Registration"]) {
+for (const path of ["/", "/about", "/contact", "/terms", "/privacy", "/Seller-Registration"]) {
   test(`${path} has no detectable WCAG A/AA violations`, async ({ page }) => {
     await page.goto(path);
     await expectAccessible(page);
@@ -68,7 +68,7 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
 
 test("public pages tell search engines and link previews what they are", async ({ page }) => {
   // [page, its canonical address]; /coming-soon is served at "/" before launch.
-  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Seller-Registration", "/Seller-Registration"], ["/about", "/about"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
+  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Seller-Registration", "/Seller-Registration"], ["/about", "/about"], ["/contact", "/contact"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
     await page.goto(path);
     const meta = (name: string) => page.locator(`meta[name="${name}"], meta[property="${name}"]`).getAttribute("content");
     const title = await page.title();

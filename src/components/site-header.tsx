@@ -28,10 +28,12 @@ export function Wordmark() {
           360px, where it and "Register" only just fit. A plain <img>: next/image adds an inline style our CSP blocks. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/logo.webp" alt="" width={58} height={52} className="-my-0.5 h-11 w-auto shrink-0 min-[360px]:-my-1.5 min-[360px]:h-13" />
-      {/* The trust's name in two lines, no taller than the header's button (40px): "Harsol27" in the serif, then
-          "Jain Yuvak Trust, Bhayander" small beneath (wrapping onto a second line on narrow phones). */}
+      {/* The trust's name in two lines, no taller than the header's button (40px): "Shree" small (like the line
+          beneath) before "Harsol27" in the serif, then "Jain Yuvak Trust, Bhayander" small beneath (wrapping onto a
+          second line on narrow phones). */}
       <span className="flex min-w-0 flex-col sm:gap-0.5">
-        <span className="font-display text-lg leading-none tracking-tight sm:text-[1.375rem]">
+        <span className="font-display text-lg leading-none tracking-tight whitespace-nowrap sm:text-[1.375rem]">
+          <span className="font-sans text-[0.625rem] font-semibold tracking-normal text-muted-foreground sm:text-xs">Shree </span>
           Harsol<span className="italic">27</span>
         </span>
         <span className="text-[0.625rem] leading-[1.1] font-semibold text-muted-foreground sm:text-xs sm:whitespace-nowrap">Jain Yuvak Trust, Bhayander</span>
@@ -95,7 +97,7 @@ export function SiteFooter() {
       {/* One slim row: the copyright left, the links right (the floating buttons stop above the footer). */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-sm sm:px-6 lg:px-10">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <p className="text-muted-foreground">© {new Date().getFullYear()} Harsol27 Jain Yuvak Trust, Bhayander</p>
+          <p className="text-muted-foreground">© {new Date().getFullYear()} Shree Harsol Sattavis Jain Yuvak Trust, Bhayander</p>
           <InstallApp />
         </div>
         <nav aria-label="Footer" className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
@@ -105,6 +107,7 @@ export function SiteFooter() {
               <Link href="/about#faq" className="hover:underline">FAQ</Link>
             </>
           )}
+          <Link href="/contact" className="hover:underline">Contact us</Link>
           <Link href="/terms" className="hover:underline">Terms</Link>
           <Link href="/privacy" className="hover:underline">Privacy</Link>
         </nav>

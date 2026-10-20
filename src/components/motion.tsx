@@ -19,6 +19,7 @@ import { useEffect } from "react";
  *   data-spin="140"     turns that many degrees while it crosses the screen (the coming-soon rangoli)
  *   data-path           an SVG path (pathLength 1) that grows bit by bit as its drawing scrolls up the screen
  *   data-light          its [data-lamp] items light up one after another as it scrolls by, like diyas
+ *   data-play           an illustration whose CSS entrance (globals.css) plays once when scrolled to
  *
  * Nothing follows the mouse (no spotlight, magnet or tilt: removed at the client's request, 2026-10-19).
  *
@@ -213,6 +214,12 @@ export function Motion({ smoothScroll = true }: { smoothScroll?: boolean }) {
         }
         for (const group of all("[data-light]").filter(offscreen)) {
           gsap.fromTo(all("[data-lamp]", group), { opacity: 0.28, scale: 0.94 }, { opacity: 1, scale: 1, ease: "none", stagger: 0.06, scrollTrigger: { trigger: group, start: "top 85%", end: "bottom 60%", scrub: true } });
+        }
+        // Illustrations with a CSS entrance (globals.css): held at its start, played once when scrolled to.
+        for (const art of all("[data-play]").filter(offscreen)) {
+          art.setAttribute("data-play", "wait");
+          ScrollTrigger.create({ trigger: art, start: "top 90%", once: true, onEnter: () => art.setAttribute("data-play", "on") });
+          cleanups.push(() => art.setAttribute("data-play", ""));
         }
 
         // The display font can arrive after this runs and change heading heights: measure again once it has.

@@ -308,6 +308,152 @@ html.lenis body {
   .dark .arch-leaf {
     background: linear-gradient(to bottom, #233021, #1a2418);
   }
+  /* The arches' illustrations (festive.tsx) play a short entrance once, when scrolled to: components/motion.tsx
+     holds them at its start (data-play="wait") and starts it (data-play="on"). On screen at load, with reduced
+     motion or without script, they simply stand finished. Seal: stamped, ribbons drop, ticked, a gold ring
+     ripples out. Phone: rises, its screen fills in, it rings. Handshake: the two hands meet, sparkles pop. */
+  @media (prefers-reduced-motion: no-preference) {
+    .why-art:is([data-play="wait"], [data-play="on"]) {
+      .art-dots {
+        animation: art-fade 900ms var(--ease-out) both;
+      }
+      .art-seal {
+        animation: art-stamp 700ms var(--ease-out) 150ms both;
+      }
+      .art-ribbon {
+        animation: art-drop 500ms var(--ease-out) 550ms both;
+      }
+      .art-tick {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: stroke-draw 450ms var(--ease-out) 750ms both;
+      }
+      .art-burst {
+        animation: art-burst 900ms var(--ease-out) 1100ms forwards; /* "forwards", not "both": it waits unseen */
+      }
+      .art-phone {
+        animation:
+          art-rise 700ms var(--ease-out) 100ms both,
+          art-ring 700ms var(--ease-in-out) 1000ms;
+      }
+      .art-screen > * {
+        animation: art-rise 450ms var(--ease-out) 450ms both;
+      }
+      .art-screen > :nth-child(2) {
+        animation-delay: 520ms;
+      }
+      .art-screen > :nth-child(3) {
+        animation-delay: 590ms;
+      }
+      .art-screen > .art-call {
+        animation: art-pop 450ms var(--ease-out) 700ms both;
+      }
+      .art-wave {
+        animation: art-fade 400ms var(--ease-out) 1000ms both;
+      }
+      .art-wave:nth-child(2) {
+        animation-delay: 1100ms;
+      }
+      .art-wave:nth-child(3) {
+        animation-delay: 1200ms;
+      }
+      .art-left {
+        animation: art-from-left 900ms var(--ease-out) 100ms both;
+      }
+      .art-right {
+        animation: art-from-right 900ms var(--ease-out) 100ms both;
+      }
+      .art-spark {
+        animation: art-pop 500ms var(--ease-out) 850ms both;
+      }
+      .art-spark:nth-child(2 of .art-spark) {
+        animation-delay: 950ms;
+      }
+      .art-spark:nth-child(3 of .art-spark) {
+        animation-delay: 1050ms;
+      }
+    }
+    .why-art[data-play="wait"] * {
+      animation-play-state: paused;
+    }
+  }
+  .art-seal,
+  .art-burst,
+  .art-phone,
+  .art-call,
+  .art-spark {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes art-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes art-rise {
+    from {
+      opacity: 0;
+      translate: 0 10px;
+    }
+  }
+  @keyframes art-drop {
+    from {
+      opacity: 0;
+      translate: 0 -12px;
+    }
+  }
+  @keyframes art-stamp {
+    from {
+      opacity: 0;
+      scale: 0.8;
+      rotate: -30deg;
+    }
+  }
+  @keyframes art-pop {
+    from {
+      opacity: 0;
+      scale: 0.6;
+    }
+  }
+  @keyframes art-burst {
+    from {
+      opacity: 0.9;
+      scale: 0.85;
+    }
+    to {
+      opacity: 0;
+      scale: 1.3;
+    }
+  }
+  @keyframes art-ring {
+    15% {
+      rotate: -7deg;
+    }
+    30% {
+      rotate: 6deg;
+    }
+    45% {
+      rotate: -5deg;
+    }
+    60% {
+      rotate: 4deg;
+    }
+    75% {
+      rotate: -2deg;
+    }
+  }
+  @keyframes art-from-left {
+    from {
+      opacity: 0;
+      translate: -22px 0;
+    }
+  }
+  @keyframes art-from-right {
+    from {
+      opacity: 0;
+      translate: 22px 0;
+    }
+  }
   /* A diya's glow on each industry. */
   .diya {
     box-shadow: 0 0 10px 2px #f7c548;

@@ -61,7 +61,7 @@ components:
   button-pill: { note: "marketing pages and the festival pages: the same buttons with rounded {rounded.full}" }
   input: { background: "{colors.card}", border: "1px {colors.input}", height: "40px", padding: "0 12px", rounded: "{rounded.lg}" }
   card: { background: "{colors.card}", border: "1px {colors.border}", rounded: "{rounded.xl}", padding: "20px" }
-  arch-card: { background: "a kumkum, marigold or leaf wash", rounded: "full top, 28px bottom", padding: "96px 28px 36px", shadow: "kumkum-tinted" }
+  arch-card: { background: "a kumkum, marigold or leaf wash", rounded: "full top, 28px bottom", padding: "12px 12px 36px", illustration: "4:3 inline SVG in the arch's round top, festival colours", shadow: "kumkum-tinted" }
   ticket: { stub: "{colors.primary}", body: "{colors.card}", notches: "16px half-circles at the perforation", rounded: "20px" }
 ---
 
@@ -96,7 +96,7 @@ phone, and many read Gujarati. So the design is:
 - **Generous space.** Plenty of room, short plain-English copy, hairlines rather than boxes.
 
 The site is closed until launch (`COMING_SOON`, `src/lib/coming-soon.ts`): visitors see only the
-coming-soon page, Seller registration and the legal pages. The rest of the site is built and kept, behind
+coming-soon page, Seller registration, Contact us and the legal pages. The rest of the site is built and kept, behind
 that switch; this file still describes it, in the Marigold palette.
 
 ## 2. Colour palette & roles
@@ -254,9 +254,10 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   page gutters (16px, 24px, 40px from 1024px), like the footer.
   - In the left corner, the Harsol Sattavis Jain Yuvak Trust's logo (`public/logo.webp`, 52px, reaching into
     the header's padding so the header stays 65px; 44px under 360px), then the trust's name in two lines
-    no taller than the button: "Harsol27" (Fraunces 22px; 18px on phones) over "Jain Yuvak Trust, Bhayander"
-    (Hind 12px/600, `muted-foreground`; 10px and wrapping on phones). The same lockup heads the admin and
-    staff sign-in. The footer reads "© <year> Harsol27 Jain Yuvak Trust, Bhayander".
+    no taller than the button: "Shree" (Hind 12px/600, `muted-foreground`; 10px on phones) before "Harsol27"
+    (Fraunces 22px; 18px on phones), over "Jain Yuvak Trust, Bhayander" (Hind 12px/600, `muted-foreground`;
+    10px and wrapping on phones). The same lockup heads the admin and staff sign-in. The footer reads
+    "© <year> Shree Harsol Sattavis Jain Yuvak Trust, Bhayander".
   - In the right corner: 14px/500 text links (Home, Search, About, Sign in or Your account) that underline
     on hover, the dark-mode toggle (moon/sun), then an kumkum pill "Get started" button.
   - Below 640px the links and the toggle move into a **menu** (a "Menu" button that opens a panel under the
@@ -268,9 +269,13 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     under it (65px), so its rangoli runs up to the toran.
 - **Footer**: turmeric, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px):
   one slim row (20px padding): the copyright in `muted-foreground` on the left, the text links (About,
-  FAQ, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
-- **Floating buttons** (bottom right, every public page): an kumkum pill "Talk to us" (to the Get started
-  form, our only public contact so far; hidden on that page), and above it a round "Back to top" that
+  FAQ, Contact us, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
+- **Contact us** (`/contact`, open while the site is closed): the text-page layout, a Gujarati pill
+  "કોઈ પ્રશ્ન છે? અમારો સંપર્ક કરો.", then two white cards side by side (stacked on phones), each with an
+  icon disc, a small label, the number or address large, and a pill button: kumkum "Chat on WhatsApp"
+  (+91 91520 00352) and outline "Write an email" (sh27jyt@gmail.com). The details live in `lib/contact.ts`.
+- **Floating buttons** (bottom right, every public page): a kumkum pill "Talk to us" (opens a WhatsApp chat
+  with the team, on every page), and above it a round "Back to top" that
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
   Sticky at the end of the main content, not fixed: they ride 16–24px above the bottom of the screen, and
   at the end of the page stop the same distance above the footer, never over it.
@@ -301,13 +306,25 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     centre. It draws itself ring by ring on load and turns with the scroll (`data-spin`). Behind the
     coming-soon headline (35%), in its closing card (25%), and faint in Seller registration's corner.
   - **Jharokha arch cards**: fully round tops, an inner outline, a kumkum, marigold or leaf wash; they rise
-    in. The three promises.
+    in. The three promises. Each has a flat illustration in the arch, not a photo (`<SealArt>`, `<CallArt>`,
+    `<DealArt>`: inline SVG, the same 4:3 box in every card), on a soft halo (white; a faint gold glow by
+    lamplight) under a dotted arch of gold dots like a rangoli's border:
+    - *Approved sellers only*: a seal of gold marigold petals round a kumkum disc, a cream tick, leaf ribbons.
+    - *Straight to the seller*: a kumkum phone whose cream screen shows the seller (gold avatar, number and
+      email lines, a leaf call button), ringing in arcs of `primary` either side.
+    - *Your deal, your terms*: a handshake, a kumkum sleeve with a gold cuff meeting a gold sleeve with a
+      kumkum cuff (sandal hands #f0c595, creases #c98d5a), the sleeves fading in from the wash, gold sparkles.
+    The fills are the festival colours and stay the same in dark mode. Each plays a short entrance once when
+    scrolled to (`data-play`): the seal stamps in, its ribbons drop, the tick draws and a gold ring ripples
+    out; the phone rises, its screen fills in and it rings; the two hands slide in and meet, then the
+    sparkles pop. On screen at load, with reduced motion or without script they simply stand finished.
   - **Diya chips**: every industry as a cream pill with a glowing gold dot; they light up one after another
     as the section scrolls by (`data-light`).
   - **Step medallions**: gold discs with a large Fraunces number, joined by a gold path that draws itself
     with the scroll (`data-path`).
   - **Ticket**: the offer, a kumkum stub with the price counting up and the regular price struck through,
-    a dashed perforation with notches cut from both sides, and the details on white.
+    a dashed perforation with notches cut from both sides, and the details on white, headed
+    "સેલર રજીસ્ટ્રેશન ઓફર · Seller registration offer".
   - **Rotating word** (`<RotatingWord>`): "manufacturers / wholesalers / traders", one sliding up every
     2.2s; hidden from screen readers, which get the whole sentence.
   - **Closing card**: fixed kumkum with marigold in both modes, a turning rangoli, and floating petals.
@@ -389,6 +406,7 @@ Motion is built on GSAP, ScrollTrigger and Lenis smooth scrolling. All of it is 
 | `data-spin="140"` | Turns that many degrees while it crosses the screen. The rangolis. |
 | `data-path` | An SVG path (`pathLength={1}`, class `drawn-path`) that grows bit by bit as you scroll, from when its drawing is near the bottom of the screen (85%) until it is near the top (25%). The steps' path. |
 | `data-light` | Its `[data-lamp]` items go from dim to lit one after another as it scrolls by. The diya chips. |
+| `data-play` | An illustration whose entrance is CSS (`globals.css`): held at its start below the fold (`data-play="wait"`), played once when its top reaches 90% of the screen (`"on"`). Without it the illustration stands finished. The arch cards' illustrations. |
 
 BlurText and CountUp are adapted from React Bits (reactbits.dev), rebuilt on GSAP. Nothing follows the mouse: the
 spotlight, magnet and tilt effects were removed at the client's request (2026-10-19). Don't add pointer-following effects.

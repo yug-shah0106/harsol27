@@ -101,12 +101,17 @@ test("phones get a menu button for the header links", async ({ browser }) => {
   await context.close();
 });
 
-test("'Talk to us' leads to the Get started form from any page", async ({ browser }) => {
+test("'Talk to us' opens a WhatsApp chat with the team, and the footer's Contact us page has WhatsApp and email", async ({ browser }) => {
   const page = await newPage(browser);
-  await page.goto("/industries");
-  await page.getByRole("link", { name: "Talk to us" }).click();
-  await expect(page).toHaveURL(/\/Seller-Registration$/);
-  await expect(page.getByRole("link", { name: "Talk to us" })).toHaveCount(0); // not on the form itself
+  for (const path of ["/industries", "/Seller-Registration"]) {
+    await page.goto(path);
+    await expect(page.getByRole("link", { name: "Talk to us on WhatsApp" })).toHaveAttribute("href", "https://wa.me/919152000352");
+  }
+  await page.getByRole("contentinfo").getByRole("link", { name: "Contact us" }).click();
+  await expect(page).toHaveURL(/\/contact$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Contact us" })).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Chat on WhatsApp" })).toHaveAttribute("href", "https://wa.me/919152000352");
+  await expect(page.getByRole("main").getByRole("link", { name: "Write an email" })).toHaveAttribute("href", "mailto:sh27jyt@gmail.com");
 });
 
 test("FAQ answers open and close, and the legal pages say when they last changed", async ({ browser }) => {

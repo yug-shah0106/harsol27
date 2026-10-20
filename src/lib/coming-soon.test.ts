@@ -14,7 +14,7 @@ describe("comingSoonRoute", () => {
 
   it("keeps Seller registration, the legal pages, sign-in and the account page, the staff area and files open", () => {
     vi.stubEnv("COMING_SOON", "true");
-    for (const path of ["/Seller-Registration", "/privacy", "/terms", "/sign-in", "/account", "/account/mobile", "/staff/sign-in", "/staff/forgot-password", "/admin", "/admin/leads/1", "/media/a/b.webp", "/serwist/sw.js", "/icon.svg", "/robots.txt", "/coming-soon"]) {
+    for (const path of ["/Seller-Registration", "/contact", "/privacy", "/terms", "/sign-in", "/account", "/account/mobile", "/staff/sign-in", "/staff/forgot-password", "/admin", "/admin/leads/1", "/media/a/b.webp", "/serwist/sw.js", "/icon.svg", "/robots.txt", "/coming-soon"]) {
       expect(comingSoonRoute(path), path).toBeNull();
     }
   });
