@@ -3,7 +3,7 @@ import { HONEYPOT_FIELD } from "@/lib/lead-schema";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
-import { changeLeadStatus, countPerIndiaDay, createPaymentUpload, decideLead, indiaDay, LEAD_IP_RULE, leadListParamsSchema, listLeads, submitLead } from "./leads";
+import { changeLeadStatus, countPerIndiaDay, createPaymentUpload, decideLead, indiaDay, LEAD_IP_RULE, leadListParamsSchema, listLeads, listPaidLeads, submitLead, updateLeadSubscription } from "./leads";
 import { createLeadLogin, generatePassword } from "./member-logins";
 import { verifyPassword } from "./password";
 import type { StaffUser } from "./staff-policy";
@@ -182,6 +182,28 @@ describe("decideLead", () => {
     await expect(decideLead({ leadId: lead.id, decision: "REJECTED" }, admin)).rejects.toThrow(/already rejected/);
     await expectFieldError(decideLead({ leadId: lead.id, decision: "MAYBE" }, admin), "decision");
     await expect(decideLead({ leadId: crypto.randomUUID(), decision: "APPROVED" }, admin)).rejects.toThrow(/no longer exists/);
+  });
+
+  it("decides the payment separately, then the registration is listed under Subscriptions with the dates an admin set", async () => {
+    const email = `payment.${run}@example.com`;
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email } });
+    expect(lead.payment).toBe("PENDING");
+    expect((await listPaidLeads()).map((l) => l.id)).not.toContain(lead.id);
+
+    await decideLead({ leadId: lead.id, decision: "APPROVED", subject: "PAYMENT" }, admin);
+    const after = await db().lead.findUniqueOrThrow({ where: { id: lead.id } });
+    expect([after.payment, after.decision]).toEqual(["APPROVED", "PENDING"]); // the registration's approval is separate
+    const change = await db().leadDecisionChange.findFirstOrThrow({ where: { leadId: lead.id } });
+    expect([change.subject, change.fromDecision, change.toDecision]).toEqual(["PAYMENT", "PENDING", "APPROVED"]);
+    await expect(decideLead({ leadId: lead.id, decision: "APPROVED", subject: "PAYMENT" }, admin)).rejects.toThrow(/payment is already approved/);
+
+    await updateLeadSubscription({ leadId: lead.id, from: "2026-11-01", months: "12", until: "2027-10-31" }, admin);
+    const paid = (await listPaidLeads()).find((l) => l.id === lead.id);
+    expect(paid?.subscription).toEqual({ from: new Date("2026-11-01T00:00:00Z"), until: new Date("2027-10-31T00:00:00Z"), months: 12 });
+
+    await expectFieldError(updateLeadSubscription({ leadId: lead.id, from: "2026-11-01", months: "12", until: "2026-10-01" }, admin), "until");
+    await expectFieldError(updateLeadSubscription({ leadId: lead.id, from: "2026-11-01", months: "0", until: "2027-10-31" }, admin), "months");
   });
 });
 

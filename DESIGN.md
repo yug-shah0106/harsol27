@@ -169,7 +169,7 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - `secondary`: turmeric.
   - `ghost` and `link` (kumkum text, underline on hover).
   - Every button gets the 3px kumkum focus ring, and moves down 1px when pressed.
-- **Input / Textarea**: white, 1px `input` border, 40px tall, radius 16px. Invalid fields get a red
+- **Input / Textarea**: white (the card colour by lamplight, like the Dropdown, so a form's fields all match), 1px `input` border, 40px tall, radius 16px. Invalid fields get a red
   border and ring plus an error message linked with `aria-describedby`.
 - **Dropdown** (`dropdown.tsx`): use this for every choice from a list. Never use a native `<select>`.
   - Closed, it looks like an Input, with a chevron that flips when open.
@@ -244,7 +244,15 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   to open a small list (Pending, Approved, Rejected) and the choice is saved at once; viewers see the pill only.
   It is the Dropdown with `triggerClassName` restyling its button. Separate from the contact status; each
   change is in the lead's history ("Approval: Pending → Approved").
-- **Table** (`table.tsx`): sits in a ScrollArea that scrolls sideways on phones. Pass `scrollLabel`
+- **Payment pill** (a lead's page): the same pill for the payment, beside "View the screenshot". An admin
+  checks the screenshot, then sets Approved; only then does the subscription count, and the seller is listed
+  under Subscriptions → Seller registrations. In the history as "Payment: Pending → Approved".
+- **Lead page details**: a white card with the details side by side, label over value: three columns from
+  1024px, two from 640px, one on phones (the browser string spans the row). First Approval, Payment, Payment
+  screenshot, Subscription. Under the card, for admins, **Subscription**: Start date, Tenure (months) and End
+  date side by side, then "Save subscription". Changing the start or the tenure fills in the end date (the
+  day before the same date, that many months later); the end can still be changed by hand.
+- **Table** (`table.tsx`): sits in a ScrollArea that scrolls sideways on phones and takes its card's rounded corners. Pass `scrollLabel`
   so keyboard users can reach it.
 - **ScrollArea** (`scroll-area.tsx`): use it for anything that scrolls inside a page.
   - Thin brand scrollbar: 10px, `input`-coloured thumb, kumkum on hover.
@@ -328,9 +336,11 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - **Rotating word** (`<RotatingWord>`): "manufacturers / wholesalers / traders", one sliding up every
     2.2s; hidden from screen readers, which get the whole sentence.
   - **Closing card**: fixed kumkum with marigold in both modes, a turning rangoli, and floating petals.
-- **Staff sign-in**: compact toran, the wordmark, a Fraunces "Staff sign in", and the form on a white
-  card with a kumkum pill button; "Forgot password?" under it. /staff/forgot-password and
-  /staff/reset-password share that layout (staff only: members cannot reset their own password).
+- **Staff sign-in**: compact toran, then the wordmark top left where the site header has it
+  (`staff/layout.tsx`), and centred below a Fraunces "Staff sign in", the line "Admins login." and the
+  form on a white card: the site's own fields (`Input`, `PasswordInput`, 48px tall) and a full-width
+  kumkum button; "Forgot password?" under it. /staff/forgot-password and /staff/reset-password share that
+  layout (staff only: members cannot reset their own password).
 - **Member sign-in** (`/sign-in`): the auth card with "Username" and "Password", the line "Forgot your
   password? Contact the Harsol27 team." and, below, "No login yet? Register as a seller" (to Seller
   registration). No "Create an account" and no Google: the team makes every login.

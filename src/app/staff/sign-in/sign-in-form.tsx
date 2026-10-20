@@ -1,55 +1,37 @@
 "use client";
 
 import { useActionState } from "react";
+import { FormAlert } from "@/components/form-feedback";
 import { PasswordInput } from "@/components/password-input";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { signInAction } from "./actions";
 
+/** The site's own fields and button (like the seller sign-in), so both fields look the same in either theme. */
 export function SignInForm() {
   const [state, formAction, pending] = useActionState(signInAction, null);
   const error = state && !state.ok ? state.error : null;
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate={false} aria-describedby={error ? "sign-in-error" : undefined}>
+    <form action={formAction} className="flex flex-col gap-5" aria-describedby={error ? "sign-in-error" : undefined}>
       {error && (
-        <p id="sign-in-error" role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <FormAlert kind="error" id="sign-in-error">
           <span className="font-semibold">Sign-in failed: </span>
           {error}
-        </p>
+        </FormAlert>
       )}
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="username"
-          required
-          maxLength={254}
-          className="rounded-lg border border-input bg-card px-3 py-2"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
-        </label>
-        <PasswordInput
-          id="password"
-          name="password"
-          autoComplete="current-password"
-          required
-          maxLength={128}
-          className="rounded-lg border border-input bg-card px-3 py-2"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-full bg-primary px-4 py-2.5 font-semibold text-primary-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--primary)_85%,black)] disabled:opacity-60"
-      >
+      <Field>
+        <FieldLabel htmlFor="email">Email</FieldLabel>
+        <Input id="email" name="email" type="email" autoComplete="username" required maxLength={254} placeholder="Enter your staff email" className="h-12" />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="password">Password</FieldLabel>
+        <PasswordInput id="password" name="password" autoComplete="current-password" required maxLength={128} placeholder="Enter your password" className="h-12" />
+      </Field>
+      <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Signing in…" : "Sign in"}
-      </button>
+      </Button>
     </form>
   );
 }

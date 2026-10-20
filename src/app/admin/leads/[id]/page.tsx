@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cn } from "cn";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,8 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { Textarea } from "@/components/ui/textarea";
 import { LEAD_DECISION_LABELS, LEAD_STATUSES, LEAD_STATUS_LABELS } from "@/lib/lead-status";
 import { leadIndustryName, suggestUsername } from "@/lib/lead-schema";
+import { leadSubscription, registrationSubscription, toDateInput } from "@/lib/subscription";
+import { FEE } from "@/lib/fee";
 import { pickUtm } from "@/lib/utm";
 import { requireStaff } from "@/server/authz";
 import { getLead } from "@/server/leads";
@@ -16,6 +19,7 @@ import { canWrite } from "@/server/staff-policy";
 import { changeLeadStatusAction } from "../actions";
 import { LeadDecision } from "../decision";
 import { LeadLogin } from "./login";
+import { SubscriptionForm } from "./subscription-form";
 import { categoryLabel, formatIst, subscriptionText } from "../format";
 
 export const metadata: Metadata = { title: "Lead" };
@@ -26,8 +30,14 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
   if (!lead) notFound();
 
   const utm = lead.utm && typeof lead.utm === "object" ? pickUtm((key) => (lead.utm as Record<string, unknown>)[key]) : null;
-  const details: [string, React.ReactNode][] = [
+  // The subscription the form starts from: what is set, or else from the registration day for the fee's months.
+  const subscription = leadSubscription(lead) ?? registrationSubscription(lead.createdAt, FEE.months);
+  // Laid out side by side (a grid of label-over-value cells); `wide` ones span the whole row.
+  const details: [string, React.ReactNode, wide?: boolean][] = [
     ["Approval", <LeadDecision key="d" lead={lead} canDecide={canWrite(staff)} />],
+    // An admin checks the screenshot, then approves the payment: the subscription counts from then on.
+    ["Payment", <LeadDecision key="pay" lead={lead} subject="PAYMENT" canDecide={canWrite(staff)} />],
+    ["Payment screenshot", lead.paymentProofKey ? <ExternalLink key="p" href={`/api/admin/leads/${lead.id}/payment-proof`} label="View the screenshot" /> : "Not added"],
     ["Subscription", subscriptionText(lead)],
     ["WhatsApp number", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],
@@ -43,12 +53,10 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
     ["Website", lead.website ? <ExternalLink key="w" href={lead.website} /> : "Not given"],
     ["Instagram", lead.instagram ? <ExternalLink key="i" href={`https://www.instagram.com/${lead.instagram}/`} label={`@${lead.instagram}`} /> : "Not given"],
     ["Google Maps", lead.mapsLink ? <ExternalLink key="m" href={lead.mapsLink} label="Open the map" /> : "Not given"],
-    // Opens a 60-second storage link in a new tab (the page's CSP keeps storage images out of the page itself).
-    ["Payment screenshot", lead.paymentProofKey ? <ExternalLink key="p" href={`/api/admin/leads/${lead.id}/payment-proof`} label="View the screenshot" /> : "Not added"],
     ["Received", `${formatIst(lead.createdAt)} IST`],
     ["Campaign", utm ? Object.entries(utm).map(([key, value]) => `${key.replace("utm_", "")}: ${value}`).join(" · ") : "Not from a campaign link"],
     ["Source IP", lead.sourceIp ?? "Not recorded"],
-    ["Browser", lead.userAgent ?? "Not recorded"],
+    ["Browser", lead.userAgent ?? "Not recorded", true],
   ];
 
   return (
@@ -63,14 +71,27 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
         </div>
       </div>
 
-      <dl className="grid gap-x-6 gap-y-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[max-content_1fr]">
-        {details.map(([term, value]) => (
-          <div key={term} className="contents">
+      <dl className="grid gap-x-8 gap-y-5 rounded-xl border border-border bg-card p-5 sm:grid-cols-2 lg:grid-cols-3">
+        {details.map(([term, value, wide]) => (
+          <div key={term} className={cn("flex min-w-0 flex-col gap-1", wide && "sm:col-span-2 lg:col-span-3")}>
             <dt className="text-sm text-muted-foreground">{term}</dt>
             <dd className="break-words">{value}</dd>
           </div>
         ))}
       </dl>
+
+      {canWrite(staff) && (
+        <section aria-labelledby="subscription-heading" className="flex max-w-3xl flex-col gap-3">
+          <h2 id="subscription-heading" className="text-lg font-semibold">
+            Subscription
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            It starts on the registration day for {FEE.months} months unless you change it here. It counts once the payment is approved, and then the
+            seller is listed under Subscriptions.
+          </p>
+          <SubscriptionForm leadId={lead.id} from={toDateInput(subscription.from)} months={subscription.months} until={toDateInput(subscription.until)} />
+        </section>
+      )}
 
       <section aria-labelledby="login-heading" className="flex max-w-xl flex-col gap-3">
         <h2 id="login-heading" className="text-lg font-semibold">
@@ -127,10 +148,14 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
             <p className="font-medium">Lead received · {LEAD_STATUS_LABELS.NEW}</p>
             <p className="text-sm text-muted-foreground">{formatIst(lead.createdAt)} IST · from the website</p>
           </li>
-          {/* Status changes and approval decisions, in the order they happened. */}
+          {/* Status changes, and approval and payment decisions, in the order they happened. */}
           {[
             ...lead.statusChanges.map((c) => ({ ...c, what: `${LEAD_STATUS_LABELS[c.fromStatus]} → ${LEAD_STATUS_LABELS[c.toStatus]}` })),
-            ...lead.decisionChanges.map((c) => ({ ...c, note: null, what: `Approval: ${LEAD_DECISION_LABELS[c.fromDecision]} → ${LEAD_DECISION_LABELS[c.toDecision]}` })),
+            ...lead.decisionChanges.map((c) => ({
+              ...c,
+              note: null,
+              what: `${c.subject === "PAYMENT" ? "Payment" : "Approval"}: ${LEAD_DECISION_LABELS[c.fromDecision]} → ${LEAD_DECISION_LABELS[c.toDecision]}`,
+            })),
           ]
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
             .map((change) => (

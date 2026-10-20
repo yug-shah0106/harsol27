@@ -158,53 +158,65 @@ enum LeadDecision {
   REJECTED
 }
 
-model Lead {
-  id               String           @id @default(uuid(7)) @db.Uuid
-  fullName         String // "First Father Last" since 2026-10-19 (shown everywhere); typed whole before then
-  firstName        String? // the form asks for the name in parts since 2026-10-19; older leads have none
-  fatherName       String? // required on the form since 2026-10-11; older leads have none
-  lastName         String?
-  nativePlace      String? // the village or town the family is from
-  address          String? // street address (before 2026-10-19: "address or city")
-  city             String?
-  state            String? // one of lib/indian-states.ts
-  pincode          String? // six digits
-  phone            String // E.164
-  email            String // lowercase
-  businessCategory BusinessCategory
-  industries       Industry[] // one or more from the list (none if they only chose "Other")
-  industryOther    String? // their own words, when their industry isn't in the list
-  website          String? // optional links to the business (http(s) only)
-  instagram        String? // handle, without the @
-  mapsLink         String? // a Google Maps link
-  tenureMonths     Int? // months the fee bought (lib/fee.ts when they registered); runs from the registration day
-  paymentProofKey  String? // storage key of the payment screenshot (Pre-registration requires one since 2026-10-17)
-  paymentProofName String? // its file name as uploaded; display only
-  status           LeadStatus       @default(NEW)
-  sourceIp         String?          @db.Inet // staff-only; null if the proxy sent no client IP
-  userAgent        String? // staff-only
-  userId           String?          @unique @db.Uuid // the member login the team made for it, once approved
-  user             User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
-  utm              Json? // campaign tags of the link the visitor arrived by (lib/utm.ts), if any
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+/// What a LeadDecisionChange decided: the registration itself, or its payment (since 2026-10-21).
+enum LeadDecisionSubject {
+  APPROVAL
+  PAYMENT
+}
 
-  statusChanges LeadStatusChange[]
+model Lead {
+  id                String           @id @default(uuid(7)) @db.Uuid
+  fullName          String // "First Father Last" since 2026-10-19 (shown everywhere); typed whole before then
+  firstName         String? // the form asks for the name in parts since 2026-10-19; older leads have none
+  fatherName        String? // required on the form since 2026-10-11; older leads have none
+  lastName          String?
+  nativePlace       String? // the village or town the family is from
+  address           String? // street address (before 2026-10-19: "address or city")
+  city              String?
+  state             String? // one of lib/indian-states.ts
+  pincode           String? // six digits
+  phone             String // E.164
+  email             String // lowercase
+  businessCategory  BusinessCategory
+  industries        Industry[] // one or more from the list (none if they only chose "Other")
+  industryOther     String? // their own words, when their industry isn't in the list
+  website           String? // optional links to the business (http(s) only)
+  instagram         String? // handle, without the @
+  mapsLink          String? // a Google Maps link
+  tenureMonths      Int? // months the fee bought (lib/fee.ts when they registered); an admin can change it
+  // The subscription's dates as an admin set them (since 2026-10-21); until then it runs from the registration
+  // day for tenureMonths (lib/subscription.ts → leadSubscription). It counts once the payment is approved.
+  subscriptionFrom  DateTime?        @db.Date
+  subscriptionUntil DateTime?        @db.Date
+  paymentProofKey   String? // storage key of the payment screenshot (Pre-registration requires one since 2026-10-17)
+  paymentProofName  String? // its file name as uploaded; display only
+  status            LeadStatus       @default(NEW)
+  sourceIp          String?          @db.Inet // staff-only; null if the proxy sent no client IP
+  userAgent         String? // staff-only
+  userId            String?          @unique @db.Uuid // the member login the team made for it, once approved
+  user              User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  utm               Json? // campaign tags of the link the visitor arrived by (lib/utm.ts), if any
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  statusChanges   LeadStatusChange[]
   decision        LeadDecision         @default(PENDING)
+  payment         LeadDecision         @default(PENDING) // the payment screenshot, checked by an admin
   decisionChanges LeadDecisionChange[]
 
   @@index([status, createdAt(sort: Desc)])
 }
 
 model LeadDecisionChange {
-  id           String       @id @default(uuid(7)) @db.Uuid
-  leadId       String       @db.Uuid
-  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id           String              @id @default(uuid(7)) @db.Uuid
+  leadId       String              @db.Uuid
+  lead         Lead                @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subject      LeadDecisionSubject @default(APPROVAL)
   fromDecision LeadDecision
   toDecision   LeadDecision
-  actorId      String       @db.Uuid
-  actor        User         @relation(fields: [actorId], references: [id], onDelete: Restrict)
-  createdAt    DateTime     @default(now())
+  actorId      String              @db.Uuid
+  actor        User                @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  createdAt    DateTime            @default(now())
 
   @@index([leadId, createdAt])
 }

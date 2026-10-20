@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin, requireStaff } from "@/server/authz";
 import { runAction, type ActionResult } from "@/server/errors";
-import { changeLeadStatus, decideLead, leadsStamp } from "@/server/leads";
+import { changeLeadStatus, decideLead, leadsStamp, updateLeadSubscription } from "@/server/leads";
 import { createLeadLogin, resetLeadPassword } from "@/server/member-logins";
 
 export async function changeLeadStatusAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
@@ -19,15 +19,29 @@ export async function changeLeadStatusAction(_prev: ActionResult | null, formDat
   });
 }
 
-/** Approve or Reject, from the leads list or a lead's page. */
+/** Pending, Approved or Rejected for a registration, or for its payment (`subject`), from the list or a lead's page. */
 export async function decideLeadAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("decideLead", async () => {
     const actor = await requireAdmin();
     const leadId = String(formData.get("leadId") ?? "");
-    await decideLead({ leadId, decision: formData.get("decision") }, actor);
+    await decideLead({ leadId, decision: formData.get("decision"), subject: formData.get("subject") ?? undefined }, actor);
     revalidatePath("/admin/leads");
     revalidatePath(`/admin/leads/${leadId}`);
+    revalidatePath("/admin/subscriptions");
     return { ok: true, data: undefined };
+  });
+}
+
+/** The subscription's start, tenure and end, set by hand on a lead's page. */
+export async function updateLeadSubscriptionAction(_prev: ActionResult<string> | null, formData: FormData): Promise<ActionResult<string>> {
+  return runAction("updateLeadSubscription", async () => {
+    const actor = await requireAdmin();
+    const leadId = String(formData.get("leadId") ?? "");
+    await updateLeadSubscription({ leadId, from: formData.get("from"), months: formData.get("months"), until: formData.get("until") }, actor);
+    revalidatePath("/admin/leads");
+    revalidatePath(`/admin/leads/${leadId}`);
+    revalidatePath("/admin/subscriptions");
+    return { ok: true, data: "Subscription saved." };
   });
 }
 
