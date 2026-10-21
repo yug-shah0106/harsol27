@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { HONEYPOT_FIELD } from "@/lib/lead-schema";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
@@ -87,10 +86,10 @@ describe("submitLead", () => {
     expect(jobs.map((j) => j.name)).toEqual([QUEUES.leadConfirmation, QUEUES.leadTeamAlert].sort());
   });
 
-  it("returns normally but saves nothing when the honeypot is filled", async () => {
-    const email = `bot.${run}@example.com`;
-    await expect(submitLead(await form({ email, [HONEYPOT_FIELD]: "http://spam.example" }), headersFor(uniqueIp()))).resolves.toBeUndefined();
-    expect(await db().lead.count({ where: { email } })).toBe(0);
+  it("saves a registration whatever extra fields the browser's autofill adds (the old honeypot dropped them)", async () => {
+    const email = `autofill.${run}@example.com`;
+    await submitLead(await form({ email, company_website: "Patel Traders" }), headersFor(uniqueIp()));
+    expect(await db().lead.count({ where: { email } })).toBe(1);
   });
 
   it("re-validates every field on the server", async () => {

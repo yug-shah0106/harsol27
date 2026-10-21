@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { db } from "./db";
-import { createIndustry, industryNameKey, moveIndustry, renameIndustry, setIndustryActive } from "./industries";
+import { createIndustry, industryNameKey, listAllIndustries, renameIndustry, setIndustryActive } from "./industries";
 import type { StaffUser } from "./staff-policy";
 
 const run = crypto.randomUUID().slice(0, 8);
@@ -42,14 +42,11 @@ describe("industries", () => {
     await expect(renameIndustry(renamed.id, `food ${run} & snacks`, admin)).rejects.toThrow(/already exists/);
   });
 
-  it("moves an industry up and down by swapping with its neighbour", async () => {
-    const a = await byName(`Food ${run} & Snacks`);
-    const b = await byName(`Steel & Metal ${run}`);
-    await moveIndustry(b.id, "up", admin);
-    expect((await byName(b.name)).sortOrder).toBe(a.sortOrder);
-    expect((await byName(a.name)).sortOrder).toBe(b.sortOrder);
-    await moveIndustry(b.id, "down", admin);
-    expect((await byName(b.name)).sortOrder).toBe(b.sortOrder);
+  it("lists industries alphabetically, wherever they were added", async () => {
+    await createIndustry(`Aaa ${run}`, admin); // added last, listed first
+    const names = (await listAllIndustries()).map((i) => i.name);
+    expect(names.indexOf(`Aaa ${run}`)).toBeLessThan(names.indexOf(`Food ${run} & Snacks`));
+    expect(names.indexOf(`Food ${run} & Snacks`)).toBeLessThan(names.indexOf(`Steel & Metal ${run}`));
   });
 
   it("deactivates and reactivates (never deletes), auditing only real changes", async () => {

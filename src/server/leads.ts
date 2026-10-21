@@ -3,7 +3,7 @@ import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { DOCUMENT_TYPES, detectDocumentType } from "@/lib/file-type";
-import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE, type BusinessCategoryValue } from "@/lib/lead-schema";
+import { BUSINESS_CATEGORIES, fieldErrors, leadSchema, OTHER_INDUSTRY, OTHER_NATIVE_PLACE, type BusinessCategoryValue } from "@/lib/lead-schema";
 import { FEE } from "@/lib/fee";
 import { leadSubscription } from "@/lib/subscription";
 import { LEAD_DECISIONS, LEAD_DECISION_LABELS, LEAD_STATUSES } from "@/lib/lead-status";
@@ -14,7 +14,6 @@ import { db } from "./db";
 import { env } from "./env";
 import { UserFacingError } from "./errors";
 import { enqueueLeadEmails, getBoss } from "./jobs";
-import { logInfo } from "./log";
 import { consumeRateLimit } from "./rate-limit";
 import type { StaffUser } from "./staff-policy";
 import { headObject, presignUpload, readObjectStart } from "./storage";
@@ -70,12 +69,9 @@ async function verifyPaymentUpload(key: string): Promise<{ key: string; fileName
  * Email is sent later by the worker, so it can neither slow down nor fail the submission.
  */
 export async function submitLead(form: FormData, headers: Headers): Promise<void> {
-  // Bots that fill the hidden field get the normal success response, and nothing is saved.
-  if (String(form.get(HONEYPOT_FIELD) ?? "").trim() !== "") {
-    logInfo("lead honeypot triggered");
-    return;
-  }
-
+  // No hidden "honeypot" field any more: browsers' autofill filled it (Chrome put a saved company name in
+  // "company_website"), and real registrations were thanked and silently dropped (2026-10-21). Bots are
+  // stopped by the per-network limit below and the payment screenshot every registration must upload.
   const ip = clientIpFrom(headers, env().CLIENT_IP_HEADER);
   const limit = await consumeRateLimit(`lead:ip:${ip ?? "unknown"}`, LEAD_IP_RULE);
   if (!limit.allowed) {
@@ -189,7 +185,7 @@ export async function listLeads(params: LeadListParams) {
         subscriptionFrom: true,
         subscriptionUntil: true,
         createdAt: true,
-        industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
+        industries: { select: { name: true }, orderBy: { name: "asc" } },
         industryOther: true,
       },
     }),
@@ -202,7 +198,7 @@ export function getLead(id: string) {
   return db().lead.findUnique({
     where: { id },
     include: {
-      industries: { select: { name: true }, orderBy: { sortOrder: "asc" } },
+      industries: { select: { name: true }, orderBy: { name: "asc" } },
       statusChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
       decisionChanges: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true } } } },
       user: { select: { username: true, createdAt: true, disabledAt: true, issuedPassword: true } },

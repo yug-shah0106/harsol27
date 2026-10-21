@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { INDIAN_STATES } from "@/lib/seller-schema";
 import type { Viewer } from "./contact-access";
 import { db } from "./db";
+import { alphabetical } from "./industries";
 import { publicProductWhere, publicSellerWhere } from "./visibility";
 
 // Everything here is public: only fields safe for anyone are selected, and visibility always comes
@@ -89,10 +90,9 @@ export async function searchProducts(params: SearchParams, now = new Date()) {
 export async function listIndustriesWithCounts(now = new Date()) {
   const industries = await db().industry.findMany({
     where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
     select: { id: true, name: true, slug: true, _count: { select: { products: { where: publicProductWhere(now) } } } },
   });
-  return industries.map(({ _count, ...industry }) => ({ ...industry, productCount: _count.products }));
+  return alphabetical(industries).map(({ _count, ...industry }) => ({ ...industry, productCount: _count.products }));
 }
 
 export function getActiveIndustryBySlug(slug: string) {
