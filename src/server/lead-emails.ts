@@ -66,7 +66,7 @@ export function leadTeamAlertEmail(lead: LeadForEmail, to: string[], appUrl: str
   const link = `${appUrl}/admin/leads/${lead.id}`;
   const rows: [string, string][] = [
     ["Name", lead.fullName],
-    ["Father's name", lead.fatherName ?? "Not given"],
+    ["Middle name", lead.fatherName ?? "Not given"],
     ["Native place", lead.nativePlace ?? "Not given"],
     ["Address", lead.address ?? "Not given"],
     ["City", lead.city ?? "Not given"],

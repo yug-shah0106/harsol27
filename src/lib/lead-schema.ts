@@ -112,7 +112,7 @@ const optionalLink = (example: string) =>
 export const leadSchema = z
   .object({
   firstName: line("Enter your first name.", 50),
-  fatherName: line("Enter your father's name.", 50),
+  fatherName: line("Enter your middle name.", 50), // asked as "Middle name" since 2026-10-21 ("Father's name" before)
   lastName: line("Enter your last name.", 50),
   nativePlace: z.enum([...NATIVE_PLACES, OTHER_NATIVE_PLACE], { error: "Choose your native place." }),
   nativePlaceOther: z

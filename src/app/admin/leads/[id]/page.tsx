@@ -41,7 +41,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
     ["Subscription", subscriptionText(lead)],
     ["WhatsApp number", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],
-    ["Father's name", lead.fatherName ?? "Not given"],
+    ["Middle name", lead.fatherName ?? "Not given"],
     ["Native place", lead.nativePlace ?? "Not given"],
     ["Address", lead.address ?? "Not given"],
     ["City", lead.city ?? "Not given"],

@@ -110,7 +110,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
           {(
             [
               ["firstName", "First name", "given-name"],
-              ["fatherName", "Father's name", "additional-name"],
+              ["fatherName", "Middle name", "additional-name"],
               ["lastName", "Last name", "family-name"],
             ] as const
           ).map(([name, label, autoComplete]) => (

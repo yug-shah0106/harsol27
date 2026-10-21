@@ -186,7 +186,7 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     Seller registration's "Industry" became a single choice on 2026-10-19 (one industry per person).
   - "Other (not listed)" (Get started form): choosing it shows a "Your industry" field where the visitor
     types their own; staff see it as "Other: …".
-- **Fields in parts** (Seller registration): the name as First name, Father's name, Last name, three
+- **Fields in parts** (Seller registration): the name as First name, Middle name, Last name, three
   across from 640px (stacked on phones); the address as Address (full width), then City and State (a
   searchable dropdown of India's states and union territories) side by side, and Pincode (6 digits) under
   City. The phone field is "WhatsApp number"; the category dropdown is labelled "Category".
@@ -283,7 +283,7 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   icon disc, a small label, the number or address large, and a pill button: kumkum "Chat on WhatsApp"
   (+91 91520 00352) and outline "Write an email" (sh27jyt@gmail.com). The details live in `lib/contact.ts`.
 - **Floating buttons** (bottom right, every public page): a kumkum pill "Talk to us" (opens a WhatsApp chat
-  with the team, on every page), and above it a round "Back to top" that
+  with the team, on every page but Contact us, which has its own WhatsApp button), and above it a round "Back to top" that
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
   Sticky at the end of the main content, not fixed: they ride 16–24px above the bottom of the screen, and
   at the end of the page stop the same distance above the footer, never over it.
