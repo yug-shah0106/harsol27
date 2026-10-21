@@ -112,6 +112,7 @@ test("'Talk to us' opens a WhatsApp chat with the team, and the footer's Contact
   await expect(page.getByRole("heading", { level: 1, name: "Contact us" })).toBeVisible();
   await expect(page.getByRole("main").getByRole("link", { name: "Chat on WhatsApp" })).toHaveAttribute("href", "https://wa.me/919152000352");
   await expect(page.getByRole("main").getByRole("link", { name: "Write an email" })).toHaveAttribute("href", "mailto:sh27jyt@gmail.com");
+  await expect(page.getByRole("link", { name: "Talk to us on WhatsApp" })).toHaveCount(0); // the page has its own WhatsApp button
 });
 
 test("FAQ answers open and close, and the legal pages say when they last changed", async ({ browser }) => {

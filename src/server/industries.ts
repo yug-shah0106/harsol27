@@ -19,19 +19,20 @@ export function industryNameKey(name: string): string {
 
 const DUPLICATE = "An industry with this name already exists.";
 
-export function listActiveIndustries() {
-  return db().industry.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true, slug: true },
-  });
+/**
+ * Industries are listed A to Z everywhere (client, 2026-10-21), ignoring capitals so "IT Services" sits
+ * after "Investment Firm" whatever the database's own collation does.
+ */
+export function alphabetical<T extends { name: string }>(industries: T[]): T[] {
+  return industries.sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
 }
 
-export function listAllIndustries() {
-  return db().industry.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true, slug: true, isActive: true, _count: { select: { leads: true } } },
-  });
+export async function listActiveIndustries() {
+  return alphabetical(await db().industry.findMany({ where: { isActive: true }, select: { id: true, name: true, slug: true } }));
+}
+
+export async function listAllIndustries() {
+  return alphabetical(await db().industry.findMany({ select: { id: true, name: true, slug: true, isActive: true, _count: { select: { leads: true } } } }));
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -84,25 +85,6 @@ export async function renameIndustry(id: string, rawName: unknown, actor: StaffU
     if (isUniqueViolation(error)) throw new UserFacingError(DUPLICATE, { name: DUPLICATE });
     throw error;
   }
-}
-
-/** Swaps the industry with its neighbour above or below. A no-op at either end of the list. */
-export async function moveIndustry(id: string, direction: "up" | "down", actor: StaffUser): Promise<void> {
-  await db().$transaction(async (tx) => {
-    const current = await tx.industry.findUnique({ where: { id }, select: { sortOrder: true } });
-    if (!current) throw new UserFacingError("This industry no longer exists. Reload the page.");
-    const neighbour = await tx.industry.findFirst({
-      where: { sortOrder: direction === "up" ? { lt: current.sortOrder } : { gt: current.sortOrder } },
-      orderBy: { sortOrder: direction === "up" ? "desc" : "asc" },
-      select: { id: true, sortOrder: true },
-    });
-    if (!neighbour) return;
-    await tx.industry.update({ where: { id }, data: { sortOrder: neighbour.sortOrder } });
-    await tx.industry.update({ where: { id: neighbour.id }, data: { sortOrder: current.sortOrder } });
-    await tx.auditLog.create({
-      data: { actorId: actor.id, action: "INDUSTRY_REORDERED", entityType: "Industry", entityId: id, details: { direction } },
-    });
-  });
 }
 
 /** Industries are never deleted: deactivating hides them from forms and public pages; history stays intact. */

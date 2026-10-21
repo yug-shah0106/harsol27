@@ -32,9 +32,9 @@ describe("lead emails", () => {
     expect(email.to).toBe("asha@example.com");
   });
 
-  it("tells the team the whole name, father's name, native place and address too", () => {
+  it("tells the team the whole name, middle name, native place and address too", () => {
     const text = leadTeamAlertEmail(lead, ["team@example.com"], "https://x.test").text;
-    for (const line of ["Name: Asha Ramesh Patel", "Father's name: Ramesh", "Native place: Harsol", "Address: 12 Station Road", "City: Talod", "State: Gujarat", "Pincode: 383215", "Category: Trading"]) expect(text).toContain(line);
+    for (const line of ["Name: Asha Ramesh Patel", "Middle name: Ramesh", "Native place: Harsol", "Address: 12 Station Road", "City: Talod", "State: Gujarat", "Pincode: 383215", "Category: Trading"]) expect(text).toContain(line);
   });
 
   it("tells the team whether a payment screenshot came with it", () => {

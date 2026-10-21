@@ -11,7 +11,7 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { PAYMENT_ACCOUNT, PAYMENT_QR_DOWNLOAD, PAYMENT_QR_SRC, longDate, rupees, type FeeToday } from "@/lib/fee";
 import { DOCUMENT_TYPES } from "@/lib/file-type";
 import { INDIAN_STATES } from "@/lib/indian-states";
-import { BUSINESS_CATEGORIES, fieldErrors, HONEYPOT_FIELD, leadSchema, NATIVE_PLACES, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "@/lib/lead-schema";
+import { BUSINESS_CATEGORIES, fieldErrors, leadSchema, NATIVE_PLACES, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "@/lib/lead-schema";
 import { DOCUMENT_MAX_BYTES } from "@/lib/seller-schema";
 import { UTM_STORAGE_KEY } from "@/lib/utm";
 import { createPaymentUploadAction, submitLeadAction } from "./actions";
@@ -110,7 +110,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
           {(
             [
               ["firstName", "First name", "given-name"],
-              ["fatherName", "Father's name", "additional-name"],
+              ["fatherName", "Middle name", "additional-name"],
               ["lastName", "Last name", "family-name"],
             ] as const
           ).map(([name, label, autoComplete]) => (
@@ -379,12 +379,6 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
           <FieldMessage id="paymentProof-error" message={proofMessage} />
         </Field>
       </fieldset>
-
-      {/* Honeypot: invisible to people and screen readers; bots that fill it are silently ignored. */}
-      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
-        <label htmlFor={HONEYPOT_FIELD}>Leave this field empty</label>
-        <input id={HONEYPOT_FIELD} name={HONEYPOT_FIELD} type="text" tabIndex={-1} autoComplete="off" />
-      </div>
 
       <p className="text-sm text-muted-foreground">All fields are required, except the links.</p>
 

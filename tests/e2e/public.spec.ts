@@ -109,7 +109,7 @@ test("lead form: a native place and an industry that aren't listed are chosen as
   const email = `other.${unique()}@example.test`;
   await page.goto("/Seller-Registration");
   await page.getByLabel("First name").fill("Kiran");
-  await page.getByLabel("Father's name").fill("Mahesh");
+  await page.getByLabel("Middle name").fill("Mahesh");
   await page.getByLabel("Last name").fill("Shah");
   await choose(page, "Native place", "Other (not listed)");
   await page.getByLabel("Your native place").fill("Talod");

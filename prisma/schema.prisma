@@ -168,7 +168,7 @@ model Lead {
   id                String           @id @default(uuid(7)) @db.Uuid
   fullName          String // "First Father Last" since 2026-10-19 (shown everywhere); typed whole before then
   firstName         String? // the form asks for the name in parts since 2026-10-19; older leads have none
-  fatherName        String? // required on the form since 2026-10-11; older leads have none
+  fatherName        String? // the middle name (labelled "Father's name" until 2026-10-21); required since 2026-10-11, older leads have none
   lastName          String?
   nativePlace       String? // the village or town the family is from
   address           String? // street address (before 2026-10-19: "address or city")

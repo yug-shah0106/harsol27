@@ -51,7 +51,7 @@ export async function choose(page: Page, label: string, option: string) {
 
 export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string }) {
   await page.getByLabel("First name").fill(values.name);
-  await page.getByLabel("Father's name").fill("Ramesh");
+  await page.getByLabel("Middle name").fill("Ramesh");
   await page.getByLabel("Last name").fill("Patel");
   await choose(page, "Native place", "Harsol");
   await fillAddress(page);

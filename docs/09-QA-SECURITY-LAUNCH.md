@@ -139,7 +139,7 @@ rendered, it is `rel="nofollow noopener"` and never fetched.
 - Subscription tampering: validity is read server-side from `SubscriptionTerm` on every check, never
   from a client-supplied value or a JWT claim. Only `ADMIN`+ may set or extend a window, and every
   change writes an `AuditLog` row in the same transaction.
-- Spam leads: honeypot field, timing check (submissions faster than 3 s are suspect), phone
+- Spam leads: no honeypot (removed 2026-10-21: browsers' autofill filled it and real registrations were silently dropped); timing check (submissions faster than 3 s are suspect), phone
   verification, per-phone rate limits, and an admin `SPAM` status.
 - Image uploads: magic-byte check, re-encode through sharp (which neutralises embedded payloads),
   strip EXIF (product photos taken on phones carry the seller's GPS coordinates — a real privacy

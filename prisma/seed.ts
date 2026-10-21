@@ -35,7 +35,7 @@ export const STARTING_INDUSTRIES = [
   "IT Services",
   "Currency Exchange",
   "Broker",
-  "LIC Agent",
+  "Insurance Agent", // "LIC Agent" until 2026-10-21
   "Investment Firm",
   "CA Services",
   "Lawyer Services",

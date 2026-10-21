@@ -44,7 +44,8 @@ Free, health check path `/api/health`, Docker command empty.
 - `BETTER_AUTH_URL`: the public address, no trailing slash: `https://<name>.onrender.com`, or the custom domain once added.
 - `BETTER_AUTH_SECRET`: `openssl rand -base64 32`. Changing it later signs everyone out.
 - `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`: the Cloudflare R2 bucket (see `deploy/.env.example`).
-- `RESEND_API_KEY`, `EMAIL_FROM`, `TEAM_ALERT_EMAILS=harsol27helpdesk@gmail.com` (every Seller registration
+- `RESEND_API_KEY`, `EMAIL_FROM=Shree Harsol Sattavis Jain Yuvak Trust <noreply@harsol27.com>` (the name people see as the
+  sender), `TEAM_ALERT_EMAILS=harsol27helpdesk@gmail.com` (every Seller registration
   is emailed there, and a confirmation to the person who registered). Until a domain is verified in Resend, use
   `EMAIL_FROM=Harsol27 <onboarding@resend.dev>`; Resend then delivers only to the Resend account's own address,
   so neither the helpdesk nor registrants get anything.

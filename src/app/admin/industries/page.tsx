@@ -1,4 +1,3 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
 import type { Metadata } from "next";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { requireStaff } from "@/server/authz";
 import { listAllIndustries } from "@/server/industries";
 import { canWrite } from "@/server/staff-policy";
-import { createIndustryAction, moveIndustryAction, renameIndustryAction, setIndustryActiveAction } from "./actions";
+import { createIndustryAction, renameIndustryAction, setIndustryActiveAction } from "./actions";
 
 export const metadata: Metadata = { title: "Industries" };
 
@@ -38,7 +37,7 @@ export default async function IndustriesPage() {
       )}
 
       <ol className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
-        {industries.map((industry, index) => (
+        {industries.map((industry) => (
           <li key={industry.id} className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -63,20 +62,6 @@ export default async function IndustriesPage() {
                       Rename<span className="sr-only"> {industry.name}</span>
                     </SubmitButton>
                   </div>
-                </ActionForm>
-                <ActionForm action={moveIndustryAction}>
-                  <input type="hidden" name="id" value={industry.id} />
-                  <input type="hidden" name="direction" value="up" />
-                  <SubmitButton variant="outline" size="icon-lg" disabled={index === 0} aria-label={`Move ${industry.name} up`}>
-                    <ArrowUp aria-hidden="true" />
-                  </SubmitButton>
-                </ActionForm>
-                <ActionForm action={moveIndustryAction}>
-                  <input type="hidden" name="id" value={industry.id} />
-                  <input type="hidden" name="direction" value="down" />
-                  <SubmitButton variant="outline" size="icon-lg" disabled={index === industries.length - 1} aria-label={`Move ${industry.name} down`}>
-                    <ArrowDown aria-hidden="true" />
-                  </SubmitButton>
                 </ActionForm>
                 <ActionForm action={setIndustryActiveAction}>
                   <input type="hidden" name="id" value={industry.id} />

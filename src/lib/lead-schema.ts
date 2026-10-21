@@ -17,8 +17,6 @@ export type BusinessCategoryValue = (typeof BUSINESS_CATEGORIES)[number]["value"
 
 const categoryValues = BUSINESS_CATEGORIES.map((c) => c.value) as [BusinessCategoryValue, ...BusinessCategoryValue[]];
 
-/** Name of the hidden honeypot field. Real people never see or fill it. */
-export const HONEYPOT_FIELD = "company_website";
 
 /**
  * Phone in any common format ("98765 43210", "+91 98765-43210", "+44 20 …"). India is assumed when no
@@ -114,7 +112,7 @@ const optionalLink = (example: string) =>
 export const leadSchema = z
   .object({
   firstName: line("Enter your first name.", 50),
-  fatherName: line("Enter your father's name.", 50),
+  fatherName: line("Enter your middle name.", 50), // asked as "Middle name" since 2026-10-21 ("Father's name" before)
   lastName: line("Enter your last name.", 50),
   nativePlace: z.enum([...NATIVE_PLACES, OTHER_NATIVE_PLACE], { error: "Choose your native place." }),
   nativePlaceOther: z
