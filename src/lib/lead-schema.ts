@@ -4,12 +4,13 @@ import { INDIAN_STATES } from "./indian-states";
 
 // Shared by the lead form (instant feedback in the browser) and the server (the source of truth).
 
+// A to Z (client, 2026-10-21), with "Others" last.
 export const BUSINESS_CATEGORIES = [
   { value: "MANUFACTURING", label: "Manufacturers" },
-  { value: "WHOLESALE", label: "Wholesale" },
   { value: "RETAIL", label: "Retail" },
   { value: "SERVICES", label: "Services" },
   { value: "TRADING", label: "Trading" },
+  { value: "WHOLESALE", label: "Wholesale" },
   { value: "OTHERS", label: "Others" },
 ] as const;
 

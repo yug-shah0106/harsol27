@@ -1,8 +1,8 @@
-import { Mail, MessageCircle } from "lucide-react";
+import { Mail, MapPin, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { ProsePage } from "@/components/prose-page";
 import { Button } from "@/components/ui/button";
-import { CONTACT } from "@/lib/contact";
+import { ADDRESS_MAPS_LINK, CONTACT } from "@/lib/contact";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -15,7 +15,7 @@ export const metadata: Metadata = pageMetadata({
 const CARD = "flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6";
 const ICON = "grid size-12 place-items-center rounded-full bg-secondary text-primary";
 
-/** The team's contact: WhatsApp and email (the footer's "Contact us" link, and the floating "Talk to us" opens WhatsApp). */
+/** The team's contact: WhatsApp, email and the trust's address (the footer's "Contact us" link). */
 export default function ContactPage() {
   return (
     <ProsePage title="Contact us" lead="Questions about Harsol27 or Seller registration? WhatsApp or email us, and our team will get back to you.">
@@ -47,6 +47,27 @@ export default function ContactPage() {
           </div>
           <Button asChild variant="outline" className="rounded-full bg-card">
             <a href={`mailto:${CONTACT.email}`}>Write an email</a>
+          </Button>
+        </div>
+        <div className={`${CARD} sm:col-span-2`}>
+          <span className={ICON}>
+            <MapPin aria-hidden="true" className="size-6" />
+          </span>
+          <div>
+            <p className="text-sm text-muted-foreground">Address</p>
+            <p className="font-semibold">Shree Harsol Sattavis Jain Yuvak Trust</p>
+            <address className="text-lg not-italic">
+              {CONTACT.address.map((line) => (
+                <span key={line} className="block">
+                  {line}
+                </span>
+              ))}
+            </address>
+          </div>
+          <Button asChild variant="outline" className="rounded-full bg-card">
+            <a href={ADDRESS_MAPS_LINK} target="_blank" rel="noopener noreferrer">
+              Open in Google Maps
+            </a>
           </Button>
         </div>
       </div>

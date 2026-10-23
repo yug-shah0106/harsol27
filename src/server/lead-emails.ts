@@ -1,3 +1,4 @@
+import { CONTACT } from "@/lib/contact";
 import { BUSINESS_CATEGORIES } from "@/lib/lead-schema";
 import { escapeHtml, type Email } from "./email";
 
@@ -52,10 +53,12 @@ export function leadConfirmationEmail(lead: LeadForEmail): Email {
       "",
       ...rows.map(([k, v]) => `${k}: ${v}`),
       "",
+      `Follow this link to join our WhatsApp group: ${CONTACT.whatsappGroupLink}`,
+      "",
       "If you did not fill in this form, you can ignore this email.",
     ].join("\n"),
     html: emailLayout(
-      `<p>Hello ${escapeHtml(name)},</p><p>Thank you for your interest in Harsol27. We have received your details and our team will contact you.</p>${detailsTable(rows)}<p style="color:#5e5650">If you did not fill in this form, you can ignore this email.</p>`,
+      `<p>Hello ${escapeHtml(name)},</p><p>Thank you for your interest in Harsol27. We have received your details and our team will contact you.</p>${detailsTable(rows)}<p>Follow this link to join our WhatsApp group: <a href="${escapeHtml(CONTACT.whatsappGroupLink)}">${escapeHtml(CONTACT.whatsappGroupLink)}</a></p><p style="color:#5e5650">If you did not fill in this form, you can ignore this email.</p>`,
     ),
     idempotencyKey: `lead-confirmation/${lead.id}`,
   };
