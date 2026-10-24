@@ -2,6 +2,7 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useState } from "react";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
 import { THEME_COOKIE } from "@/lib/preferences";
 
@@ -10,6 +11,7 @@ import { THEME_COOKIE } from "@/lib/preferences";
  * renders the next page in it too (no flash of the wrong theme). Light unless the visitor chooses.
  */
 export function ThemeToggle({ initialDark }: { initialDark: boolean }) {
+  const { t } = useI18n();
   // On the client, read the page itself: another toggle (header or menu) may have changed it.
   const [dark, setDark] = useState(() => (typeof document === "undefined" ? initialDark : document.documentElement.classList.contains("dark")));
   const toggle = () => {
@@ -19,7 +21,7 @@ export function ThemeToggle({ initialDark }: { initialDark: boolean }) {
     setDark(next);
   };
   return (
-    <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-pressed={dark} aria-label="Dark mode" onClick={toggle}>
+    <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-pressed={dark} aria-label={t.nav.darkMode} onClick={toggle}>
       {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
     </Button>
   );

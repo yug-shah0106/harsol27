@@ -2,10 +2,12 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { FieldMessage, FormAlert } from "@/components/form-feedback";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
+import { translateError } from "@/lib/i18n";
 import type { ActionResult } from "@/server/errors";
 import { saveMobileAction, signInAction } from "./actions";
 
@@ -62,20 +64,22 @@ const fieldsOf = (state: ActionResult<unknown> | null) => (state && !state.ok ? 
 const formError = (state: ActionResult<unknown> | null) => (state && !state.ok && !state.fields ? state.error : null);
 
 export function SignInForm({ next }: { next: string }) {
+  const { t } = useI18n();
+  const s = t.signIn;
   const [state, action, pending] = useActionState(signInAction, null);
   const bind = useValues({ username: "", password: "" });
-  const error = state && !state.ok ? state.error : null;
+  const error = state && !state.ok ? translateError(t, state.error) : null;
   return (
     <form action={action} className="group flex flex-col gap-5">
       {error && <FormAlert kind="error">{error}</FormAlert>}
       <input type="hidden" name="next" value={next} />
-      <AuthField id="username" label="Username" autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={30} placeholder="Enter your username" {...bind("username")} />
+      <AuthField id="username" label={s.username} autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={30} placeholder={s.usernamePlaceholder} {...bind("username")} />
       <div className="flex flex-col gap-2">
-        <AuthField id="password" label="Password" type="password" autoComplete="current-password" required maxLength={128} placeholder="Enter your password" {...bind("password")} />
+        <AuthField id="password" label={s.password} type="password" autoComplete="current-password" required maxLength={128} placeholder={s.passwordPlaceholder} {...bind("password")} />
         {/* No self-service reset: the team gives logins out, and gives a new password when one is forgotten. */}
-        <p className="text-sm text-muted-foreground">Forgot your password? Contact the Harsol27 team.</p>
+        <p className="text-sm text-muted-foreground">{s.forgot}</p>
       </div>
-      <Submit pending={pending} label="Sign in" pendingLabel="Signing in…" />
+      <Submit pending={pending} label={s.submit} pendingLabel={s.submitting} />
     </form>
   );
 }
@@ -84,6 +88,7 @@ export function SignInForm({ next }: { next: string }) {
 const MOBILE_FIELD = ["mobile"];
 
 export function MobileForm({ next, current }: { next: string; current: string }) {
+  const { t } = useI18n();
   const [state, action, pending] = useActionState(saveMobileAction, null);
   const bind = useValues({ mobile: current });
   const fields = fieldsOf(state);
@@ -91,22 +96,22 @@ export function MobileForm({ next, current }: { next: string; current: string })
   useFocusFirstError(state, MOBILE_FIELD);
   return (
     <form action={action} className="group flex flex-col gap-5">
-      {error && <FormAlert kind="error">{error}</FormAlert>}
+      {error && <FormAlert kind="error">{translateError(t, error)}</FormAlert>}
       <input type="hidden" name="next" value={next} />
       <AuthField
         id="mobile"
-        label="Mobile number"
+        label={t.mobile.label}
         type="tel"
         inputMode="tel"
         autoComplete="tel"
         required
         maxLength={32}
         placeholder="98765 43210"
-        hint="Indian numbers need no country code. For other countries, start with + and the code."
-        error={fields.mobile}
+        hint={t.registration.phoneHint}
+        error={fields.mobile && translateError(t, fields.mobile)}
         {...bind("mobile")}
       />
-      <Submit pending={pending} label="Save and continue" pendingLabel="Saving…" />
+      <Submit pending={pending} label={t.mobile.submit} pendingLabel={t.mobile.saving} />
     </form>
   );
 }

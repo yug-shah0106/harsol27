@@ -18,7 +18,14 @@ export default defineConfig({
     baseURL,
     trace: "retain-on-failure",
     serviceWorkers: "block",
-    storageState: { cookies: [{ name: "cookie_notice", value: "ok", domain: "localhost", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" }], origins: [] },
+    // A returning English visitor: no cookie notice, no first-visit language popup (languages.spec.ts tests those).
+    storageState: {
+      cookies: [
+        { name: "cookie_notice", value: "ok", domain: "localhost", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" },
+        { name: "lang", value: "en", domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" },
+      ],
+      origins: [],
+    },
   },
   // Software WebGL, so the home page's 3D scene also runs on CI machines without a GPU.
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], launchOptions: { args: ["--enable-unsafe-swiftshader"] } } }],

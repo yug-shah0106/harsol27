@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/components/i18n";
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
@@ -9,6 +10,7 @@ type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Pro
  * not installed yet. Safari on iPhone has no install prompt, so it gets the steps instead.
  */
 export function InstallApp() {
+  const { t } = useI18n();
   const [offer, setOffer] = useState<InstallPromptEvent | null>(null);
   const [iphoneSteps, setIphoneSteps] = useState(false);
 
@@ -41,10 +43,10 @@ export function InstallApp() {
           setOffer(null); // the prompt can only be used once
         }}
       >
-        Install the Harsol27 app
+        {t.footer.install}
       </button>
     );
   }
-  if (iphoneSteps) return <p className="text-muted-foreground">Install on iPhone: tap Share, then “Add to Home Screen”.</p>;
+  if (iphoneSteps) return <p className="text-muted-foreground">{t.footer.installIphone}</p>;
   return null;
 }

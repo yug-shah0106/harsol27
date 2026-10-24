@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
 import { safeReturnPath } from "@/lib/return-path";
 import { getMember } from "@/server/authz";
+import { getMessages } from "@/server/locale";
 import { SignInForm } from "./forms";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
@@ -14,18 +15,19 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   const params = await searchParams;
   const next = safeReturnPath(params.next);
   if (await getMember()) redirect(next);
+  const { signIn: s } = await getMessages();
 
   return (
     <AuthCard
-      title="Sign in"
-      description="With the username and password the Harsol27 team sent you."
+      title={s.title}
+      description={s.description}
       footer={
         <>
-          No login yet?{" "}
+          {s.noLogin}
           <Link href="/Seller-Registration" className="font-semibold text-primary hover:underline">
-            Register as a seller
+            {s.registerLink}
           </Link>
-          . Once approved, our team sends you your username and password.
+          {s.noLoginAfter}
         </>
       }
     >

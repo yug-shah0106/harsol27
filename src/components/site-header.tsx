@@ -2,20 +2,23 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { cn } from "cn";
 import { InstallApp } from "@/components/install-app";
+import { LanguageSwitcher } from "@/components/language";
 import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { isComingSoon } from "@/lib/coming-soon";
 import { THEME_COOKIE } from "@/lib/preferences";
 import { getMember } from "@/server/authz";
+import { getMessages } from "@/server/locale";
 
-export function SkipLink() {
+/** `label`: in the visitor's language on public pages; the admin's stays English. */
+export function SkipLink({ label = "Skip to main content" }: { label?: string }) {
   return (
     <a
       href="#main"
       className="sr-only rounded-md bg-primary px-4 py-2 text-primary-foreground print:hidden focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
     >
-      Skip to main content
+      {label}
     </a>
   );
 }
@@ -51,23 +54,25 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
   // (src/lib/coming-soon.ts), so only they are linked.
   const closed = isComingSoon();
   const member = await getMember();
+  const t = await getMessages();
   const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
-  const account = member ? { href: "/account", label: "Your account" } : { href: "/sign-in", label: "Sign in" };
+  const account = member ? { href: "/account", label: t.nav.account } : { href: "/sign-in", label: t.nav.signIn };
   const links = closed
-    ? [{ href: "/", label: "Home" }, account]
-    : [{ href: "/", label: "Home" }, { href: "/search", label: "Search" }, { href: "/about", label: "About" }, account];
+    ? [{ href: "/", label: t.nav.home }, account]
+    : [{ href: "/", label: t.nav.home }, { href: "/search", label: t.nav.search }, { href: "/about", label: t.nav.about }, account];
   return (
     <header className={cn("sticky top-0 z-40 border-b border-border backdrop-blur-md print:static print:border-0", blend ? "header-blend bg-background/85" : "bg-card/85")}>
       {/* Full width: the wordmark in the left corner, the links and "Get started" in the right (same gutters as the footer). */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 lg:px-10">
         <Wordmark />
         <div className="flex items-center gap-1 print:hidden sm:gap-3">
-          <nav aria-label="Main" className="hidden items-center gap-1 sm:flex sm:gap-3">
+          <nav aria-label={t.nav.main} className="hidden items-center gap-1 sm:flex sm:gap-3">
             {links.map((link) => (
               <Link key={link.href} href={link.href} className="rounded-md px-2 py-2 text-sm font-medium whitespace-nowrap hover:text-primary hover:underline">
                 {link.label}
               </Link>
             ))}
+            <LanguageSwitcher id="language" />
             <ThemeToggle initialDark={dark} />
           </nav>
           <Button asChild className="rounded-full">
@@ -75,11 +80,11 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
               {closed ? (
                 // Short on phones, where the header is tight.
                 <>
-                  <span className="sm:hidden">Register</span>
-                  <span className="hidden sm:inline">Seller registration</span>
+                  <span className="sm:hidden">{t.nav.register}</span>
+                  <span className="hidden sm:inline">{t.nav.sellerRegistration}</span>
                 </>
               ) : (
-                "Get started"
+                t.nav.getStarted
               )}
             </Link>
           </Button>
@@ -91,25 +96,26 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const t = await getMessages();
   return (
     <footer className="mt-auto border-t border-border bg-secondary print:hidden">
       {/* One slim row: the copyright left, the links right (the floating buttons stop above the footer). */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-sm sm:px-6 lg:px-10">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <p className="text-muted-foreground">© {new Date().getFullYear()} Shree Harsol Sattavis Jain Yuvak Trust, Bhayander</p>
+          <p className="text-muted-foreground">© {new Date().getFullYear()} {t.footer.owner}</p>
           <InstallApp />
         </div>
-        <nav aria-label="Footer" className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
+        <nav aria-label={t.footer.label} className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
           {!isComingSoon() && (
             <>
-              <Link href="/about" className="hover:underline">About</Link>
-              <Link href="/about#faq" className="hover:underline">FAQ</Link>
+              <Link href="/about" className="hover:underline">{t.footer.about}</Link>
+              <Link href="/about#faq" className="hover:underline">{t.footer.faq}</Link>
             </>
           )}
-          <Link href="/contact" className="hover:underline">Contact us</Link>
-          <Link href="/terms" className="hover:underline">Terms</Link>
-          <Link href="/privacy" className="hover:underline">Privacy</Link>
+          <Link href="/contact" className="hover:underline">{t.footer.contact}</Link>
+          <Link href="/terms" className="hover:underline">{t.footer.terms}</Link>
+          <Link href="/privacy" className="hover:underline">{t.footer.privacy}</Link>
         </nav>
       </div>
     </footer>

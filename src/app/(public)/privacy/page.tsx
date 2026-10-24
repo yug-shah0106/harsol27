@@ -3,6 +3,8 @@ import { DraftNotice, ProsePage } from "@/components/prose-page";
 import { isComingSoon } from "@/lib/coming-soon";
 import { CONTACT } from "@/lib/contact";
 import { pageMetadata } from "@/lib/seo";
+import { getLocale } from "@/server/locale";
+import { PrivacyGu, PrivacyHi } from "./translations";
 
 export const metadata: Metadata = pageMetadata({
   title: "Privacy policy",
@@ -14,17 +16,29 @@ export const metadata: Metadata = pageMetadata({
 // Draft written from what the code actually collects (updated 2026-10-21: who is responsible, seller logins and
 // their encrypted passwords, the services that hold the data). Questions go to the team's contact (lib/contact.ts).
 // How long registrations are kept, and requests to delete them, wait for the client's decision. Legal review is
-// required before launch (see docs/FUTURE.md).
-export default function PrivacyPage() {
+// required before launch (see docs/FUTURE.md). 2026-10-24: the language cookie; Hindi and Gujarati (translations.tsx).
+const TITLE = { en: "Privacy policy", hi: "गोपनीयता नीति", gu: "ગોપનીયતા નીતિ" } as const;
+
+export default async function PrivacyPage() {
+  const locale = await getLocale();
+  const closed = isComingSoon();
   return (
-    <ProsePage title="Privacy policy" updated="2026-10-21">
+    <ProsePage title={TITLE[locale]} updated="2026-10-24">
       <DraftNotice />
+      {locale === "hi" ? <PrivacyHi closed={closed} /> : locale === "gu" ? <PrivacyGu closed={closed} /> : <PrivacyEn closed={closed} />}
+    </ProsePage>
+  );
+}
+
+function PrivacyEn({ closed }: { closed: boolean }) {
+  return (
+    <>
       <h2>Who we are</h2>
       <p>
         Harsol27 is run by the Shree Harsol Sattavis Jain Yuvak Trust, Bhayander. The trust is responsible for the information
         described here.
       </p>
-      <h2>What we collect through the {isComingSoon() ? "Seller registration" : "Get started"} form</h2>
+      <h2>What we collect through the {closed ? "Seller registration" : "Get started"} form</h2>
       <ul>
         <li>Your first name, your middle name and your last name, your WhatsApp number and email address.</li>
         <li>Your native place, and your address, city, state and pincode.</li>
@@ -66,8 +80,8 @@ export default function PrivacyPage() {
       </p>
       <h2>Cookies</h2>
       <p>
-        We use only essential cookies: to keep you signed in, and to remember your settings (dark mode, and that you
-        have seen our cookie notice). We do not use advertising or tracking cookies.
+        We use only essential cookies: to keep you signed in, and to remember your settings (dark mode, your language,
+        and that you have seen our cookie notice). We do not use advertising or tracking cookies.
       </p>
       <h2>Questions</h2>
       <p>
@@ -78,6 +92,6 @@ export default function PrivacyPage() {
         </a>
         , and our team will get back to you.
       </p>
-    </ProsePage>
+    </>
   );
 }
