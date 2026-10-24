@@ -6,14 +6,15 @@ test.beforeEach(async ({ context }) => {
   await sendClientIp(context);
 });
 
-test("home page: real HTML hero, seeded industries, how it works, call to action", async ({ page }) => {
+test("home page: real HTML hero, seeded industries, how it works, the offer and seller registration", async ({ page }) => {
   const csp = watchCsp(page);
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Find the right supplier");
-  await expect(page.getByRole("heading", { name: "Industries on Harsol27" })).toBeVisible();
-  await expect(page.getByRole("listitem").filter({ hasText: "Food Products" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "How it works" })).toBeVisible();
-  await page.getByRole("link", { name: "Get started" }).first().click();
+  await expect(page.getByRole("heading", { name: "A festival of trades" })).toBeAttached();
+  await expect(page.getByRole("link", { name: "Food Products" })).toBeAttached();
+  await expect(page.getByRole("heading", { name: "How it works" })).toBeAttached();
+  await expect(page.getByRole("heading", { name: /months on Harsol27/ })).toBeAttached();
+  await page.getByRole("main").getByRole("link", { name: "Register your business" }).first().click();
   await expect(page).toHaveURL(/\/Seller-Registration$/);
   expect(csp).toEqual([]);
 });
@@ -67,8 +68,8 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
 });
 
 test("public pages tell search engines and link previews what they are", async ({ page }) => {
-  // [page, its canonical address]; /coming-soon is served at "/" before launch.
-  for (const [path, canonical] of [["/", "/"], ["/coming-soon", "/"], ["/Seller-Registration", "/Seller-Registration"], ["/about", "/about"], ["/contact", "/contact"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
+  // [page, its canonical address]
+  for (const [path, canonical] of [["/", "/"], ["/Seller-Registration", "/Seller-Registration"], ["/about", "/about"], ["/contact", "/contact"], ["/terms", "/terms"], ["/privacy", "/privacy"], ["/industries", "/industries"], ["/industries/food-products", "/industries/food-products"]] as const) {
     await page.goto(path);
     const meta = (name: string) => page.locator(`meta[name="${name}"], meta[property="${name}"]`).getAttribute("content");
     const title = await page.title();

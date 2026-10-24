@@ -6,14 +6,14 @@ import { phoneSchema } from "./lead-schema";
 export { INDIAN_STATES };
 
 /**
- * The documents a seller uploads when applying (client decisions, 2026-10-08). GST is optional:
- * businesses under the GST threshold do not have a certificate.
+ * The documents a seller can upload when applying (client decisions, 2026-10-08). All optional since the
+ * client's decision of 2026-10-15: a business adds the ones it has (GST, for one, only above the threshold).
  */
 export const SELLER_DOCUMENTS = [
   { kind: "GST_CERTIFICATE", label: "GST certificate", required: false },
-  { kind: "PAN_CARD", label: "PAN card", required: true },
-  { kind: "BUSINESS_REGISTRATION", label: "Udyam or business registration certificate", required: true },
-  { kind: "ADDRESS_PROOF", label: "Address proof (for example an electricity bill)", required: true },
+  { kind: "PAN_CARD", label: "PAN card", required: false },
+  { kind: "BUSINESS_REGISTRATION", label: "Udyam or business registration certificate", required: false },
+  { kind: "ADDRESS_PROOF", label: "Address proof (for example an electricity bill)", required: false },
 ] as const;
 
 export type SellerDocumentKindValue = (typeof SELLER_DOCUMENTS)[number]["kind"];

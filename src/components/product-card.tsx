@@ -1,21 +1,25 @@
 import { ImageOff } from "lucide-react";
 import Link from "next/link";
 import { ProductPhoto } from "@/components/product-photo";
+import { industryName } from "@/lib/i18n";
+import type { Messages } from "@/i18n";
+import { getMessages } from "@/server/locale";
 import type { ProductCard as ProductCardData } from "@/server/catalog";
 
-export function ProductGrid({ products, priorityCount = 0 }: { products: ProductCardData[]; priorityCount?: number }) {
+export async function ProductGrid({ products, priorityCount = 0 }: { products: ProductCardData[]; priorityCount?: number }) {
+  const t = await getMessages();
   return (
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product, i) => (
         <li key={product.id} data-reveal>
-          <ProductCard product={product} priority={i < priorityCount} />
+          <ProductCard product={product} priority={i < priorityCount} t={t} />
         </li>
       ))}
     </ul>
   );
 }
 
-export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
+export function ProductCard({ product, priority = false, t }: { product: ProductCardData; priority?: boolean; t: Messages }) {
   const photo = product.photos[0];
   return (
     <Link
@@ -41,7 +45,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
         <span className="font-semibold group-hover:underline">{product.name}</span>
         <span className="text-sm text-muted-foreground">{product.seller.companyName}</span>
         <span className="mt-auto pt-2 text-sm text-muted-foreground">
-          {product.seller.city}, {product.seller.state} · {product.industry.name}
+          {product.seller.city}, {product.seller.state} · {industryName(t, product.industry.name)}
         </span>
       </div>
     </Link>

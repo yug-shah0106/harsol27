@@ -222,7 +222,7 @@ describe("member logins", () => {
     expect(login.password).toMatch(/^[a-zA-Z2-9]{12}$/);
     const user = await db().user.findUniqueOrThrow({ where: { username }, include: { accounts: true } });
     expect(user).toMatchObject({ role: "MEMBER", email, name: "Asha Ramesh Patel", mobile: "+919876543210", disabledAt: null });
-    expect(await verifyPassword({ hash: user.accounts[0]!.password!, password: login.password })).toBe(true); // only its hash is kept
+    expect(await verifyPassword({ hash: user.accounts[0]!.password!, password: login.password! })).toBe(true); // only its hash is kept
     expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).userId).toBe(user.id);
     expect(await db().auditLog.count({ where: { action: "MEMBER_LOGIN_CREATED", entityId: lead.id } })).toBe(1);
 
@@ -234,6 +234,28 @@ describe("member logins", () => {
     const other = await db().lead.findFirstOrThrow({ where: { email: second } });
     await decideLead({ leadId: other.id, decision: "APPROVED" }, admin);
     await expectFieldError(createLeadLogin({ leadId: other.id, username }, admin), "username");
+  });
+
+  it("links the person's own buyer account when its email and mobile number match, and refuses another's", async () => {
+    const email = `own.${run}@example.com`;
+    const username = `own.${run}`.slice(0, 30);
+    const buyer = await db().user.create({ data: { name: "Asha Patel", email, username, mobile: "+919876543210", role: "MEMBER" } });
+    await submitLead(await form({ email }), headersFor(uniqueIp()));
+    const lead = await db().lead.findFirstOrThrow({ where: { email } });
+    await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
+
+    const login = await createLeadLogin({ leadId: lead.id, username: `ignored.${run}` }, admin);
+    expect(login).toEqual({ username, password: null, linked: true });
+    expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).userId).toBe(buyer.id);
+    expect(await db().auditLog.count({ where: { action: "MEMBER_LOGIN_LINKED", entityId: lead.id } })).toBe(1);
+
+    // Same email, another mobile number: not linked.
+    const email2 = `notmine.${run}@example.com`;
+    await db().user.create({ data: { name: "Someone Else", email: email2, username: `nm.${run}`.slice(0, 30), mobile: "+919000000001", role: "MEMBER" } });
+    await submitLead(await form({ email: email2 }), headersFor(uniqueIp()));
+    const lead2 = await db().lead.findFirstOrThrow({ where: { email: email2 } });
+    await decideLead({ leadId: lead2.id, decision: "APPROVED" }, admin);
+    await expect(createLeadLogin({ leadId: lead2.id, username: `x.${run}`.slice(0, 30) }, admin)).rejects.toThrow(/Another account already uses/);
   });
 
   it("works only while the registration is approved: rejecting switches it off and signs it out, approving turns it back on", async () => {

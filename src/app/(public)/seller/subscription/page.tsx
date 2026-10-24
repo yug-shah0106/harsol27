@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDay, formatRupees, REMINDER_DAYS, subscriptionState } from "@/lib/subscription";
+import { fill, formatShortDate, HTML_LANG } from "@/lib/i18n";
+import { formatRupees, REMINDER_DAYS, subscriptionState } from "@/lib/subscription";
 import { getSellerContact } from "@/server/contact-access";
+import { getLocale, getMessages } from "@/server/locale";
 import { getMySubscriptionHistory } from "@/server/subscriptions";
 import { indiaToday } from "@/server/visibility";
 import { requireSellerPage } from "../seller-page";
@@ -13,50 +15,54 @@ export const metadata: Metadata = { title: "Subscription", robots: { index: fals
 export default async function SellerSubscriptionPage() {
   const { member, seller } = await requireSellerPage("/seller/subscription");
   const [history, contact] = await Promise.all([getMySubscriptionHistory(seller.id), getSellerContact({ kind: "member", id: member.id }, seller.id)]);
+  const [locale, { sellerArea: s }] = [await getLocale(), await getMessages()];
+  const day = (date: Date) => formatShortDate(date, locale);
+  const days = REMINDER_DAYS.join(", ").replace(/, (\d+)$/, `${s.and}$1`);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-12 sm:px-6">
       <SellerNav />
-      <h1 className="text-3xl font-extrabold tracking-tight">Subscription</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{s.subscription}</h1>
 
       <SubscriptionStatus state={subscriptionState(seller.paidUntil, indiaToday())} paidUntil={seller.paidUntil} />
 
       <section aria-labelledby="renewal-heading" className="flex flex-col gap-2 rounded-xl border border-border bg-card p-5">
         <h2 id="renewal-heading" className="text-lg font-semibold">
-          How renewal works
+          {s.renewalTitle}
         </h2>
-        <p>Your Harsol27 subscription is yearly and is paid to the Harsol27 team, not on this website.</p>
+        <p>{s.renewal}</p>
         <p>
-          We email reminders to <strong>{contact?.email ?? "your contact email"}</strong> {REMINDER_DAYS.join(", ").replace(/, (\d+)$/, " and $1")} days before your
-          paid-until date. To renew, reply to one of those emails or contact the Harsol27 team. Your new date shows here as soon as it is recorded.
+          {fill(s.remindBefore, { days })}
+          <strong>{contact?.email ?? s.yourEmail}</strong>
+          {fill(s.remindAfter, { days })}
         </p>
       </section>
 
       <section aria-labelledby="payments-heading" className="flex flex-col gap-3">
         <h2 id="payments-heading" className="text-lg font-semibold">
-          Payments recorded
+          {s.payments}
         </h2>
         {history.length === 0 ? (
-          <p className="text-muted-foreground">None yet.</p>
+          <p className="text-muted-foreground">{s.none}</p>
         ) : (
           <div className="rounded-xl border border-border bg-card">
-            <Table scrollLabel="Payments recorded">
+            <Table scrollLabel={s.payments}>
               <TableHeader>
                 <TableRow>
-                  <TableHead scope="col">Recorded</TableHead>
-                  <TableHead scope="col">Paid until</TableHead>
-                  <TableHead scope="col">Amount</TableHead>
-                  <TableHead scope="col">Paid on</TableHead>
-                  <TableHead scope="col">Reference</TableHead>
+                  <TableHead scope="col">{s.recorded}</TableHead>
+                  <TableHead scope="col">{s.paidUntil}</TableHead>
+                  <TableHead scope="col">{s.amount}</TableHead>
+                  <TableHead scope="col">{s.paidOn}</TableHead>
+                  <TableHead scope="col">{s.reference}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="whitespace-nowrap">{p.createdAt.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium" })}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDay(p.newPaidUntil)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{p.createdAt.toLocaleDateString(HTML_LANG[locale], { timeZone: "Asia/Kolkata", dateStyle: "medium" })}</TableCell>
+                    <TableCell className="whitespace-nowrap">{day(p.newPaidUntil)}</TableCell>
                     <TableCell>{p.amountPaise !== null ? formatRupees(p.amountPaise) : "—"}</TableCell>
-                    <TableCell className="whitespace-nowrap">{p.paidOn ? formatDay(p.paidOn) : "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap">{p.paidOn ? day(p.paidOn) : "—"}</TableCell>
                     <TableCell>{p.reference ?? "—"}</TableCell>
                   </TableRow>
                 ))}

@@ -1,5 +1,7 @@
 import { CircleAlert, CircleCheck, TriangleAlert } from "lucide-react";
-import { formatDay, type SubscriptionState } from "@/lib/subscription";
+import { fill, formatShortDate } from "@/lib/i18n";
+import type { SubscriptionState } from "@/lib/subscription";
+import { getLocale, getMessages } from "@/server/locale";
 
 const TONES = {
   ok: { Icon: CircleCheck, className: "border-success" },
@@ -8,32 +10,36 @@ const TONES = {
 } as const;
 
 /** The seller's subscription in a sentence or two. Icon + words carry the meaning, the border colour only adds to it. */
-export function SubscriptionStatus({ state, paidUntil }: { state: SubscriptionState; paidUntil: Date | null }) {
-  const until = paidUntil ? formatDay(paidUntil) : "";
+export async function SubscriptionStatus({ state, paidUntil }: { state: SubscriptionState; paidUntil: Date | null }) {
+  const [locale, { sellerArea: s }] = [await getLocale(), await getMessages()];
+  const until = paidUntil ? formatShortDate(paidUntil, locale) : "";
   let tone: keyof typeof TONES;
   let message: React.ReactNode;
   if (state.kind === "none") {
     tone = "bad";
     message = (
       <>
-        <strong>Not active yet.</strong> Your products are not visible to buyers until the Harsol27 team records your yearly subscription.
+        <strong>{s.notActive}</strong>
+        {s.notActiveBody}
       </>
     );
   } else if (state.kind === "expired") {
     tone = "bad";
     message = (
       <>
-        <strong>Expired.</strong> Your subscription was paid until {until}, so your products are hidden from buyers. Your account, products and
-        inquiries are kept, and your listings come back as soon as your renewal is recorded.
+        <strong>{s.expired}</strong>
+        {fill(s.expiredBody, { until })}
       </>
     );
   } else {
     tone = state.kind === "expiring" ? "warn" : "ok";
-    const left = state.daysLeft === 0 ? "today is the last day" : `${state.daysLeft} ${state.daysLeft === 1 ? "day" : "days"} left`;
+    const left = state.daysLeft === 0 ? s.lastDay : state.daysLeft === 1 ? s.dayLeft : fill(s.daysLeft, { n: state.daysLeft });
     message = (
       <>
-        Active until <strong>{until}</strong> ({left}). Your listed products are visible to buyers.
-        {state.kind === "expiring" && " Please renew soon so they stay visible."}
+        {s.activeBefore}
+        <strong>{until}</strong>
+        {fill(s.activeAfter, { left })}
+        {state.kind === "expiring" && s.renewSoon}
       </>
     );
   }

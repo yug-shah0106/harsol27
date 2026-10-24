@@ -7,14 +7,14 @@ import { expectAccessible, newPage } from "./helpers";
 test("first visit: the popup asks for a language, and the choice is remembered", async ({ browser }) => {
   const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const page = await context.newPage();
-  await page.goto("/coming-soon"); // served at "/" before launch (the tests run the full site)
+  await page.goto("/");
   const popup = page.getByRole("dialog");
   await expect(popup).toContainText("Choose your language");
   await expect(popup).toContainText("તમારી ભાષા પસંદ કરો");
   await expectAccessible(page);
   await popup.getByRole("button", { name: "ગુજરાતી" }).click();
   await expect(popup).toHaveCount(0);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("ઉડાન ભરવા");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("તેમને ફોન કરો.");
   await expect(page.locator("div.contents[lang]")).toHaveAttribute("lang", "gu-IN");
   await page.reload();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -41,7 +41,7 @@ test("the header's language button switches the page, and form errors follow it"
   await page.goto("/Seller-Registration");
   await page.getByRole("banner").getByRole("combobox", { name: "Language" }).click();
   await page.getByRole("option", { name: "हिन्दी" }).click();
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Harsol27 के साथ शुरू करें"); // the launched site's title
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("सेलर रजिस्ट्रेशन शुरू हो गया है");
   await expect(page.getByLabel("पहला नाम")).toBeVisible();
   await page.getByRole("button", { name: "जमा करें" }).click();
   await expect(page.getByText("अपना पहला नाम लिखें।")).toBeVisible();

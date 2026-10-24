@@ -7,7 +7,6 @@ import { Motion } from "@/components/motion";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { SiteFooter, SiteHeader, SkipLink } from "@/components/site-header";
 import { UtmCapture } from "@/components/utm-capture";
-import { isComingSoon } from "@/lib/coming-soon";
 import { getMessages } from "@/server/locale";
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -16,8 +15,8 @@ export default async function PublicLayout({ children }: { children: React.React
     <LocaleRoot>
       <SkipLink label={t.nav.skip} />
       <Toran />
-      {/* Before launch, these pages wear the coming-soon page's header: clear at the top, frosting as you scroll. */}
-      <SiteHeader blend={isComingSoon()} />
+      {/* The festival header: clear at the top (over the home page's rangoli), frosting as you scroll. */}
+      <SiteHeader blend />
       <main id="main" className="flex-1 outline-none">
         {children}
         <FloatingActions />

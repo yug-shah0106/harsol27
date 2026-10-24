@@ -82,8 +82,8 @@ export function getMySeller(userId: string) {
 }
 
 /**
- * Creates the seller application, or resubmits it after a rejection. A new application needs every
- * required document (all but GST); a resubmission keeps any document not replaced. Everything (details, documents,
+ * Creates the seller application, or resubmits it after a rejection. Documents are optional (client,
+ * 2026-10-15; SELLER_DOCUMENTS keeps a `required` flag should that change); a resubmission keeps any document not replaced. Everything (details, documents,
  * history, team alert) is written in one transaction.
  */
 export async function submitApplication(member: Member, form: FormData): Promise<void> {

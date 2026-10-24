@@ -52,9 +52,9 @@ test("the header stays at the top, with a line showing how far down the page you
   expect((await page.getByRole("banner").boundingBox())!.y).toBe(0);
 });
 
-test("coming soon: the header is clear at the top and frosts as you scroll; a reload starts at the top", async ({ browser }) => {
+test("home: the header is clear at the top and frosts as you scroll; a reload starts at the top", async ({ browser }) => {
   const page = await newPage(browser);
-  await page.goto("/coming-soon");
+  await page.goto("/");
   const header = page.getByRole("banner");
   const background = () => header.evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(await background()).toMatch(/\/ 0\)$|rgba\(0, 0, 0, 0\)/);

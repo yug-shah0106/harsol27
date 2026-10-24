@@ -22,9 +22,9 @@ test("seller journey: apply with documents → rejected with reason → resubmit
   // Submitting empty shows every problem as text, and focuses the first one.
   await seller.getByRole("button", { name: "Submit application" }).click();
   await expect(seller.getByLabel("Company name")).toBeFocused();
-  await expect(seller.getByText("Upload your PAN card.")).toBeVisible();
-  await expect(seller.getByText("Upload your GST certificate.")).toHaveCount(0); // GST is optional
-  await expect(seller.getByLabel("GST certificate (optional)")).toBeVisible();
+  await expect(seller.getByText("Enter your company name.")).toBeVisible();
+  await expect(seller.getByText(/^Upload your /)).toHaveCount(0); // every document is optional (client, 2026-10-15)
+  await expect(seller.getByLabel("PAN card (optional)")).toBeVisible();
 
   await seller.getByLabel("Company name").fill(company);
   await seller.getByLabel("Contact person").fill("Asha Patel");

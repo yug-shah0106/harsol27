@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, requireStaff } from "@/server/authz";
 import { runAction, type ActionResult } from "@/server/errors";
 import { changeLeadStatus, decideLead, leadsStamp, updateLeadSubscription } from "@/server/leads";
-import { createLeadLogin, resetLeadPassword } from "@/server/member-logins";
+import { createLeadLogin, resetMemberPassword } from "@/server/member-logins";
 
 export async function changeLeadStatusAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("changeLeadStatus", async () => {
@@ -45,14 +45,14 @@ export async function updateLeadSubscriptionAction(_prev: ActionResult<string> |
   });
 }
 
-/** Makes the member login for an approved registration; the lead page then shows its username and password. */
-export async function createLeadLoginAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+/** Makes the member login for an approved registration (or links the person's own account); the lead page then shows it. */
+export async function createLeadLoginAction(_prev: ActionResult<boolean> | null, formData: FormData): Promise<ActionResult<boolean>> {
   return runAction("createLeadLogin", async () => {
     const actor = await requireAdmin();
     const leadId = String(formData.get("leadId") ?? "");
-    await createLeadLogin({ leadId, username: formData.get("username") }, actor);
+    const { linked } = await createLeadLogin({ leadId, username: formData.get("username") }, actor);
     revalidatePath(`/admin/leads/${leadId}`);
-    return { ok: true, data: undefined };
+    return { ok: true, data: linked };
   });
 }
 
@@ -61,7 +61,7 @@ export async function resetLeadPasswordAction(_prev: ActionResult | null, formDa
   return runAction("resetLeadPassword", async () => {
     const actor = await requireAdmin();
     const leadId = String(formData.get("leadId") ?? "");
-    await resetLeadPassword({ leadId }, actor);
+    await resetMemberPassword({ leadId }, actor);
     revalidatePath(`/admin/leads/${leadId}`);
     return { ok: true, data: undefined };
   });

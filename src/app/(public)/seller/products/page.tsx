@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ProductPhoto } from "@/components/product-photo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { fill, industryName } from "@/lib/i18n";
+import { getMessages } from "@/server/locale";
 import { listMyProducts } from "@/server/products";
 import { indiaToday } from "@/server/visibility";
 import { requireSellerPage } from "../seller-page";
@@ -15,32 +17,35 @@ export default async function MyProductsPage() {
   const { seller } = await requireSellerPage("/seller/products");
   const products = await listMyProducts(seller.id);
   const subscriptionActive = !!seller.paidUntil && seller.paidUntil >= indiaToday();
+  const t = await getMessages();
+  const s = t.sellerArea;
 
   const statusOf = (p: (typeof products)[number]) =>
-    p.removedAt ? { label: "Removed by Harsol27", variant: "destructive" as const }
-    : p.isHidden ? { label: "Hidden", variant: "outline" as const }
-    : !p.industry.isActive ? { label: "Not visible: industry inactive", variant: "outline" as const }
-    : !subscriptionActive ? { label: "Not visible: subscription inactive", variant: "outline" as const }
-    : { label: "Live", variant: "default" as const };
+    p.removedAt ? { label: s.removedBadge, variant: "destructive" as const }
+    : p.isHidden ? { label: s.hiddenBadge, variant: "outline" as const }
+    : !p.industry.isActive ? { label: s.industryInactive, variant: "outline" as const }
+    : !subscriptionActive ? { label: s.subscriptionInactive, variant: "outline" as const }
+    : { label: s.live, variant: "default" as const };
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10 sm:px-6">
       <SellerNav />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Your products</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{s.yourProducts}</h1>
         <Button asChild>
           <Link href="/seller/products/new">
-            <Plus aria-hidden="true" /> Add a product
+            <Plus aria-hidden="true" /> {s.addProduct}
           </Link>
         </Button>
       </div>
       {!subscriptionActive && (
         <p className="rounded-lg border border-border bg-secondary p-3 text-sm">
-          <strong>Your products are not visible to buyers</strong> until your yearly subscription is active. You can still add and edit them.
+          <strong>{s.notVisible}</strong>
+          {s.notVisibleAfter}
         </p>
       )}
       {products.length === 0 ? (
-        <p className="text-muted-foreground">You have not added any products yet.</p>
+        <p className="text-muted-foreground">{s.noProducts}</p>
       ) : (
         <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
           {products.map((product) => {
@@ -61,8 +66,8 @@ export default async function MyProductsPage() {
                     {product.name}
                   </Link>
                   <span className="text-sm text-muted-foreground">
-                    {product.industry.name} · {product._count.photos} {product._count.photos === 1 ? "photo" : "photos"} · {product._count.inquiries}{" "}
-                    {product._count.inquiries === 1 ? "inquiry" : "inquiries"}
+                    {industryName(t, product.industry.name)} · {fill(product._count.photos === 1 ? s.photoOne : s.photoMany, { n: product._count.photos })} ·{" "}
+                    {fill(product._count.inquiries === 1 ? s.inquiryOne : s.inquiryMany, { n: product._count.inquiries })}
                   </span>
                 </div>
                 <Badge variant={status.variant}>{status.label}</Badge>

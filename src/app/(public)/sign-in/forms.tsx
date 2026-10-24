@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
-import { translateError } from "@/lib/i18n";
+import { fill, translateError } from "@/lib/i18n";
 import type { ActionResult } from "@/server/errors";
-import { saveMobileAction, signInAction } from "./actions";
+import { saveMobileAction, signInAction, signUpAction } from "./actions";
 
 /**
  * Controlled fields, so what was typed survives React's form reset when the server says no.
@@ -76,7 +76,7 @@ export function SignInForm({ next }: { next: string }) {
       <AuthField id="username" label={s.username} autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={30} placeholder={s.usernamePlaceholder} {...bind("username")} />
       <div className="flex flex-col gap-2">
         <AuthField id="password" label={s.password} type="password" autoComplete="current-password" required maxLength={128} placeholder={s.passwordPlaceholder} {...bind("password")} />
-        {/* No self-service reset: the team gives logins out, and gives a new password when one is forgotten. */}
+        {/* No self-service reset: the team gives a new password when one is forgotten. */}
         <p className="text-sm text-muted-foreground">{s.forgot}</p>
       </div>
       <Submit pending={pending} label={s.submit} pendingLabel={s.submitting} />
@@ -85,6 +85,32 @@ export function SignInForm({ next }: { next: string }) {
 }
 
 // Module-level, so the focus effect runs when the result changes, not on every keystroke.
+const SIGN_UP_FIELDS = ["name", "mobile", "email", "username", "password"];
+
+/** A buyer's own account (sellers get theirs from the team). Signed in at once. */
+export function SignUpForm({ next, minPassword }: { next: string; minPassword: number }) {
+  const { t } = useI18n();
+  const s = t.signUp;
+  const [state, action, pending] = useActionState(signUpAction, null);
+  const bind = useValues({ name: "", mobile: "", email: "", username: "", password: "" });
+  const fields = fieldsOf(state);
+  const error = formError(state);
+  const fieldError = (name: string) => fields[name] && translateError(t, fields[name]);
+  useFocusFirstError(state, SIGN_UP_FIELDS);
+  return (
+    <form action={action} className="group flex flex-col gap-5">
+      {error && <FormAlert kind="error">{translateError(t, error)}</FormAlert>}
+      <input type="hidden" name="next" value={next} />
+      <AuthField id="name" label={s.name} autoComplete="name" required maxLength={100} error={fieldError("name")} {...bind("name")} />
+      <AuthField id="mobile" label={s.mobile} type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="98765 43210" hint={s.mobileHint} error={fieldError("mobile")} {...bind("mobile")} />
+      <AuthField id="email" label={s.email} type="email" autoComplete="email" required maxLength={254} error={fieldError("email")} {...bind("email")} />
+      <AuthField id="username" label={s.username} autoComplete="username" autoCapitalize="none" spellCheck={false} required minLength={3} maxLength={30} pattern="[A-Za-z0-9][A-Za-z0-9._]{2,29}" hint={s.usernameHint} error={fieldError("username")} {...bind("username")} />
+      <AuthField id="password" label={s.password} type="password" autoComplete="new-password" required minLength={minPassword} maxLength={128} hint={fill(s.passwordHint, { min: minPassword })} error={fieldError("password")} {...bind("password")} />
+      <Submit pending={pending} label={s.submit} pendingLabel={s.submitting} />
+    </form>
+  );
+}
+
 const MOBILE_FIELD = ["mobile"];
 
 export function MobileForm({ next, current }: { next: string; current: string }) {

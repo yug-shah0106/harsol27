@@ -8,7 +8,7 @@ import { LanguageSwitcher } from "@/components/language";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
-/** The header's links on phones (below 640px): a button that opens them as a panel under the header. */
+/** The header's links below 1024px (phones and tablets): a button that opens them as a panel under the header. */
 export function MobileMenu({ links, initialDark }: { links: { href: string; label: string }[]; initialDark: boolean }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -21,7 +21,7 @@ export function MobileMenu({ links, initialDark }: { links: { href: string; labe
   }, [open]);
 
   return (
-    <div className="sm:hidden">
+    <div className="lg:hidden">
       <Button
         type="button"
         variant="ghost"

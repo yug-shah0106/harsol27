@@ -6,17 +6,16 @@ import { newPage, watchCsp } from "./helpers";
 test("below the fold waits for you, shows itself when reached or focused, and breaks no CSP rule", async ({ browser }) => {
   const page = await newPage(browser);
   const csp = watchCsp(page);
-  await page.goto("/");
+  await page.goto("/industries");
   await page.waitForFunction(() => document.documentElement.classList.contains("lenis")); // GSAP and Lenis are running
 
-  // The call to action is below the fold: hidden until reached.
-  const cta = page.locator("[data-reveal]", { has: page.getByRole("link", { name: "Get started" }) });
-  await expect(cta).toHaveCSS("opacity", "0");
-  await expect(page.getByRole("heading", { name: "Sell everything on Harsol27" })).toBeAttached(); // still readable to screen readers
+  // The last industry is below the fold: hidden until reached, but still readable to screen readers.
+  const tile = page.locator("[data-reveal]", { has: page.getByRole("link", { name: /Videography/ }) });
+  await expect(tile).toHaveCSS("opacity", "0");
 
   // A keyboard user tabbing ahead never lands on something invisible.
-  await page.getByRole("link", { name: "Get started" }).last().focus();
-  await expect(cta).toHaveCSS("opacity", "1");
+  await page.getByRole("link", { name: /Videography/ }).focus();
+  await expect(tile).toHaveCSS("opacity", "1");
 
   // Scrolling to the end reaches the rest: every revealed item, heading word and statement word ends
   // fully visible, and every giant line has slid fully into place.
@@ -33,22 +32,11 @@ test("below the fold waits for you, shows itself when reached or focused, and br
   expect(csp).toEqual([]);
 });
 
-test("the marquee drifts on its own", async ({ browser }) => {
-  const page = await newPage(browser);
-  await page.goto("/");
-  await page.waitForFunction(() => document.documentElement.classList.contains("lenis"));
-  const track = page.locator("[data-marquee]");
-  await track.scrollIntoViewIfNeeded();
-  const x = () => track.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
-  const start = await x();
-  await expect.poll(x).not.toBe(start); // (it wraps round, so it can jump either way)
-});
-
 test("nothing follows the mouse: buttons and cards stay put under the pointer", async ({ browser }) => {
   const page = await newPage(browser);
   await page.goto("/industries");
   await page.waitForFunction(() => document.documentElement.classList.contains("lenis"));
-  const button = page.getByRole("banner").getByRole("link", { name: "Get started" });
+  const button = page.getByRole("banner").getByRole("link", { name: "Seller registration" });
   const card = page.getByRole("link", { name: /Food Products/ });
   for (const target of [button, card]) {
     const box = (await target.boundingBox())!;
@@ -61,9 +49,9 @@ test("nothing follows the mouse: buttons and cards stay put under the pointer", 
   }
 });
 
-test("coming soon: the line between the steps grows bit by bit as you scroll", async ({ browser }) => {
+test("home: the line between the steps grows bit by bit as you scroll", async ({ browser }) => {
   const page = await newPage(browser);
-  await page.goto("/coming-soon");
+  await page.goto("/");
   await page.waitForFunction(() => document.documentElement.classList.contains("lenis"));
   const path = page.locator("[data-path]");
   const drawn = () => path.evaluate((el) => 1 - parseFloat(getComputedStyle(el).strokeDashoffset));

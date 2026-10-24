@@ -93,11 +93,10 @@ describe("seller application", () => {
     expect(seller.documents.map((d) => d.kind).sort()).toEqual(["ADDRESS_PROOF", "BUSINESS_REGISTRATION", "PAN_CARD"]);
   });
 
-  it("requires every other document on a first application", async () => {
+  it("takes an application without documents: they are optional (client, 2026-10-15)", async () => {
     const member = await newMember();
-    const docs = await allDocs(member);
-    delete docs.PAN_CARD;
-    await fieldError(submitApplication(member, await applicationForm(member, docs)), "doc_PAN_CARD");
+    await submitApplication(member, await applicationForm(member, {}));
+    expect(await db().seller.findUniqueOrThrow({ where: { userId: member.id }, select: { status: true, documents: true } })).toEqual({ status: "PENDING", documents: [] });
   });
 
   it("refuses a file whose bytes are not what it claims to be", async () => {

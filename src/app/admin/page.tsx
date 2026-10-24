@@ -4,7 +4,6 @@ import { cn } from "cn";
 import { Rangoli } from "@/components/festive";
 import { CountUp } from "@/components/motion-text";
 import { Button } from "@/components/ui/button";
-import { isComingSoon } from "@/lib/coming-soon";
 import { leadIndustryName } from "@/lib/lead-schema";
 import { LEAD_DECISION_LABELS } from "@/lib/lead-status";
 import { requireStaff } from "@/server/authz";
@@ -157,10 +156,10 @@ export default async function AdminHomePage() {
         <Breakdown title="By category" rows={leads.categories.map((c) => ({ label: categoryLabel(c.value), count: c.count }))} empty="No registrations yet." />
       </div>
 
-      {/* The marketplace: quiet before launch, so smaller. */}
+      {/* The marketplace: sellers, inquiries and their subscriptions. */}
       <section aria-labelledby="marketplace-heading" className="flex flex-col gap-3">
         <h2 id="marketplace-heading" className="text-lg font-semibold">
-          Marketplace{isComingSoon() && <span className="ml-2 text-sm font-normal text-muted-foreground">opens after launch</span>}
+          Marketplace
         </h2>
         <ul className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard small href="/admin/sellers?status=PENDING" label="Seller applications to review" value={pendingSellers} />

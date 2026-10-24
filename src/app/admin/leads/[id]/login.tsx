@@ -41,7 +41,12 @@ export function LeadLogin({
     const { username } = login;
     return (
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
-        {state?.ok && <FormAlert kind="success">Login made. Send these to {firstName} on WhatsApp.</FormAlert>}
+        {state?.ok &&
+          (state.data ? (
+            <FormAlert kind="success">{firstName} already had a buyer account with this email and mobile number: it is now linked to this registration, and they sign in with it.</FormAlert>
+          ) : (
+            <FormAlert kind="success">Login made. Send these to {firstName} on WhatsApp.</FormAlert>
+          ))}
         {reset?.ok && <FormAlert kind="success">Password reset. Send the new one to {firstName} on WhatsApp.</FormAlert>}
         {reset && !reset.ok && <FormAlert kind="error">{reset.error}</FormAlert>}
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
@@ -51,7 +56,7 @@ export function LeadLogin({
             <>
               <dt className="text-muted-foreground">Password</dt>
               <dd className={password ? "font-mono font-semibold" : "text-muted-foreground"}>
-                {password ?? "Not saved (made before passwords were kept). Reset it to make a new one."}
+                {password ?? "Not known (they chose it themselves, or it was made before passwords were kept). Reset it to make a new one."}
               </dd>
             </>
           )}
