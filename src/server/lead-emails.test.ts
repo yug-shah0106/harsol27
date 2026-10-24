@@ -29,6 +29,9 @@ describe("lead emails", () => {
     expect(email.html).toContain("Food &amp; Snacks");
     expect(email.text).toContain(`Hello ${lead.firstName},`); // by first name
     expect(email.text).toContain("WhatsApp number: +919876543210");
+    // The community WhatsApp group, in both versions of the email.
+    expect(email.text).toContain("Follow this link to join our WhatsApp group: https://chat.whatsapp.com/GEfoxJohXeT5I1cl3mvT1k");
+    expect(email.html).toContain('href="https://chat.whatsapp.com/GEfoxJohXeT5I1cl3mvT1k"');
     expect(email.to).toBe("asha@example.com");
   });
 

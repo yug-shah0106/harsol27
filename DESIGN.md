@@ -281,7 +281,8 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
 - **Contact us** (`/contact`, open while the site is closed): the text-page layout, a Gujarati pill
   "કોઈ પ્રશ્ન છે? અમારો સંપર્ક કરો.", then two white cards side by side (stacked on phones), each with an
   icon disc, a small label, the number or address large, and a pill button: kumkum "Chat on WhatsApp"
-  (+91 91520 00352) and outline "Write an email" (sh27jyt@gmail.com). The details live in `lib/contact.ts`.
+  (+91 91520 00352) and outline "Write an email" (sh27jyt@gmail.com); below them, across the row, the trust's
+  address with an outline "Open in Google Maps". The details live in `lib/contact.ts`.
 - **Floating buttons** (bottom right, every public page): a kumkum pill "Talk to us" (opens a WhatsApp chat
   with the team, on every page but Contact us, which has its own WhatsApp button), and above it a round "Back to top" that
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.

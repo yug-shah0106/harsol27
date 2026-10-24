@@ -113,6 +113,8 @@ test("'Talk to us' opens a WhatsApp chat with the team, and the footer's Contact
   await expect(page.getByRole("main").getByRole("link", { name: "Chat on WhatsApp" })).toHaveAttribute("href", "https://wa.me/919152000352");
   await expect(page.getByRole("main").getByRole("link", { name: "Write an email" })).toHaveAttribute("href", "mailto:sh27jyt@gmail.com");
   await expect(page.getByRole("link", { name: "Talk to us on WhatsApp" })).toHaveCount(0); // the page has its own WhatsApp button
+  await expect(page.getByRole("main").getByText("Bhayandar West, Mira Bhayandar")).toBeVisible(); // the trust's address
+  await expect(page.getByRole("main").getByRole("link", { name: "Open in Google Maps" })).toHaveAttribute("href", /google\.com\/maps\/search/);
 });
 
 test("FAQ answers open and close, and the legal pages say when they last changed", async ({ browser }) => {
