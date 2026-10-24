@@ -3,8 +3,8 @@ import { expectAccessible, newPage, watchCsp } from "./helpers";
 import { completeSignIn, emailFor, makeMemberLogin, randomMobile, signInMember, usernameFor, withDb } from "./member";
 import { passwordOf, STAFF } from "./staff";
 
-// Buyer and seller accounts: the username and password the team gives an approved registration. There is
-// no "Create an account", Google or self-service reset (SMS sign-in is switched off too).
+// Buyer and seller accounts: buyers make their own (since 2026-10-24); sellers get a username and password from
+// the team for an approved registration. No Google sign-in and no self-service reset (SMS sign-in is off too).
 
 const GENERIC = "Username or password is incorrect, or the account is temporarily locked.";
 // Several deliberately slow password hashes per test (argon2id): give them room on a busy machine.
@@ -28,18 +28,56 @@ test("protected pages send you to sign in, and a login from the team brings you 
   expect(csp).toEqual([]);
 });
 
-test("nobody can make their own account or reset their own password: the sign-in page points to registration", async ({ browser }) => {
+test("nobody can reset their own password: the sign-in page points to buyer sign-up and to seller registration", async ({ browser }) => {
   const page = await newPage(browser);
   await page.goto("/sign-in");
-  await expect(page.getByRole("link", { name: "Create an account" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveCount(0);
   await expect(page.getByText("Forgot your password? Contact the Harsol27 team.")).toBeVisible();
-  await page.getByRole("link", { name: "Register as a seller" }).click();
+  await expect(page.getByRole("main").getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/sign-up");
+  await page.getByRole("link", { name: "Register your business" }).click();
   await expect(page).toHaveURL(/\/Seller-Registration$/);
 
-  for (const gone of ["/sign-up", "/forgot-password", "/reset-password?token=abc", "/sign-in/google"]) {
+  for (const gone of ["/forgot-password", "/reset-password?token=abc", "/sign-in/google"]) {
     expect((await page.request.get(gone)).status(), gone).toBe(404);
   }
+});
+
+test("a buyer makes their own account, is signed in at once, and a taken username is refused", async ({ browser }) => {
+  const mobile = randomMobile();
+  const username = `b${mobile.local.slice(-9)}`;
+  const page = await newPage(browser);
+  const csp = watchCsp(page);
+  await page.goto("/sign-up?next=%2Faccount");
+  await expect(page.getByRole("heading", { name: "Create an account" })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByLabel("Your name").fill("Meera Shah");
+  await page.getByLabel("Mobile number").fill(mobile.local);
+  await page.getByLabel("Email").fill(`${username}@example.com`);
+  await page.getByLabel("Username").fill(username);
+  // Too short: the browser's own check stops it (the server says the same, translated, if it ever gets through).
+  await page.getByLabel("Password", { exact: true }).fill("short");
+  await page.getByRole("button", { name: "Create account" }).click();
+  expect(await page.getByLabel("Password", { exact: true }).evaluate((el: HTMLInputElement) => el.validity.tooShort)).toBe(true);
+  await expect(page).toHaveURL(/\/sign-up\?next=%2Faccount$/);
+
+  await page.getByLabel("Password", { exact: true }).fill("kite-season-2026");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/account$/, SLOW);
+  await expect(page.getByRole("heading", { name: "Your account" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Register your business" })).toBeVisible(); // a buyer: selling starts with a registration
+  expect(csp).toEqual([]);
+
+  // The same username again, from a fresh visit.
+  const other = await newPage(browser);
+  await other.goto("/sign-up");
+  await other.getByLabel("Your name").fill("Someone Else");
+  await other.getByLabel("Mobile number").fill(randomMobile().local);
+  await other.getByLabel("Email").fill(`other.${username}@example.com`);
+  await other.getByLabel("Username").fill(username);
+  await other.getByLabel("Password", { exact: true }).fill("kite-season-2026");
+  await other.getByRole("button", { name: "Create account" }).click();
+  await expect(other.getByText("That username is taken. Try another.")).toBeVisible(SLOW);
 });
 
 test("sign in: username and password; a wrong password and a staff account get the same message", async ({ browser }) => {

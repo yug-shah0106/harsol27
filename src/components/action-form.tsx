@@ -3,9 +3,10 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormAlert } from "@/components/form-feedback";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
+import { translateError } from "@/lib/i18n";
 import type { ActionResult } from "@/server/errors";
-
 
 /**
  * A form bound to a server action that shows the action's error, or its success message, beneath it.
@@ -22,11 +23,12 @@ export function ActionForm<T extends string | undefined>({
   className?: string;
   successMessage?: string;
 }) {
+  const { t } = useI18n();
   const [state, formAction] = useActionState(action, null);
   return (
     <form action={formAction} className={className}>
       {children}
-      {state && !state.ok && <FormAlert kind="error">{state.error}</FormAlert>}
+      {state && !state.ok && <FormAlert kind="error">{translateError(t, state.error)}</FormAlert>}
       {state?.ok && (state.data ?? successMessage) && <FormAlert kind="success">{state.data ?? successMessage}</FormAlert>}
     </form>
   );

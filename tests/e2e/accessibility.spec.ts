@@ -43,7 +43,7 @@ async function sweep(page: Page, paths: string[]) {
 test("visitor pages", async ({ browser }) => {
   const { product, sellerSlug } = fixture;
   await sweep(await newPage(browser), [
-    "/coming-soon",
+    "/",
     "/search",
     "/search?q=khakhra",
     "/industries",

@@ -6,7 +6,6 @@ import { LanguageSwitcher } from "@/components/language";
 import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { isComingSoon } from "@/lib/coming-soon";
 import { THEME_COOKIE } from "@/lib/preferences";
 import { getMember } from "@/server/authz";
 import { getMessages } from "@/server/locale";
@@ -47,26 +46,22 @@ export function Wordmark() {
 
 /**
  * Sticky: stays at the top (translucent) while the page scrolls under it, with a reading-progress line beneath.
- * `blend` (the coming-soon page): clear over the page at the top, frosting into a cream bar as you scroll.
+ * `blend` (the public pages): clear over the page at the top, frosting into a cream bar as you scroll.
  */
 export async function SiteHeader({ blend = false }: { blend?: boolean }) {
-  // Before launch only Home, Seller registration and sign-in (for registered sellers) are open
-  // (src/lib/coming-soon.ts), so only they are linked.
-  const closed = isComingSoon();
   const member = await getMember();
   const t = await getMessages();
   const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
   const account = member ? { href: "/account", label: t.nav.account } : { href: "/sign-in", label: t.nav.signIn };
-  const links = closed
-    ? [{ href: "/", label: t.nav.home }, account]
-    : [{ href: "/", label: t.nav.home }, { href: "/search", label: t.nav.search }, { href: "/about", label: t.nav.about }, account];
+  const links = [{ href: "/", label: t.nav.home }, { href: "/search", label: t.nav.search }, { href: "/about", label: t.nav.about }, account];
   return (
     <header className={cn("sticky top-0 z-40 border-b border-border backdrop-blur-md print:static print:border-0", blend ? "header-blend bg-background/85" : "bg-card/85")}>
-      {/* Full width: the wordmark in the left corner, the links and "Get started" in the right (same gutters as the footer). */}
+      {/* Full width: the wordmark in the left corner, the links and "Seller registration" in the right (same gutters as the
+          footer). Below 1024px the links, language and dark mode move into the menu. */}
       <div className="flex items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 lg:px-10">
         <Wordmark />
         <div className="flex items-center gap-1 print:hidden sm:gap-3">
-          <nav aria-label={t.nav.main} className="hidden items-center gap-1 sm:flex sm:gap-3">
+          <nav aria-label={t.nav.main} className="hidden items-center gap-3 lg:flex">
             {links.map((link) => (
               <Link key={link.href} href={link.href} className="rounded-md px-2 py-2 text-sm font-medium whitespace-nowrap hover:text-primary hover:underline">
                 {link.label}
@@ -77,15 +72,9 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
           </nav>
           <Button asChild className="rounded-full">
             <Link href="/Seller-Registration">
-              {closed ? (
-                // Short on phones, where the header is tight.
-                <>
-                  <span className="sm:hidden">{t.nav.register}</span>
-                  <span className="hidden sm:inline">{t.nav.sellerRegistration}</span>
-                </>
-              ) : (
-                t.nav.getStarted
-              )}
+              {/* Short on phones, where the header is tight. */}
+              <span className="sm:hidden">{t.nav.register}</span>
+              <span className="hidden sm:inline">{t.nav.sellerRegistration}</span>
             </Link>
           </Button>
           <MobileMenu links={links} initialDark={dark} />
@@ -107,12 +96,8 @@ export async function SiteFooter() {
           <InstallApp />
         </div>
         <nav aria-label={t.footer.label} className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
-          {!isComingSoon() && (
-            <>
-              <Link href="/about" className="hover:underline">{t.footer.about}</Link>
-              <Link href="/about#faq" className="hover:underline">{t.footer.faq}</Link>
-            </>
-          )}
+          <Link href="/about" className="hover:underline">{t.footer.about}</Link>
+          <Link href="/about#faq" className="hover:underline">{t.footer.faq}</Link>
           <Link href="/contact" className="hover:underline">{t.footer.contact}</Link>
           <Link href="/terms" className="hover:underline">{t.footer.terms}</Link>
           <Link href="/privacy" className="hover:underline">{t.footer.privacy}</Link>

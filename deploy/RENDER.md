@@ -52,7 +52,6 @@ Free, health check path `/api/health`, Docker command empty.
 - `CLIENT_IP_HEADER=cf-connecting-ip`. Render sits behind Cloudflare and appends to `X-Forwarded-For`
   without clearing it, so the right-most entry is a proxy, not the visitor. Check it once after the
   first deploy: sign-in rate limits must not lock out everyone at once.
-- `COMING_SOON=true` until launch.
 - `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` (at least 12 characters): the first admin, created at
   the next start. Once the log says `Created ADMIN account`, delete `ADMIN_PASSWORD`; the account and
   its password stay. Staff sign in at `/staff/sign-in`.

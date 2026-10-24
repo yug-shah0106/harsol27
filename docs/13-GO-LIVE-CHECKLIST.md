@@ -59,7 +59,7 @@ and backup-failure alarms.
 ## Launch day
 
 1. Take a backup: `docker compose -f deploy/compose.yml exec backup /backup/backup.sh`
-2. Open the site: `COMING_SOON="false"` in `deploy/.env` (until then visitors see only the coming-soon page), then deploy: `deploy/deploy.sh`
+2. Deploy: `deploy/deploy.sh` (the coming-soon switch was removed on 2026-10-24: the full site is always open)
 3. Run the go-live check (0 blocking) and the smoke test (item 19).
 4. Turn on the uptime monitor's alerts.
 5. Announce.

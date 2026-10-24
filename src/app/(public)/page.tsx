@@ -1,232 +1,222 @@
-import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { HeroSky, Rooftops } from "@/components/hero/hero-sky";
-import { KitePoster } from "@/components/hero/kite-poster";
-import { BlurText, ScrollText } from "@/components/motion-text";
-import { SearchForm } from "@/components/search-form";
-import { Button } from "@/components/ui/button";
+import { CallArt, DealArt, Rangoli, SealArt } from "@/components/festive";
 import { pageMetadata } from "@/lib/seo";
+import { CountUp } from "@/components/motion-text";
+import { RotatingWord } from "@/components/rotating-word";
+import { SearchForm } from "@/components/search-form";
+import { StartAtTop } from "@/components/start-at-top";
+import { Button } from "@/components/ui/button";
+import { feeOn, rupees } from "@/lib/fee";
+import { fill, formatLongDate, HTML_LANG, industryName } from "@/lib/i18n";
 import { listActiveIndustries } from "@/server/industries";
+import { getLocale, getMessages } from "@/server/locale";
+import { indiaToday } from "@/server/visibility";
 
 export const metadata: Metadata = pageMetadata({
   title: { absolute: "Harsol27 · Harsol Sattavis Jain community B2B marketplace" },
   description: "Harsol27, by the Harsol Sattavis (27) Jain community: find approved manufacturers, wholesalers and traders from Harsol and talk to the seller directly.",
   path: "/",
-  keywords: ["find suppliers in Harsol", "buy from Harsol manufacturers", "wholesale suppliers Harsol"],
+  keywords: ["find suppliers in Harsol", "buy from Harsol manufacturers", "wholesale suppliers Harsol", "seller registration Harsol"],
 });
 
-const STEPS = [
-  {
-    title: "Search",
-    body: "Look up a product or browse by industry to find approved sellers from across Harsol.",
-  },
-  {
-    title: "Send an enquiry",
-    body: "Tell the seller what you need. Sending an enquiry shows you their phone number and email.",
-  },
-  {
-    title: "Talk directly",
-    body: "Call or email the seller and agree the deal directly between yourselves.",
-  },
-];
-
-// Why buyers use Harsol27: what the About page says, nothing more.
-const REASONS = [
-  { title: "Approved sellers only", body: "Sellers apply to join, and our team approves each one before they appear on Harsol27." },
-  { title: "Straight to the seller", body: "Send an enquiry and you see the seller's phone number and email, so you can speak to them yourself." },
-  { title: "Your deal, your terms", body: "No cart and no online payment. Price, quantity, delivery and payment are agreed between you and the seller." },
-  { title: "From khakhra to steel", body: "Harsol makes and trades almost everything. Search for a product, or browse by industry." },
-];
-// The stacked cards stick a little lower each, and lean a little, so the pile fans out.
-const STACK = ["top-24 -rotate-1", "top-28 rotate-1", "top-32 -rotate-1", "top-36 rotate-1"];
-
-const MARQUEE = ["Manufacturers", "Wholesalers", "Traders"];
-
+// Why Harsol27, in the About page's words; the texts are home.promises.
+const PROMISES = [
+  { key: "approved", Art: SealArt, tint: "arch-kumkum" },
+  { key: "direct", Art: CallArt, tint: "arch-marigold" },
+  { key: "terms", Art: DealArt, tint: "arch-leaf" },
+] as const;
+const PETALS = ["left-[8%] top-[18%]", "right-[10%] top-[26%]", "left-[16%] bottom-[16%]", "right-[18%] bottom-[12%]"];
 const pad = (n: number) => String(n).padStart(2, "0");
-const DISPLAY_HEADING = "font-display text-5xl leading-none tracking-tight text-primary sm:text-7xl";
+// Visible at load, so it enters with CSS (components/motion.tsx only animates what is below the fold).
+const RISE = "animate-in fade-in slide-in-from-bottom-3 duration-700 ease-out fill-mode-both";
 
+/**
+ * The home page, in the Marigold theme's festival dress (client's choice at launch, 2026-10-24): a rangoli that
+ * draws itself and turns, the search, jharokha arches, every industry as a diya, the steps, the seller offer as a
+ * ticket. The layout ((public)/layout.tsx) gives it the clear header, which frosts as you scroll.
+ */
 export default async function HomePage() {
-  const industries = await listActiveIndustries();
+  const [locale, t] = [await getLocale(), await getMessages()];
+  const c = t.home;
+  // In the visitor's language, A to Z in it.
+  const industries = (await listActiveIndustries())
+    .map((industry) => ({ id: industry.id, slug: industry.slug, name: industryName(t, industry.name) }))
+    .sort((a, b) => a.name.localeCompare(b.name, HTML_LANG[locale]));
+  const fee = feeOn(indiaToday().toISOString().slice(0, 10));
 
   return (
     <>
-      <section aria-labelledby="hero-heading" className="kite-sky relative isolate overflow-hidden">
-        <div className="mx-auto flex max-w-6xl flex-col gap-7 px-4 pt-12 sm:px-6 sm:pt-16 lg:min-h-[calc(100svh-4rem)] lg:justify-center lg:pt-12 lg:pb-40">
-          <p className="w-fit rounded-full border border-primary/25 bg-card/70 px-3.5 py-1 text-xs font-semibold tracking-[0.18em] text-primary uppercase animate-in fade-in slide-in-from-bottom-2 duration-700 ease-out fill-mode-both">
-            B2B marketplace for Harsol
-          </p>
+      <StartAtTop />
+      {/* Hero: centred on a rangoli that draws itself on load and turns as the page scrolls. It starts under
+          the clear header (65px: its button, padding and hairline), so the rangoli runs up to the toran. */}
+      <section className="relative isolate -mt-[65px] overflow-hidden pt-[65px]">
+        <div aria-hidden="true" className="absolute top-1/2 left-1/2 -z-10 size-[min(56rem,140vw)] -translate-x-1/2 -translate-y-1/2">
+          <div data-spin="140" className="size-full">
+            <Rangoli className="size-full opacity-35" />
+          </div>
+        </div>
+        <div className="mx-auto flex max-w-4xl flex-col items-center px-4 pt-20 pb-28 text-center sm:px-6 sm:pt-28 sm:pb-36">
+          {c.accent && (
+            <p lang={c.accent.lang} className={`${RISE} rounded-full bg-card/85 px-4 py-1 text-lg font-semibold text-primary`}>
+              {c.accent.text}
+            </p>
+          )}
+          <p lang="en" className={`${RISE} mt-2 text-xs font-bold tracking-[0.22em] text-muted-foreground uppercase delay-75`}>{c.kicker}</p>
           {/* The headline only slides (never fades): it is the largest paint, which must not wait. */}
-          <h1
-            id="hero-heading"
-            className="font-display text-[clamp(2.75rem,1.2rem+6vw,6.75rem)] leading-[0.95] tracking-tight text-balance text-primary animate-in slide-in-from-bottom-4 duration-700 ease-out"
-          >
-            Find the right supplier. Then just{" "}
-            <span className="relative isolate whitespace-nowrap italic">
-              call them.
-              <span aria-hidden="true" className="animate-draw absolute inset-x-0 bottom-[0.16em] -z-10 h-[0.26em] bg-accent" />
+          <h1 className="mt-6 font-display text-[clamp(2.9rem,1.2rem+6.4vw,7rem)] leading-[0.96] tracking-tight text-balance animate-in slide-in-from-bottom-4 duration-700 ease-out">
+            {c.headline.before}
+            <span className="relative inline-block text-primary italic">
+              {c.headline.highlight}
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 250 14" preserveAspectRatio="none" className="hand-underline absolute inset-x-0 -bottom-[0.12em] h-[0.18em] w-full">
+                <path d="M3 9 C 45 2, 95 2, 132 7 S 212 12, 247 4" pathLength={1} fill="none" stroke="#f2a20c" strokeWidth="5" strokeLinecap="round" />
+              </svg>
             </span>
+            {c.headline.after}
           </h1>
-          <p className="max-w-xl text-lg text-muted-foreground animate-in fade-in slide-in-from-bottom-3 duration-700 delay-150 ease-out fill-mode-both">
-            From khakhra makers to steel fabricators, Harsol27 lists approved manufacturers, wholesalers and traders,
-            and puts you in direct touch with them.
+          <p className={`${RISE} mt-8 rounded-full bg-card/85 px-5 py-1.5 text-xl font-medium delay-200 sm:text-2xl`}>
+            <span className="sr-only">{c.madeFor.sentence}</span>
+            <span aria-hidden="true">
+              {c.madeFor.before}
+              <RotatingWord words={c.madeFor.words} className="font-bold text-primary" />
+            </span>
           </p>
-          <div className="w-full max-w-xl animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300 ease-out fill-mode-both">
+          <p className={`${RISE} mt-5 max-w-xl rounded-2xl bg-background/80 px-3 py-1 text-muted-foreground delay-300`}>{c.intro}</p>
+          <div className={`${RISE} mt-9 flex w-full justify-center delay-500`}>
             <SearchForm compact />
           </div>
-          <div className="flex flex-wrap gap-3 animate-in fade-in duration-700 delay-500 ease-out fill-mode-both">
-            <Button asChild variant="outline" className="rounded-full">
-              <Link href="/industries">Browse by industry</Link>
+          <div className={`${RISE} mt-5 flex flex-wrap justify-center gap-3 delay-700`}>
+            <Button asChild variant="outline" className="rounded-full bg-card">
+              <Link href="/industries">{c.browse}</Link>
             </Button>
-            <Button asChild variant="outline" className="rounded-full">
-              <a href="#how-it-works">How it works</a>
+            <Button asChild variant="outline" className="rounded-full bg-card">
+              <Link href="/Seller-Registration">{c.register}</Link>
             </Button>
           </div>
         </div>
-        {/* Kites at Uttarayan: a static picture first, then live 3D (see components/hero). From 1024px they fly
-            on the right, behind the headline, fading out towards it so the words stay clear. */}
-        <div
-          data-parallax="10"
-          className="relative -z-10 mx-auto aspect-square w-full max-w-md print:hidden lg:absolute lg:-right-[4%] lg:bottom-0 lg:h-full lg:w-auto lg:max-w-none lg:[mask-image:linear-gradient(to_right,transparent_5%,black_45%)]"
-        >
-          <div className="size-full animate-in fade-in zoom-in-95 duration-1000 delay-200 ease-out fill-mode-both">
-            <HeroSky poster={<KitePoster />} className="relative size-full" />
-          </div>
-        </div>
-        <Rooftops className="absolute inset-x-0 bottom-0 -z-10 h-20 w-full print:hidden sm:h-28 lg:h-32" />
       </section>
 
-      {/* Who is on Harsol27, drifting past (decorative: the hero says it in words). */}
-      <div aria-hidden="true" className="overflow-hidden border-y border-border bg-secondary py-5 text-primary print:hidden sm:py-7">
-        <div data-marquee className="flex w-max">
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex shrink-0 items-center">
-              {[...MARQUEE, ...MARQUEE].map((word, i) => (
-                <span key={i} className="flex items-center font-display text-4xl italic sm:text-7xl">
-                  <span className="px-6 sm:px-10">{word}</span>
-                  <span className="size-2 rotate-45 bg-primary/40 sm:size-2.5" />
-                </span>
-              ))}
-            </div>
+      {/* Jharokha arches: the three promises, each with an illustration in the arch, rising in. */}
+      <section aria-labelledby="why-heading" className="mx-auto max-w-6xl px-4 pb-28 sm:px-6">
+        <h2 id="why-heading" data-reveal className="text-center font-display text-5xl tracking-tight text-primary sm:text-6xl">
+          {c.whyTitle}
+        </h2>
+        <ul className="mt-14 grid gap-6 sm:grid-cols-3">
+          {PROMISES.map(({ key, Art, tint }) => (
+            <li key={key} data-reveal className={`arch relative flex flex-col items-center gap-4 p-3 pb-9 text-center ${tint}`}>
+              <span aria-hidden="true" className="arch-inner absolute inset-3" />
+              {/* The same 4:3 box in every arch, so all three are the same size. */}
+              <Art className="relative aspect-[4/3] w-full" />
+              <h3 className="relative px-4 font-display text-3xl leading-tight tracking-tight">{c.promises[key].title}</h3>
+              <p className="relative px-4 text-muted-foreground">{c.promises[key].body}</p>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </section>
 
-      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-36">
-        <ScrollText
-          text="Harsol is full of businesses that make and trade almost everything. Harsol27 helps buyers find the right one and talk to them directly."
-          className="max-w-5xl font-display text-4xl leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl"
-        />
-      </div>
-
-      <section aria-labelledby="why-heading" className="bg-sage">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 py-24 sm:px-6 sm:py-32 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
-          <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
-            <BlurText id="why-heading" text="Why Harsol27?" className={DISPLAY_HEADING} />
-            <p data-reveal className="max-w-md text-lg text-muted-foreground">
-              A business-to-business marketplace for Harsol&apos;s manufacturers, wholesalers and traders.
-            </p>
-          </div>
-          <ol data-stack className="flex flex-col gap-[14vh]">
-            {REASONS.map((reason, i) => (
-              <li key={reason.title} className={`sticky ${STACK[i]}`}>
-                <div className="flex min-h-64 flex-col justify-between gap-10 rounded-2xl border border-border bg-card p-7 shadow-xl shadow-primary/10 sm:p-9">
-                  <span aria-hidden="true" className="font-display text-xl text-primary italic">
-                    {pad(i + 1)}
-                  </span>
-                  <div className="flex flex-col gap-3">
-                    <h3 className="font-display text-3xl leading-tight text-primary sm:text-4xl">{reason.title}</h3>
-                    <p className="text-base text-muted-foreground sm:text-lg">{reason.body}</p>
-                  </div>
-                </div>
+      {/* Every industry as a diya: they light up one after another as you scroll. */}
+      <section aria-labelledby="industries-heading" className="bg-secondary/70 py-24">
+        <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
+          <h2 id="industries-heading" data-reveal className="font-display text-4xl tracking-tight sm:text-6xl">
+            {c.tradesTitle}
+          </h2>
+          <p data-reveal className="mt-3 text-muted-foreground">
+            {fill(c.tradesCount, { count: industries.length })}
+          </p>
+          <ul data-light className="mt-10 flex flex-wrap justify-center gap-2.5">
+            {industries.map((industry) => (
+              <li key={industry.id} data-lamp>
+                <Link href={`/industries/${industry.slug}`} className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium no-underline hover:border-primary hover:text-primary">
+                  <span aria-hidden="true" className="diya size-2 rounded-full bg-[#f2a20c]" />
+                  {industry.name}
+                </Link>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      <section id="how-it-works" aria-labelledby="how-heading" className="scroll-mt-4 overflow-x-clip">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-          <BlurText id="how-heading" text="How it works" className={DISPLAY_HEADING} />
-          <ol className="mt-12 sm:mt-16">
-            {STEPS.map((step, i) => (
-              <li key={step.title} className="relative grid gap-4 py-8 sm:grid-cols-[4rem_1fr] sm:py-12">
-                <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-border" />
-                <span aria-hidden="true" data-draw className="absolute inset-x-0 top-0 h-px origin-left bg-primary" />
-                <span aria-hidden="true" className="font-display text-xl text-muted-foreground italic sm:pt-4">
+      {/* The three steps as medallions on a path that draws itself between them. */}
+      <section aria-labelledby="how-heading" className="mx-auto max-w-6xl px-4 py-28 sm:px-6">
+        <h2 id="how-heading" data-reveal className="text-center font-display text-5xl tracking-tight text-primary sm:text-6xl">
+          {c.howTitle}
+        </h2>
+        <div className="relative mt-16">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 1000 120" preserveAspectRatio="none" className="absolute inset-x-0 top-6 hidden h-28 w-full sm:block">
+            <path d="M 160 60 C 320 -10, 380 130, 500 60 S 700 -10, 840 60" pathLength={1} data-path className="drawn-path" fill="none" stroke="#f2a20c" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+          <ol className="relative grid gap-12 sm:grid-cols-3 sm:gap-8">
+            {c.steps.map((step, i) => (
+              <li key={step.title} data-reveal className="flex flex-col items-center gap-4 text-center">
+                <span aria-hidden="true" className="grid size-28 place-items-center rounded-full border-4 border-card bg-[#f2a20c] font-display text-5xl text-[#5c1a15] shadow-lg shadow-primary/20">
                   {pad(i + 1)}
                 </span>
-                <div className={`flex flex-col gap-4 ${i % 2 ? "sm:items-end sm:text-right" : ""}`}>
-                  <h3 data-slide={i % 2 ? "right" : "left"} className="font-display text-[clamp(2.75rem,1rem+6vw,6.5rem)] leading-none tracking-tight text-primary">
-                    <span className="sr-only">Step {i + 1}: </span>
-                    {step.title}
-                  </h3>
-                  <p data-reveal className="max-w-md text-lg text-muted-foreground">
-                    {step.body}
-                  </p>
-                </div>
+                <h3 className="font-display text-3xl tracking-tight">
+                  <span className="sr-only">{fill(c.step, { n: i + 1 })}</span>
+                  {step.title}
+                </h3>
+                <p className="max-w-xs text-muted-foreground">{step.body}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      {industries.length > 0 && (
-        <section aria-labelledby="industries-heading" className="border-y border-border bg-card">
-          <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6 sm:py-32">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex max-w-3xl flex-col gap-4">
-                <BlurText id="industries-heading" text="Industries on Harsol27" className={DISPLAY_HEADING} />
-                <p data-reveal className="max-w-xl text-lg text-muted-foreground">
-                  Sellers choose their main industry and list their own products within it.
-                </p>
-              </div>
-              <Button asChild variant="outline" className="w-fit shrink-0 rounded-full">
-                <Link href="/industries">
-                  All industries
-                  <ArrowUpRight aria-hidden="true" />
-                </Link>
-              </Button>
-            </div>
-            <ul className="mt-12 grid gap-x-10 sm:grid-cols-2">
-              {industries.map((industry, i) => (
-                <li key={industry.id} data-reveal>
-                  {/* Blush fills the row from below on hover or focus. */}
-                  <Link
-                    href={`/industries/${industry.slug}`}
-                    className="group relative isolate flex items-center gap-4 border-b border-border px-2 py-5 no-underline before:absolute before:inset-0 before:-z-10 before:origin-bottom before:scale-y-0 before:bg-accent before:transition-transform before:duration-500 before:ease-[cubic-bezier(0.65,0,0.35,1)] hover:before:scale-y-100 focus-visible:before:scale-y-100"
-                  >
-                    <span aria-hidden="true" className="w-7 shrink-0 text-sm font-semibold text-muted-foreground tabular-nums group-hover:text-foreground group-focus-visible:text-foreground">
-                      {pad(i + 1)}
-                    </span>
-                    <span className="flex-1 font-display text-2xl leading-tight sm:text-3xl">{industry.name}</span>
-                    <ArrowUpRight aria-hidden="true" className="size-5 shrink-0 transition-transform duration-300 group-hover:rotate-45" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      <section aria-labelledby="cta-heading" className="overflow-x-clip bg-accent">
-        <div className="mx-auto max-w-6xl px-4 pt-24 pb-20 sm:px-6 sm:pt-32">
-          <h2 id="cta-heading" className="font-display text-[clamp(3.25rem,1rem+11vw,11.5rem)] leading-[0.9] tracking-tight">
-            <span data-slide="left" className="block">
-              Sell everything on
-            </span>{" "}
-            <span data-slide="right" className="block text-right text-primary italic">
-              Harsol27
-            </span>
-          </h2>
-          <div data-reveal className="mt-12 flex flex-col gap-6 border-t border-foreground/15 pt-8 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-lg">
-              Share a few details about your business and our team will get in touch, or apply as a seller right away.
+      {/* The offer as a ticket, perforated down the middle. */}
+      <section aria-labelledby="offer-heading" className="mx-auto max-w-4xl px-4 pb-28 sm:px-6">
+        <div data-reveal className="ticket grid bg-card shadow-xl shadow-primary/10 sm:grid-cols-[auto_1fr]">
+          <div className="flex flex-col items-center justify-center gap-1 bg-primary px-10 py-8 text-primary-foreground">
+            <p className="font-display text-7xl">
+              ₹<CountUp value={fee.amount} />
             </p>
-            <Button asChild size="lg" className="w-fit rounded-full px-8">
-              <Link href="/Seller-Registration">Get started</Link>
-            </Button>
+            {fee.offerLastDay && (
+              <s className="text-lg opacity-80">
+                <span className="sr-only">{c.offer.usually}</span>
+                {rupees(fee.regular)}
+              </s>
+            )}
           </div>
+          <div className="ticket-body flex flex-col justify-center gap-2 px-8 py-8">
+            <p className="font-semibold text-primary">
+              {c.offer.accent && (
+                <>
+                  <span lang={c.offer.accent.lang}>{c.offer.accent.text}</span> ·{" "}
+                </>
+              )}
+              {c.offer.label}
+            </p>
+            <h2 id="offer-heading" className="font-display text-3xl tracking-tight sm:text-4xl">
+              {fill(c.offer.months, { months: fee.months })}
+            </h2>
+            {fee.offerLastDay && <p className="font-medium">{fill(c.offer.till, { date: formatLongDate(fee.offerLastDay, locale) })}</p>}
+            <p className="text-sm text-muted-foreground">{c.offer.pay}</p>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="cta-heading" className="px-4 pb-20 sm:px-6">
+        {/* Fixed kumkum and marigold in both modes: the festival card does not invert for dark mode. */}
+        <div className="relative isolate mx-auto flex max-w-6xl flex-col items-center gap-6 overflow-hidden rounded-[2.5rem] bg-[#9c2f28] px-6 py-20 text-center text-white">
+          <div aria-hidden="true" className="absolute top-1/2 left-1/2 -z-10 size-[44rem] -translate-x-1/2 -translate-y-1/2 opacity-25">
+            <div data-spin="-160" className="size-full">
+              <Rangoli className="size-full" />
+            </div>
+          </div>
+          {PETALS.map((spot, i) => (
+            <span key={spot} aria-hidden="true" className={`petal absolute ${spot} petal-${i + 1}`} />
+          ))}
+          {c.cta.accent && (
+            <p lang={c.cta.accent.lang} data-reveal className="text-lg font-semibold">
+              {c.cta.accent.text}
+            </p>
+          )}
+          <h2 id="cta-heading" data-reveal className="font-display text-[clamp(2.75rem,1rem+6vw,6rem)] leading-[0.95] tracking-tight">
+            {c.cta.before}
+            <span className="text-[#ffd27a] italic">{c.cta.highlight}</span>
+          </h2>
+          <Button asChild size="lg" className="h-13 rounded-full bg-[#ffd27a] px-10 text-base text-[#3a2418] hover:bg-[#ffe09c]">
+            <Link href="/Seller-Registration">{c.cta.button}</Link>
+          </Button>
         </div>
       </section>
     </>
