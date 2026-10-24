@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hind_Vadodara } from "next/font/google";
+import { Fraunces, Hind, Hind_Vadodara } from "next/font/google";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
 import { ServiceWorker } from "@/components/service-worker";
@@ -13,6 +13,8 @@ import "./globals.css";
 // second in the font stack, not preloaded, so a browser fetches them only on pages that show Gujarati.
 const body = Hind_Vadodara({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-body", display: "swap" });
 const gujarati = Hind_Vadodara({ subsets: ["gujarati"], weight: ["400", "500", "600", "700"], variable: "--font-gujarati", display: "swap", preload: false });
+// Hindi (the language button): Hind, Hind Vadodara's Devanagari sister, fetched the same way, only where Hindi shows.
+const devanagari = Hind({ subsets: ["devanagari"], weight: ["400", "500", "600", "700"], variable: "--font-devanagari", display: "swap", preload: false });
 // Display: Fraunces, a soft serif for headings and the wordmark (globals.css turns on its soft, wonky cut).
 // Not preloaded: headings show a fallback serif for a moment, then swap, rather than hold up the page.
 const serif = Fraunces({ subsets: ["latin"], style: ["normal", "italic"], axes: ["SOFT", "WONK"], variable: "--font-serif", display: "swap", preload: false });
@@ -40,7 +42,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
 
   return (
-    <html lang="en-IN" className={`${body.variable} ${gujarati.variable} ${serif.variable} h-full antialiased${dark ? " dark" : ""}`}>
+    <html lang="en-IN" className={`${body.variable} ${gujarati.variable} ${devanagari.variable} ${serif.variable} h-full antialiased${dark ? " dark" : ""}`}>
       <body className="flex min-h-svh flex-col">
         {children}
         <ServiceWorker />

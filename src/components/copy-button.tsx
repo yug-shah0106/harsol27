@@ -2,6 +2,7 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
  * `compact`: just the icon (for values in a list), with the same name.
  */
 export function CopyButton({ value, what, compact = false }: { value: string; what: string; compact?: boolean }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try {
@@ -26,15 +28,15 @@ export function CopyButton({ value, what, compact = false }: { value: string; wh
         variant={compact ? "ghost" : "outline"}
         size={compact ? "icon" : "sm"}
         className={compact ? "shrink-0 rounded-full text-muted-foreground" : "h-10 shrink-0 rounded-full px-4"}
-        title={compact ? `Copy ${what}` : undefined}
+        title={compact ? `${t.common.copy} ${what}` : undefined}
         onClick={copy}
       >
         {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-        <span className={compact ? "sr-only" : undefined}>{copied ? "Copied" : "Copy"}</span>
+        <span className={compact ? "sr-only" : undefined}>{copied ? t.common.copied : t.common.copy}</span>
         <span className="sr-only"> {what}</span>
       </Button>
       <span aria-live="polite" className="sr-only">
-        {copied ? `${what} copied` : ""}
+        {copied ? `${what}: ${t.common.copied}` : ""}
       </span>
     </>
   );

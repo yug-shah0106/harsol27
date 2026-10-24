@@ -4,6 +4,7 @@ import * as React from "react"
 import { flushSync } from "react-dom"
 import { cn } from "cn"
 import { CheckIcon, ChevronDownIcon } from "lucide-react"
+import { useI18n } from "@/components/i18n"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 export type DropdownOption = {
@@ -83,6 +84,7 @@ function Dropdown({
   defaultValues,
   onValuesChange,
 }: DropdownProps) {
+  const { t } = useI18n()
   const [own, setOwn] = React.useState(defaultValue ?? "")
   const [chosen, setChosen] = React.useState<string[]>(defaultValues ?? [])
   const value = controlled ?? own
@@ -380,7 +382,7 @@ function Dropdown({
             />
           </div>
         )}
-        {shown.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">No matches</p>}
+        {shown.length === 0 && <p className="px-4 py-3 text-sm text-muted-foreground">{t.common.noMatches}</p>}
         <ScrollArea
           ref={list}
           id={listId}

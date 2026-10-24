@@ -25,7 +25,7 @@ colors:
   festival-turmeric: "#f7c548"
   festival-leaf: "#3f7d4e"
 typography:
-  family: "Hind Vadodara (self-hosted by next/font, Latin and Gujarati), weights 400–700, fallback ui-sans-serif, system-ui, sans-serif"
+  family: "Hind Vadodara (self-hosted by next/font, Latin and Gujarati), then Hind (Devanagari, for Hindi), weights 400–700, fallback ui-sans-serif, system-ui, sans-serif"
   display-family: "Fraunces (self-hosted by next/font), variable, with its SOFT and WONK axes on (the soft, slightly wonky cut) plus italic; headings and the wordmark only"
   hero-display: { family: display, size: "clamp(46px, 19px + 6.4vw, 112px)", weight: 400, lineHeight: 0.96, letterSpacing: "-0.025em" }
   page-title: { family: display, size: "60px (36px on phones)", weight: 400, lineHeight: 1.05, letterSpacing: "-0.025em" }
@@ -87,8 +87,12 @@ phone, and many read Gujarati. So the design is:
 - **Festival decoration that moves.** A toran (a string of flags) across the top of every page, swaying;
   on the coming-soon page, a rangoli that draws itself and turns as you scroll, jharokha arches, diyas
   that light up, a ticket for the offer, floating marigold petals. Gold #f2a20c is for decoration only.
-- **Two languages.** Gujarati lines sit beside the English ones ("ટૂંક સમયમાં આવી રહ્યું છે"), set in Hind
-  Vadodara, which carries both scripts.
+- **Three languages** (client, 2026-10-24): every public page reads in English, Hindi or Gujarati, as the
+  visitor chooses (the header's language button, or the popup on their first visit; a cookie remembers it,
+  and the address stays the same). The admin stays English. In English, Gujarati lines sit beside the
+  English ones ("ટૂંક સમયમાં આવી રહ્યું છે"); in Hindi and Gujarati the page's own script takes those
+  places. All texts live in `src/i18n/` (en.ts names every key; hi.ts and gu.ts must supply each one;
+  Terms and Privacy are `translations.tsx` beside each page).
 - **Soft serif headings.** Fraunces in its soft, slightly wonky cut, with italics for emphasis ("*take
   off*" over a hand-drawn marigold underline), over Hind Vadodara for everything you read and use.
 - **Festive where it welcomes, calm where you work.** The coming-soon page is the full festival; forms,
@@ -137,8 +141,12 @@ under the `.dark` class.
 ## 3. Typography
 
 Two families, both self-hosted by `next/font` (no request to Google from the visitor):
-**Hind Vadodara** for everything you read and use — it sets Gujarati as well as English — and
-**Fraunces** (`font-display`) for headings and the wordmark. `globals.css` turns on Fraunces' SOFT and
+**Hind Vadodara** for everything you read and use — it sets Gujarati as well as English, and its
+Devanagari sister **Hind** sets Hindi (both only fetched where those scripts show) — and
+**Fraunces** (`font-display`) for headings and the wordmark. Fraunces has no Gujarati or Hindi letters, so
+those headings fall to Hind, upright: Hind has no italic, and the emphasis keeps its colour and underline
+without a fake slant (`font-synthesis-style: none`). Never letter-space Gujarati or Hindi (the eyebrow
+"Coming soon" stays English for that reason). `globals.css` turns on Fraunces' SOFT and
 WONK axes for every `font-display`, which gives the Marigold voice. Use italics for emphasis. Display
 headings are kumkum. The offline page uses the system font, because the web fonts may not be cached.
 
@@ -267,9 +275,12 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     10px and wrapping on phones). The same lockup heads the admin and staff sign-in. The footer reads
     "© <year> Shree Harsol Sattavis Jain Yuvak Trust, Bhayander".
   - In the right corner: 14px/500 text links (Home, Search, About, Sign in or Your account) that underline
-    on hover, the dark-mode toggle (moon/sun), then an kumkum pill "Get started" button.
-  - Below 640px the links and the toggle move into a **menu** (a "Menu" button that opens a panel under the
-    header with the links in serif; Escape closes it). "Get started" stays visible.
+    on hover, the **language button** (a languages icon and the current language in its own script,
+    "English", "हिन्दी", "ગુજરાતી", a borderless dropdown), the dark-mode toggle (moon/sun), then an kumkum
+    pill "Get started" button.
+  - Below 640px the links, the language button and the toggle move into a **menu** (a "Menu" button that
+    opens a panel under the header with the links in serif, then a "Language" row and a "Dark mode" row;
+    Escape closes it). "Get started" stays visible.
   - A 2px kumkum **reading-progress line** along its bottom edge, driven by the scroll in CSS
     (`.scroll-progress`, scroll-driven animations; browsers without them don't show it).
   - Until launch, every public page (Seller registration, Terms, Privacy) uses the coming-soon page's
@@ -288,6 +299,10 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   appears after 600px of scrolling, scrolls up (smoothly unless reduced motion) and moves focus to the main content.
   Sticky at the end of the main content, not fixed: they ride 16–24px above the bottom of the screen, and
   at the end of the page stop the same distance above the footer, never over it.
+- **Language popup** (`components/language.tsx`): on a visitor's first visit, a native modal `<dialog>`
+  (the confirmation dialog's card) asks "Choose your language" in all three languages, with three outline
+  pill buttons (English, हिन्दी, ગુજરાતી) and a line in each language saying the header's button changes it
+  later. Escape keeps English; either way it does not ask again.
 - **Cookie notice**: a white card, bottom left (full width on phones), until "OK" (a form post, so it works
   without JavaScript; remembered for a year). It says what is true: essential cookies only. If analytics or
   advertising cookies are ever added, it must become a real choice first.
@@ -487,7 +502,7 @@ light theme, with anything the scroll animations had not revealed yet shown.
 - Cards: #ffffff with a #f0dcc0 border, radius 22px
 - Text: #3a2418, secondary #6b5141
 - Action, links and headings: kumkum #9c2f28; decoration gold #f2a20c (never text)
-- Fonts: Hind Vadodara for text (Latin and Gujarati); Fraunces (soft, wonky cut; italics for emphasis) for headings and the wordmark
+- Fonts: Hind Vadodara for text (Latin and Gujarati), Hind for Hindi; Fraunces (soft, wonky cut; italics for emphasis) for headings and the wordmark
 - Festival pieces: `<Toran>`, `<Rangoli>`, arch cards, diya chips, the ticket (`components/festive.tsx`)
 - No dark sections; dark mode only when the visitor turns it on
 - Corners: 16px for controls, 22px for cards, fully round pills on festival pages

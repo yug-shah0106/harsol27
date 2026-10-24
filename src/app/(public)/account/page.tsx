@@ -3,12 +3,12 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isComingSoon } from "@/lib/coming-soon";
-import { BUSINESS_CATEGORIES, leadIndustryName } from "@/lib/lead-schema";
-import { LEAD_DECISION_LABELS } from "@/lib/lead-status";
+import { fill, formatShortDate, industryName } from "@/lib/i18n";
 import { SELLER_STATUS_LABELS } from "@/lib/seller-status";
-import { formatDay, leadSubscription } from "@/lib/subscription";
+import { leadSubscription } from "@/lib/subscription";
 import { requireMember } from "@/server/authz";
 import { db } from "@/server/db";
+import { getLocale, getMessages } from "@/server/locale";
 import { memberSignOutAction } from "./actions";
 
 export const metadata: Metadata = { title: "Your account", robots: { index: false } };
@@ -35,25 +35,29 @@ export default async function AccountPage() {
   ]);
   // Before launch the buying and selling pages are closed, so only the registration is shown.
   const closed = isComingSoon();
+  const [locale, t] = [await getLocale(), await getMessages()];
+  const a = t.account;
   const subscription = lead ? leadSubscription(lead) : null;
+  const range = subscription && { months: subscription.months ?? "", from: formatShortDate(subscription.from, locale), until: formatShortDate(subscription.until, locale) };
   // The subscription counts once the team has checked the payment screenshot.
-  const subscriptionLine = !lead || !subscription
-    ? "None"
+  const subscriptionLine = !lead || !range
+    ? t.common.none
     : lead.payment === "APPROVED"
-      ? `${subscription.months ? `${subscription.months} months, ` : ""}${formatDay(subscription.from)} to ${formatDay(subscription.until)}`
+      ? fill(range.months ? a.monthsRange : a.range, range)
       : lead.payment === "REJECTED"
-        ? "None: we could not confirm your payment. Please contact the Harsol27 team."
-        : "Starts once our team has checked your payment.";
+        ? a.paymentRejected
+        : a.paymentPending;
+  const industries = lead && [...lead.industries.map((i) => industryName(t, i.name)), ...(lead.industryOther ? [lead.industryOther] : [])].join(", ");
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight">Your account</h1>
-        <p className="text-muted-foreground">Signed in as {member.email ?? member.phone}</p>
+        <h1 className="text-3xl font-extrabold tracking-tight">{a.title}</h1>
+        <p className="text-muted-foreground">{fill(a.signedInAs, { who: member.email ?? member.phone ?? "" })}</p>
         <p className="text-muted-foreground">
-          Mobile number for sellers: {member.phone} ·{" "}
+          {fill(a.mobile, { phone: member.phone ?? "" })} ·{" "}
           <Link href={`/account/mobile?change=1&next=${encodeURIComponent("/account")}`} className="font-medium text-primary underline">
-            Change
+            {a.change}
           </Link>
         </p>
       </div>
@@ -61,21 +65,21 @@ export default async function AccountPage() {
       {lead && (
         <section aria-labelledby="registration-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
           <h2 id="registration-heading" className="text-lg font-semibold">
-            Your seller registration
+            {a.registration}
           </h2>
           <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
-            <dt className="text-muted-foreground">Status</dt>
+            <dt className="text-muted-foreground">{a.status}</dt>
             <dd>
-              <Badge variant="secondary">{LEAD_DECISION_LABELS[lead.decision]}</Badge>
+              <Badge variant="secondary">{t.decisions[lead.decision]}</Badge>
             </dd>
-            <dt className="text-muted-foreground">Subscription</dt>
+            <dt className="text-muted-foreground">{a.subscription}</dt>
             <dd>{subscriptionLine}</dd>
-            <dt className="text-muted-foreground">Category</dt>
-            <dd>{BUSINESS_CATEGORIES.find((c) => c.value === lead.businessCategory)?.label}</dd>
-            <dt className="text-muted-foreground">Industry</dt>
-            <dd>{leadIndustryName(lead)}</dd>
+            <dt className="text-muted-foreground">{a.category}</dt>
+            <dd>{t.categories[lead.businessCategory]}</dd>
+            <dt className="text-muted-foreground">{a.industry}</dt>
+            <dd>{industries || t.common.none}</dd>
           </dl>
-          {closed && <p className="text-sm text-muted-foreground">Harsol27 opens soon. You will be able to list your products here then.</p>}
+          {closed && <p className="text-sm text-muted-foreground">{a.opensSoon}</p>}
         </section>
       )}
 
@@ -121,7 +125,7 @@ export default async function AccountPage() {
 
       <form action={memberSignOutAction}>
         <Button type="submit" variant="outline">
-          Sign out
+          {a.signOut}
         </Button>
       </form>
     </div>

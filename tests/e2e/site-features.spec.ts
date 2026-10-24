@@ -5,7 +5,9 @@ import { expectAccessible, newPage } from "./helpers";
 // "Talk to us", FAQ, password visibility, last-updated dates and the print stylesheet.
 
 test("the cookie notice shows until OK is pressed, then stays away", async ({ browser }) => {
-  const context = await browser.newContext({ storageState: { cookies: [], origins: [] } }); // a first visit
+  // A first visit, past the language popup.
+  const lang = { name: "lang", value: "en", domain: "localhost", path: "/", expires: -1, httpOnly: false, secure: false, sameSite: "Lax" as const };
+  const context = await browser.newContext({ storageState: { cookies: [lang], origins: [] } });
   const page = await context.newPage();
   await page.goto("/about");
   const notice = page.getByRole("region", { name: "Cookies" });
