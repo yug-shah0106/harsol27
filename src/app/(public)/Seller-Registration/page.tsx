@@ -3,9 +3,11 @@ import { cn } from "cn";
 import { Rangoli } from "@/components/festive";
 import { isComingSoon } from "@/lib/coming-soon";
 import { feeOn } from "@/lib/fee";
+import { HTML_LANG, industryName } from "@/lib/i18n";
 import { NATIVE_PLACES } from "@/lib/lead-schema";
 import { pageMetadata } from "@/lib/seo";
 import { listActiveIndustries } from "@/server/industries";
+import { getLocale, getMessages } from "@/server/locale";
 import { indiaToday } from "@/server/visibility";
 import { LeadForm } from "./lead-form";
 
@@ -28,7 +30,12 @@ export function generateMetadata(): Metadata {
 }
 
 export default async function GetStartedPage() {
-  const industries = await listActiveIndustries();
+  const [locale, t] = [await getLocale(), await getMessages()];
+  const r = t.registration;
+  // In the visitor's language, A to Z in it.
+  const industries = (await listActiveIndustries())
+    .map((industry) => ({ id: industry.id, name: industryName(t, industry.name) }))
+    .sort((a, b) => a.name.localeCompare(b.name, HTML_LANG[locale]));
   const closed = isComingSoon();
 
   return (
@@ -43,18 +50,16 @@ export default async function GetStartedPage() {
       </div>
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-4 py-12 sm:px-6">
       <div className="flex flex-col gap-2">
-        {closed && (
-          <p lang="gu" className="w-fit rounded-full bg-card/85 px-3 py-0.5 font-semibold text-primary">
-            સેલર રજીસ્ટ્રેશન શરૂ થઈ ગયું છે
+        {closed && r.accent && (
+          <p lang={r.accent.lang} className="w-fit rounded-full bg-card/85 px-3 py-0.5 font-semibold text-primary">
+            {r.accent.text}
           </p>
         )}
         <h1 className="font-display text-4xl leading-[1.05] tracking-tight text-primary sm:text-6xl animate-in slide-in-from-bottom-2 duration-500 ease-out">
-          {closed ? "Seller registration is open" : "Get started with Harsol27"}
+          {closed ? r.titleOpen : r.titleLaunched}
         </h1>
         <p className="text-muted-foreground">
-          {closed
-            ? "Harsol27 is coming soon. Share a few details about your business and our team will get in touch."
-            : "Share a few details about your business. Our team will contact you to help you get started."}
+          {closed ? r.introOpen : r.introLaunched}
         </p>
       </div>
       <div className="rounded-2xl border border-border bg-card p-5 shadow-xl shadow-primary/10 sm:p-8">

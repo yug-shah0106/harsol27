@@ -4,12 +4,14 @@ import { CircleCheck, Download } from "lucide-react";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { FieldMessage, FormAlert } from "@/components/form-feedback";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
-import { PAYMENT_ACCOUNT, PAYMENT_QR_DOWNLOAD, PAYMENT_QR_SRC, longDate, rupees, type FeeToday } from "@/lib/fee";
+import { PAYMENT_ACCOUNT, PAYMENT_QR_DOWNLOAD, PAYMENT_QR_SRC, rupees, type FeeToday } from "@/lib/fee";
 import { DOCUMENT_TYPES } from "@/lib/file-type";
+import { fill, formatLongDate, HTML_LANG, translateError } from "@/lib/i18n";
 import { INDIAN_STATES } from "@/lib/indian-states";
 import { BUSINESS_CATEGORIES, fieldErrors, leadSchema, NATIVE_PLACES, OTHER_INDUSTRY, OTHER_NATIVE_PLACE } from "@/lib/lead-schema";
 import { DOCUMENT_MAX_BYTES } from "@/lib/seller-schema";
@@ -21,7 +23,10 @@ type UploadState = { status: "idle" } | { status: "uploading" } | { status: "don
 
 const FIELD_ORDER = ["firstName", "fatherName", "lastName", "phone", "email", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "businessCategory", "industryIds", "industryOther", "website", "instagram", "mapsLink", "paymentProof"];
 
+/** `industries`: already in the visitor's language and order (page.tsx). */
 export function LeadForm({ industries, fee }: { industries: Industry[]; fee: FeeToday }) {
+  const { locale, t } = useI18n();
+  const r = t.registration;
   const [state, formAction, pending] = useActionState(submitLeadAction, null);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [industry, setIndustry] = useState("");
@@ -31,7 +36,12 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
   const successRef = useRef<HTMLDivElement>(null);
 
   const serverErrors = state && !state.ok ? (state.fields ?? {}) : {};
-  const errors = { ...serverErrors, ...clientErrors };
+  // The rules' messages are English; shown in the visitor's language.
+  const errors = Object.fromEntries(Object.entries({ ...serverErrors, ...clientErrors }).map(([name, message]) => [name, translateError(t, message)]));
+  // A to Z in the visitor's language, "Others" last.
+  const categories = BUSINESS_CATEGORIES.map((c) => ({ value: c.value, label: t.categories[c.value] })).sort(
+    (a, b) => Number(a.value === "OTHERS") - Number(b.value === "OTHERS") || a.label.localeCompare(b.label, HTML_LANG[locale]),
+  );
 
   // Move focus to the first invalid field after a server-side rejection, so keyboard and
   // screen-reader users land where the problem is.
@@ -44,10 +54,8 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
     return (
       <div ref={successRef} tabIndex={-1} className="outline-none">
         <FormAlert kind="success">
-          <p className="text-base">Thank you! We have received your details.</p>
-          <p className="mt-1 font-normal text-foreground">
-            Our team will contact you soon. A confirmation is on its way to your email address.
-          </p>
+          <p className="text-base">{r.thanks}</p>
+          <p className="mt-1 font-normal text-foreground">{r.thanksMore}</p>
         </FormAlert>
       </div>
     );
@@ -84,8 +92,8 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
   async function uploadProof(file: File | undefined) {
     clear("paymentProof")();
     if (!file) return setProof({ status: "idle" });
-    if (!(file.type in DOCUMENT_TYPES)) return setProof({ status: "error", message: "Upload a JPG, PNG or PDF file." });
-    if (file.size > DOCUMENT_MAX_BYTES) return setProof({ status: "error", message: "The file must be 5 MB or smaller." });
+    if (!(file.type in DOCUMENT_TYPES)) return setProof({ status: "error", message: r.fileType });
+    if (file.size > DOCUMENT_MAX_BYTES) return setProof({ status: "error", message: r.fileSize });
     setProof({ status: "uploading" });
     try {
       const ticket = await createPaymentUploadAction({ fileName: file.name, contentType: file.type, sizeBytes: file.size });
@@ -95,23 +103,23 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
       setProof({ status: "done", key: ticket.data.key, fileName: file.name });
     } catch (error) {
       console.error("Payment screenshot upload failed", error);
-      setProof({ status: "error", message: "The upload failed. Check your connection and choose the file again." });
+      setProof({ status: "error", message: r.uploadFailed });
     }
   }
-  const proofMessage = proof.status === "error" ? proof.message : errors.paymentProof;
+  const proofMessage = proof.status === "error" ? translateError(t, proof.message) : errors.paymentProof;
 
   return (
     <form ref={formRef} action={formAction} onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      {state && !state.ok && <FormAlert kind="error">{state.error}</FormAlert>}
+      {state && !state.ok && <FormAlert kind="error">{translateError(t, state.error)}</FormAlert>}
 
       <FieldGroup>
         {/* The name in its three parts, side by side from 640px. */}
         <div className="grid gap-6 sm:grid-cols-3 sm:gap-4">
           {(
             [
-              ["firstName", "First name", "given-name"],
-              ["fatherName", "Middle name", "additional-name"],
-              ["lastName", "Last name", "family-name"],
+              ["firstName", r.firstName, "given-name"],
+              ["fatherName", r.middleName, "additional-name"],
+              ["lastName", r.lastName, "family-name"],
             ] as const
           ).map(([name, label, autoComplete]) => (
             <Field key={name} data-invalid={!!errors[name]}>
@@ -123,27 +131,27 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         </div>
 
         <Field data-invalid={!!errors.phone}>
-          <FieldLabel htmlFor="phone">WhatsApp number</FieldLabel>
+          <FieldLabel htmlFor="phone">{r.whatsapp}</FieldLabel>
           <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required maxLength={32} placeholder="98765 43210" aria-invalid={!!errors.phone} aria-describedby={["phone-hint", describe("phone")].filter(Boolean).join(" ")} onChange={clear("phone")} />
           <p id="phone-hint" className="text-sm text-muted-foreground">
-            Indian numbers need no country code. For other countries, start with + and the code.
+            {r.phoneHint}
           </p>
           <FieldMessage id="phone-error" message={errors.phone} />
         </Field>
 
         <Field data-invalid={!!errors.email}>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <FieldLabel htmlFor="email">{r.email}</FieldLabel>
           <Input id="email" name="email" type="email" autoComplete="email" required maxLength={254} aria-invalid={!!errors.email} aria-describedby={describe("email")} onChange={clear("email")} />
           <FieldMessage id="email-error" message={errors.email} />
         </Field>
 
         <Field data-invalid={!!errors.nativePlace}>
-          <FieldLabel htmlFor="nativePlace">Native place</FieldLabel>
+          <FieldLabel htmlFor="nativePlace">{r.nativePlace}</FieldLabel>
           <Dropdown
             id="nativePlace"
             name="nativePlace"
             required
-            placeholder="Choose your village or town"
+            placeholder={r.nativePlacePlaceholder}
             className="w-full"
             aria-invalid={!!errors.nativePlace}
             aria-describedby={describe("nativePlace")}
@@ -151,21 +159,21 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
               setNativePlace(value);
               clear("nativePlace")();
             }}
-            searchable={{ placeholder: "Search places" }}
-            options={[...NATIVE_PLACES.map((p) => ({ value: p, label: p })), { value: OTHER_NATIVE_PLACE, label: "Other (not listed)", pinned: true }]}
+            searchable={{ placeholder: r.nativePlaceSearch }}
+            options={[...NATIVE_PLACES.map((p) => ({ value: p, label: p })), { value: OTHER_NATIVE_PLACE, label: t.common.otherNotListed, pinned: true }]}
           />
           <FieldMessage id="nativePlace-error" message={errors.nativePlace} />
         </Field>
 
         {nativePlace === OTHER_NATIVE_PLACE && (
           <Field data-invalid={!!errors.nativePlaceOther}>
-            <FieldLabel htmlFor="nativePlaceOther">Your native place</FieldLabel>
+            <FieldLabel htmlFor="nativePlaceOther">{r.nativePlaceOther}</FieldLabel>
             <Input
               id="nativePlaceOther"
               name="nativePlaceOther"
               required
               maxLength={100}
-              placeholder="Village or town"
+              placeholder={r.nativePlaceOtherPlaceholder}
               aria-invalid={!!errors.nativePlaceOther}
               aria-describedby={describe("nativePlaceOther")}
               onChange={clear("nativePlaceOther")}
@@ -175,7 +183,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         )}
 
         <Field data-invalid={!!errors.address}>
-          <FieldLabel htmlFor="address">Address</FieldLabel>
+          <FieldLabel htmlFor="address">{r.address}</FieldLabel>
           <Input id="address" name="address" autoComplete="street-address" required maxLength={300} aria-invalid={!!errors.address} aria-describedby={describe("address")} onChange={clear("address")} />
           <FieldMessage id="address-error" message={errors.address} />
         </Field>
@@ -183,56 +191,56 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         {/* City and state side by side from 640px, the pincode under the city. */}
         <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
           <Field data-invalid={!!errors.city}>
-            <FieldLabel htmlFor="city">City</FieldLabel>
+            <FieldLabel htmlFor="city">{r.city}</FieldLabel>
             <Input id="city" name="city" autoComplete="address-level2" required maxLength={80} aria-invalid={!!errors.city} aria-describedby={describe("city")} onChange={clear("city")} />
             <FieldMessage id="city-error" message={errors.city} />
           </Field>
           <Field data-invalid={!!errors.state}>
-            <FieldLabel htmlFor="state">State</FieldLabel>
+            <FieldLabel htmlFor="state">{r.state}</FieldLabel>
             <Dropdown
               id="state"
               name="state"
               required
-              placeholder="Choose your state"
+              placeholder={r.statePlaceholder}
               className="w-full"
               aria-invalid={!!errors.state}
               aria-describedby={describe("state")}
               onValueChange={clear("state")}
-              searchable={{ placeholder: "Search states" }}
+              searchable={{ placeholder: r.stateSearch }}
               options={INDIAN_STATES.map((s) => ({ value: s, label: s }))}
             />
             <FieldMessage id="state-error" message={errors.state} />
           </Field>
           <Field data-invalid={!!errors.pincode}>
-            <FieldLabel htmlFor="pincode">Pincode</FieldLabel>
+            <FieldLabel htmlFor="pincode">{r.pincode}</FieldLabel>
             <Input id="pincode" name="pincode" inputMode="numeric" autoComplete="postal-code" required maxLength={7} placeholder="380001" aria-invalid={!!errors.pincode} aria-describedby={describe("pincode")} onChange={clear("pincode")} />
             <FieldMessage id="pincode-error" message={errors.pincode} />
           </Field>
         </div>
 
         <Field data-invalid={!!errors.businessCategory}>
-          <FieldLabel htmlFor="businessCategory">Category</FieldLabel>
+          <FieldLabel htmlFor="businessCategory">{r.category}</FieldLabel>
           <Dropdown
             id="businessCategory"
             name="businessCategory"
             required
-            placeholder="Choose a category"
+            placeholder={r.categoryPlaceholder}
             className="w-full"
             aria-invalid={!!errors.businessCategory}
             aria-describedby={describe("businessCategory")}
             onValueChange={clear("businessCategory")}
-            options={BUSINESS_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+            options={categories}
           />
           <FieldMessage id="businessCategory-error" message={errors.businessCategory} />
         </Field>
 
         <Field data-invalid={!!errors.industryIds}>
-          <FieldLabel htmlFor="industryIds">Industry</FieldLabel>
+          <FieldLabel htmlFor="industryIds">{r.industry}</FieldLabel>
           <Dropdown
             id="industryIds"
             name="industryIds"
             required
-            placeholder="Choose your industry"
+            placeholder={r.industryPlaceholder}
             className="w-full"
             aria-invalid={!!errors.industryIds}
             aria-describedby={describe("industryIds")}
@@ -240,21 +248,21 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
               setIndustry(value);
               clear("industryIds")();
             }}
-            searchable={{ placeholder: "Search industries" }}
-            options={[...industries.map((i) => ({ value: i.id, label: i.name })), { value: OTHER_INDUSTRY, label: "Other (not listed)", pinned: true }]}
+            searchable={{ placeholder: r.industrySearch }}
+            options={[...industries.map((i) => ({ value: i.id, label: i.name })), { value: OTHER_INDUSTRY, label: t.common.otherNotListed, pinned: true }]}
           />
           <FieldMessage id="industryIds-error" message={errors.industryIds} />
         </Field>
 
         {industry === OTHER_INDUSTRY && (
           <Field data-invalid={!!errors.industryOther}>
-            <FieldLabel htmlFor="industryOther">Your industry</FieldLabel>
+            <FieldLabel htmlFor="industryOther">{r.industryOther}</FieldLabel>
             <Input
               id="industryOther"
               name="industryOther"
               required
               maxLength={80}
-              placeholder="For example: solar panels"
+              placeholder={r.industryOtherPlaceholder}
               aria-invalid={!!errors.industryOther}
               aria-describedby={describe("industryOther")}
               onChange={clear("industryOther")}
@@ -267,28 +275,28 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
       {/* Optional: helps our team look the business up before calling. */}
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-1 font-medium">
-          Links to your business <span className="font-normal text-muted-foreground">(optional)</span>
+          {r.links} <span className="font-normal text-muted-foreground">{r.optional}</span>
         </legend>
         <Field data-invalid={!!errors.website}>
-          <FieldLabel htmlFor="website">Website</FieldLabel>
+          <FieldLabel htmlFor="website">{r.website}</FieldLabel>
           <Input id="website" name="website" type="url" inputMode="url" autoComplete="url" maxLength={300} placeholder="www.yourshop.com" aria-invalid={!!errors.website} aria-describedby={describe("website")} onChange={clear("website")} />
           <FieldMessage id="website-error" message={errors.website} />
         </Field>
         <Field data-invalid={!!errors.instagram}>
-          <FieldLabel htmlFor="instagram">Instagram</FieldLabel>
+          <FieldLabel htmlFor="instagram">{r.instagram}</FieldLabel>
           <Input id="instagram" name="instagram" maxLength={200} autoCapitalize="none" placeholder="@yourshop" aria-invalid={!!errors.instagram} aria-describedby={describe("instagram")} onChange={clear("instagram")} />
           <FieldMessage id="instagram-error" message={errors.instagram} />
         </Field>
         <Field data-invalid={!!errors.mapsLink}>
-          <FieldLabel htmlFor="mapsLink">Google Maps link</FieldLabel>
-          <Input id="mapsLink" name="mapsLink" type="url" inputMode="url" maxLength={300} placeholder="Paste the link from Google Maps" aria-invalid={!!errors.mapsLink} aria-describedby={describe("mapsLink")} onChange={clear("mapsLink")} />
+          <FieldLabel htmlFor="mapsLink">{r.maps}</FieldLabel>
+          <Input id="mapsLink" name="mapsLink" type="url" inputMode="url" maxLength={300} placeholder={r.mapsPlaceholder} aria-invalid={!!errors.mapsLink} aria-describedby={describe("mapsLink")} onChange={clear("mapsLink")} />
           <FieldMessage id="mapsLink-error" message={errors.mapsLink} />
         </Field>
       </fieldset>
 
       {/* Paid by UPI to the team's QR code; the team checks the screenshot (no payment gateway). */}
       <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 font-medium">Pay the fee</legend>
+        <legend className="mb-1 font-medium">{r.pay}</legend>
         <div className="flex flex-col gap-5 rounded-xl border border-border bg-secondary/60 p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex shrink-0 flex-col items-center gap-2">
@@ -296,7 +304,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={PAYMENT_QR_SRC}
-                alt={`UPI QR code for paying ${PAYMENT_ACCOUNT.name}`}
+                alt={fill(r.qrAlt, { name: PAYMENT_ACCOUNT.name })}
                 width={176}
                 height={176}
                 className="size-44 rounded-lg border border-border bg-white p-2"
@@ -304,40 +312,40 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
               {/* A PNG: on a phone, UPI apps scan a saved QR code from the photos. */}
               <a href={PAYMENT_QR_DOWNLOAD} download="harsol27-upi-qr.png" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline">
                 <Download aria-hidden="true" className="size-4" />
-                Save the QR code
+                {r.saveQr}
               </a>
             </div>
             <div className="flex flex-col gap-3">
               <p className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                 {fee.offerLastDay && (
                   <s className="font-display text-2xl leading-none text-muted-foreground">
-                    <span className="sr-only">Usual price </span>
+                    <span className="sr-only">{r.usualPrice}</span>
                     {rupees(fee.regular)}
                   </s>
                 )}
                 <span className="font-display text-4xl leading-none text-primary">{rupees(fee.amount)}</span>
-                <span className="text-sm font-medium">for {fee.months} months</span>
+                <span className="text-sm font-medium">{fill(r.forMonths, { months: fee.months })}</span>
               </p>
               {fee.offerLastDay && (
-                <p className="w-fit rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold">Offer price till {longDate(fee.offerLastDay)}</p>
+                <p className="w-fit rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold">{fill(r.offerTill, { date: formatLongDate(fee.offerLastDay, locale) })}</p>
               )}
               <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm">
-                <li>Scan the QR code with any UPI app, like Google Pay, PhonePe or Paytm, or use the details below.</li>
-                <li>Pay {rupees(fee.amount)}.</li>
-                <li>Take a screenshot of the payment and add it below.</li>
+                {r.paySteps.map((step) => (
+                  <li key={step}>{fill(step, { amount: rupees(fee.amount) })}</li>
+                ))}
               </ol>
             </div>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold">Pay by UPI ID or bank transfer</h2>
+            <h2 className="text-sm font-semibold">{r.bankTitle}</h2>
             <dl className="mt-3 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
               {[
-                { label: "Account name", value: PAYMENT_ACCOUNT.name, wide: true },
-                { label: "UPI ID", value: PAYMENT_ACCOUNT.upiId, copy: true },
-                { label: "Account number", value: PAYMENT_ACCOUNT.accountNumber, copy: true },
-                { label: "IFSC", value: PAYMENT_ACCOUNT.ifsc, copy: true },
-                { label: "Bank", value: PAYMENT_ACCOUNT.bank, note: `${PAYMENT_ACCOUNT.branch} branch` },
+                { label: r.accountName, value: PAYMENT_ACCOUNT.name, wide: true },
+                { label: r.upiId, value: PAYMENT_ACCOUNT.upiId, copy: true },
+                { label: r.accountNumber, value: PAYMENT_ACCOUNT.accountNumber, copy: true },
+                { label: r.ifsc, value: PAYMENT_ACCOUNT.ifsc, copy: true },
+                { label: r.bank, value: PAYMENT_ACCOUNT.bank, note: fill(r.branch, { branch: PAYMENT_ACCOUNT.branch }) },
               ].map((item) => (
                 <div key={item.label} className={item.wide ? "sm:col-span-2" : undefined}>
                   <dt className="text-muted-foreground">{item.label}</dt>
@@ -354,7 +362,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
           </div>
         </div>
         <Field data-invalid={!!proofMessage}>
-          <FieldLabel htmlFor="paymentProof">Payment screenshot</FieldLabel>
+          <FieldLabel htmlFor="paymentProof">{r.screenshot}</FieldLabel>
           <input type="hidden" name="paymentProof" value={proof.status === "done" ? proof.key : ""} />
           <Input
             id="paymentProof"
@@ -366,13 +374,13 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
             onChange={(e) => void uploadProof(e.target.files?.[0])}
           />
           <p id="paymentProof-hint" className="text-sm text-muted-foreground">
-            JPG, PNG or PDF, up to 5 MB. Only the Harsol27 team can see it.
+            {r.screenshotHint}
           </p>
           <p id="paymentProof-status" aria-live="polite" className="text-sm text-muted-foreground empty:hidden">
-            {proof.status === "uploading" && "Uploading…"}
+            {proof.status === "uploading" && r.uploading}
             {proof.status === "done" && (
               <span className="flex items-center gap-1.5 text-success">
-                <CircleCheck aria-hidden="true" className="size-4" /> Uploaded: {proof.fileName}
+                <CircleCheck aria-hidden="true" className="size-4" /> {fill(r.uploaded, { name: proof.fileName })}
               </span>
             )}
           </p>
@@ -380,10 +388,10 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
         </Field>
       </fieldset>
 
-      <p className="text-sm text-muted-foreground">All fields are required, except the links.</p>
+      <p className="text-sm text-muted-foreground">{r.allRequired}</p>
 
       <Button type="submit" size="lg" disabled={pending || proof.status === "uploading"} className="w-full sm:w-fit">
-        {pending ? "Sending…" : proof.status === "uploading" ? "Uploading screenshot…" : "Submit"}
+        {pending ? r.sending : proof.status === "uploading" ? r.uploadingButton : r.submit}
       </Button>
     </form>
   );

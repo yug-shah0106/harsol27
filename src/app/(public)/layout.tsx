@@ -2,16 +2,19 @@ import { Suspense } from "react";
 import { CookieNotice } from "@/components/cookie-notice";
 import { Toran } from "@/components/festive";
 import { FloatingActions } from "@/components/floating-actions";
+import { LocaleRoot } from "@/components/locale-root";
 import { Motion } from "@/components/motion";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { SiteFooter, SiteHeader, SkipLink } from "@/components/site-header";
 import { UtmCapture } from "@/components/utm-capture";
 import { isComingSoon } from "@/lib/coming-soon";
+import { getMessages } from "@/server/locale";
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const t = await getMessages();
   return (
-    <>
-      <SkipLink />
+    <LocaleRoot>
+      <SkipLink label={t.nav.skip} />
       <Toran />
       {/* Before launch, these pages wear the coming-soon page's header: clear at the top, frosting as you scroll. */}
       <SiteHeader blend={isComingSoon()} />
@@ -26,6 +29,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         <Motion />
         <NavigationProgress />
       </Suspense>
-    </>
+    </LocaleRoot>
   );
 }

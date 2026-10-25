@@ -4,6 +4,8 @@ import { DraftNotice, ProsePage } from "@/components/prose-page";
 import { CONTACT } from "@/lib/contact";
 import { FEE, longDate, rupees } from "@/lib/fee";
 import { pageMetadata } from "@/lib/seo";
+import { getLocale } from "@/server/locale";
+import { TermsGu, TermsHi } from "./translations";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms of use",
@@ -15,10 +17,21 @@ export const metadata: Metadata = pageMetadata({
 // Draft written from what the site actually does (updated 2026-10-21: the trust, the fee, payment checks, logins).
 // Refunds and the governing law are not covered until the client decides them. Must be reviewed by the client's
 // legal adviser before launch.
-export default function TermsPage() {
+const TITLE = { en: "Terms of use", hi: "उपयोग के नियम", gu: "ઉપયોગના નિયમો" } as const;
+
+export default async function TermsPage() {
+  const locale = await getLocale();
   return (
-    <ProsePage title="Terms of use" updated="2026-10-21">
+    <ProsePage title={TITLE[locale]} updated="2026-10-21">
       <DraftNotice />
+      {locale === "hi" ? <TermsHi /> : locale === "gu" ? <TermsGu /> : <TermsEn />}
+    </ProsePage>
+  );
+}
+
+function TermsEn() {
+  return (
+    <>
       <h2>Who runs Harsol27</h2>
       <p>
         Harsol27 is run by the Shree Harsol Sattavis Jain Yuvak Trust, Bhayander, for the Harsol Sattavis (27) Jain community.
@@ -72,6 +85,6 @@ export default function TermsPage() {
         </a>
         .
       </p>
-    </ProsePage>
+    </>
   );
 }

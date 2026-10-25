@@ -104,9 +104,10 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-body), var(--font-gujarati), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-body), var(--font-gujarati), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-serif), ui-serif, Georgia, serif;
+  --font-sans: var(--font-body), var(--font-gujarati), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-body), var(--font-gujarati), var(--font-devanagari), ui-sans-serif, system-ui, sans-serif;
+  /* Fraunces has no Gujarati or Hindi letters: those headings take Hind's. */
+  --font-display: var(--font-serif), var(--font-gujarati), var(--font-devanagari), ui-serif, Georgia, serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -265,6 +266,7 @@ html.lenis body {
     display: inline-grid;
     overflow: hidden;
     vertical-align: bottom;
+    text-align: start; /* a shorter word sits right after the words before it; the spare room trails */
   }
   .rotator > span {
     grid-area: 1 / 1;
@@ -626,6 +628,11 @@ html.lenis body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Hind has no italic: Hindi and Gujarati stay upright rather than take a slanted fake (Fraunces' real italic is kept). */
+  :lang(hi),
+  :lang(gu) {
+    font-synthesis-style: none;
   }
   /* One clearly visible keyboard focus style everywhere (WCAG 2.4.7 / 2.4.11). */
   :focus-visible {
