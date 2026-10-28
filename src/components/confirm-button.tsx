@@ -2,6 +2,7 @@
 
 import { useId, useRef } from "react";
 import { SubmitButton } from "@/components/action-form";
+import { useI18n } from "@/components/i18n";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -18,6 +19,7 @@ export function ConfirmButton({
   value,
   ...trigger
 }: Omit<React.ComponentProps<typeof Button>, "type" | "onClick"> & { title: string; description: string; confirmLabel?: string; name?: string; value?: string }) {
+  const { t } = useI18n();
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
   return (
@@ -40,7 +42,7 @@ export function ConfirmButton({
         <div className="mt-6 flex flex-wrap justify-end gap-2">
           {/* The safe choice has the focus first. */}
           <Button type="button" variant="outline" autoFocus onClick={() => dialog.current?.close()}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <SubmitButton name={name} value={value} variant="destructive" onClick={() => dialog.current?.close()}>
             {confirmLabel ?? children}

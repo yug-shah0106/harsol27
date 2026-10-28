@@ -95,12 +95,6 @@
     --sidebar-border: #3d2b21;
     --sidebar-ring: #f2b866;
   }
-  /* Dusk instead of morning. (The kites keep their light haze: ponytail, a dark fog for the 3D if it bothers.) */
-  .dark .kite-sky {
-    background:
-      radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 80%, transparent) 0, transparent 24%),
-      linear-gradient(to bottom, #2a1d15 0%, #221812 45%, var(--background) 100%);
-  }
 }
 
 @theme inline {
@@ -148,13 +142,6 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-}
-
-/* The home page's sky behind the kites (behind the coming-soon switch for now): a warm morning, a marigold sun. */
-.kite-sky {
-  background:
-    radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--accent) 80%, transparent) 0, transparent 24%),
-    linear-gradient(to bottom, #ffefd2 0%, #fff6e6 45%, var(--background) 100%);
 }
 
 /*
@@ -570,16 +557,6 @@ html.lenis body {
     }
   }
 
-  /* A line that draws itself from the left once, at first paint (the hero underline). CSS, so it never waits for scripts. */
-  .animate-draw {
-    transform-origin: left;
-    animation: draw-x 900ms cubic-bezier(0.65, 0, 0.35, 1) 600ms both;
-  }
-  @keyframes draw-x {
-    from {
-      transform: scaleX(0);
-    }
-  }
 
   /*
    * <ScrollArea> (components/ui/scroll-area.tsx): soft shadows at an edge while there is more to
@@ -668,13 +645,19 @@ html.lenis body {
       transform: none !important;
       filter: none !important;
     }
-    .kite-sky {
-      background: none;
-    }
     li,
     section > div,
     .rounded-xl {
       break-inside: avoid;
     }
+  }
+}
+
+/* Hindi and Gujarati vowel signs reach above and below the letters: the display headings' tight leading would make
+   lines touch. In the utilities layer, where its higher specificity beats the leading-* utilities. */
+@layer utilities {
+  :lang(hi) :is(h1, h2).font-display,
+  :lang(gu) :is(h1, h2).font-display {
+    line-height: 1.2;
   }
 }

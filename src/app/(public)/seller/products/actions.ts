@@ -10,6 +10,7 @@ import {
   createProduct,
   deletePhoto,
   movePhoto,
+  renamePhoto,
   requireApprovedSeller,
   setProductHidden,
   updateProduct,
@@ -63,6 +64,14 @@ export async function attachPhotoAction(productId: string, key: string): Promise
 export async function deletePhotoAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("deletePhoto", async () => {
     await deletePhoto(await account(), formData.get("photoId"));
+    revalidatePath(`/seller/products/${String(formData.get("productId") ?? "")}`);
+    return ok;
+  });
+}
+
+export async function renamePhotoAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
+  return runAction("renamePhoto", async () => {
+    await renamePhoto(await account(), formData.get("photoId"), formData.get("name"));
     revalidatePath(`/seller/products/${String(formData.get("productId") ?? "")}`);
     return ok;
   });

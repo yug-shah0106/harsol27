@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma/client";
 import { detectPhotoType, PHOTO_TYPES } from "@/lib/file-type";
 import { fieldErrors } from "@/lib/lead-schema";
-import { MAX_PHOTOS_PER_PRODUCT, photoUploadSchema, productSchema, specificationsFromForm } from "@/lib/product-schema";
+import { MAX_PHOTOS_PER_PRODUCT, photoNameSchema, photoUploadSchema, productSchema, specificationsFromForm } from "@/lib/product-schema";
 import type { Member } from "./authz";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
@@ -187,6 +187,14 @@ export async function deletePhoto(seller: SellerAccount, photoId: unknown): Prom
   const photo = await ownPhoto(seller, photoId);
   await db().productPhoto.delete({ where: { id: photo.id } });
   await deletePhotoFiles(photo.productId, photo.id, photo.uploadKey).catch((error: unknown) => logError(error, { deletedPhoto: photo.id }));
+}
+
+/** Names what the photo shows, so buyers can tell the models or sizes apart (2026-10-27). */
+export async function renamePhoto(seller: SellerAccount, photoId: unknown, name: unknown): Promise<void> {
+  const photo = await ownPhoto(seller, photoId);
+  const parsed = photoNameSchema.safeParse(name ?? "");
+  if (!parsed.success) throw new UserFacingError(parsed.error.issues[0]?.message ?? "Check the photo name.");
+  await db().productPhoto.update({ where: { id: photo.id }, data: { name: parsed.data || null } });
 }
 
 /** Swaps the photo with its neighbour; the first photo is the one shown in search results. */

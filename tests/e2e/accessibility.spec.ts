@@ -43,7 +43,7 @@ async function sweep(page: Page, paths: string[]) {
 test("visitor pages", async ({ browser }) => {
   const { product, sellerSlug } = fixture;
   await sweep(await newPage(browser), [
-    "/coming-soon",
+    "/",
     "/search",
     "/search?q=khakhra",
     "/industries",
@@ -59,12 +59,12 @@ test("visitor pages", async ({ browser }) => {
 });
 
 test("buyer and seller pages", async ({ browser }) => {
-  await sweep(fixture.buyerPage, ["/account", "/account/mobile?change=1", "/account/inquiries", `/products/${fixture.product.slug}`, "/seller/apply"]);
-  await sweep(fixture.sellerPage, ["/seller", "/seller/products", "/seller/products/new", `/seller/products/${fixture.product.id}`, "/seller/inquiries", "/seller/subscription"]);
-  const fresh = await newPage(browser); // the application form, before applying
+  await sweep(fixture.buyerPage, ["/account", "/account/mobile?change=1", "/account/inquiries", `/products/${fixture.product.slug}`, "/seller/dashboard", "/seller/companyverification"]);
+  await sweep(fixture.sellerPage, ["/seller/dashboard", "/seller/companyverification", "/seller/products", "/seller/products/new", `/seller/products/${fixture.product.id}`, "/seller/inquiries", "/seller/subscription"]);
+  const fresh = await newPage(browser); // the verification form, before sending it
   await fresh.goto("/sign-in");
   await completeSignIn(fresh, randomMobile());
-  await sweep(fresh, ["/seller/apply"]);
+  await sweep(fresh, ["/seller/companyverification"]);
 });
 
 test("admin and viewer pages", async ({ browser }) => {

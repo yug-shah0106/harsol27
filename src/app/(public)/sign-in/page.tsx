@@ -9,13 +9,14 @@ import { SignInForm } from "./forms";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
-// Members sign in with the username and password the team gave them once their Seller registration was
-// approved: there is no "Create an account", Google sign-in or self-service reset (client, 2026-10-19).
+// Buyers sign in here with the email and password of the account they made (/sign-up); sellers have their own
+// page, /seller/sign-in, for the team's username and password (client, 2026-10-25). No Google, no self-service reset.
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   const params = await searchParams;
   const next = safeReturnPath(params.next);
   if (await getMember()) redirect(next);
   const { signIn: s } = await getMessages();
+  const query = params.next ? `?next=${encodeURIComponent(next)}` : "";
 
   return (
     <AuthCard
@@ -23,11 +24,15 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
       description={s.description}
       footer={
         <>
-          {s.noLogin}
-          <Link href="/Seller-Registration" className="font-semibold text-primary hover:underline">
-            {s.registerLink}
+          {s.newHere}
+          <Link href={`/sign-up${query}`} className="font-semibold text-primary hover:underline">
+            {s.createAccount}
           </Link>
-          {s.noLoginAfter}
+          <br />
+          {s.sellerLine}
+          <Link href="/seller/sign-in" className="font-semibold text-primary hover:underline">
+            {s.sellerLink}
+          </Link>
         </>
       }
     >

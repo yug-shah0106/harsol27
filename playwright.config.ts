@@ -38,7 +38,6 @@ export default defineConfig({
       BETTER_AUTH_URL: baseURL,
       BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "",
       CLIENT_IP_HEADER: "x-forwarded-for",
-      COMING_SOON: "false", // the tests use the full site; /coming-soon itself is still checked
       S3_ENDPOINT: process.env.S3_ENDPOINT ?? "http://127.0.0.1:8333",
       S3_BUCKET: process.env.TEST_S3_BUCKET ?? "harsol27-test",
       S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID ?? "local-dev-access-key",

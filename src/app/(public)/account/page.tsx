@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { isComingSoon } from "@/lib/coming-soon";
 import { fill, formatShortDate, industryName } from "@/lib/i18n";
-import { SELLER_STATUS_LABELS } from "@/lib/seller-status";
 import { leadSubscription } from "@/lib/subscription";
 import { requireMember } from "@/server/authz";
 import { db } from "@/server/db";
@@ -33,8 +31,6 @@ export default async function AccountPage() {
       },
     }),
   ]);
-  // Before launch the buying and selling pages are closed, so only the registration is shown.
-  const closed = isComingSoon();
   const [locale, t] = [await getLocale(), await getMessages()];
   const a = t.account;
   const subscription = lead ? leadSubscription(lead) : null;
@@ -79,49 +75,52 @@ export default async function AccountPage() {
             <dt className="text-muted-foreground">{a.industry}</dt>
             <dd>{industries || t.common.none}</dd>
           </dl>
-          {closed && <p className="text-sm text-muted-foreground">{a.opensSoon}</p>}
         </section>
       )}
 
-      {!closed && (
-        <>
-          <section aria-labelledby="buying-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
-            <h2 id="buying-heading" className="text-lg font-semibold">
-              Buying
-            </h2>
-            <p className="text-muted-foreground">Sellers you have contacted, with their phone numbers and emails.</p>
+      <section aria-labelledby="buying-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
+        <h2 id="buying-heading" className="text-lg font-semibold">
+          {t.buyer.buying}
+        </h2>
+        <p className="text-muted-foreground">{t.buyer.buyingText}</p>
+        <Button asChild variant="outline" className="w-fit">
+          <Link href="/account/inquiries">{t.buyer.myInquiries}</Link>
+        </Button>
+      </section>
+
+      <section aria-labelledby="seller-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
+        <h2 id="seller-heading" className="text-lg font-semibold">
+          {t.buyer.selling}
+        </h2>
+        {/* Two steps (client, 2026-10-24): the team approves the Seller registration, then the seller page. */}
+        {seller ? (
+          <>
+            <p className="flex flex-wrap items-center gap-2">
+              {seller.companyName} <Badge variant="secondary">{t.sellerStatuses[seller.status]}</Badge>
+            </p>
             <Button asChild variant="outline" className="w-fit">
-              <Link href="/account/inquiries">My inquiries</Link>
+              <Link href="/seller/dashboard">{t.buyer.openSeller}</Link>
             </Button>
-          </section>
+          </>
+        ) : lead?.decision === "APPROVED" ? (
+          <>
+            <p className="text-muted-foreground">{t.buyer.setUp}</p>
+            <Button asChild className="w-fit">
+              <Link href="/seller/companyverification">{t.buyer.setUpButton}</Link>
+            </Button>
+          </>
+        ) : lead ? (
+          <p className="text-muted-foreground">{t.buyer.registered}</p>
+        ) : (
+          <>
+            <p className="text-muted-foreground">{t.buyer.register}</p>
+            <Button asChild className="w-fit">
+              <Link href="/Seller-Registration">{t.buyer.registerButton}</Link>
+            </Button>
+          </>
+        )}
+      </section>
 
-          <section aria-labelledby="seller-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
-            <h2 id="seller-heading" className="text-lg font-semibold">
-              Selling on Harsol27
-            </h2>
-            {seller ? (
-              <>
-                <p className="flex flex-wrap items-center gap-2">
-                  {seller.companyName} <Badge variant="secondary">{SELLER_STATUS_LABELS[seller.status]}</Badge>
-                </p>
-                <Button asChild variant="outline" className="w-fit">
-                  <Link href="/seller">Open your seller page</Link>
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-muted-foreground">
-                  Apply to list your products. Our team reviews every application before a seller is listed.
-                </p>
-                <Button asChild className="w-fit">
-                  <Link href="/seller/apply">Apply to become a seller</Link>
-                </Button>
-              </>
-            )}
-          </section>
-
-        </>
-      )}
 
       <form action={memberSignOutAction}>
         <Button type="submit" variant="outline">

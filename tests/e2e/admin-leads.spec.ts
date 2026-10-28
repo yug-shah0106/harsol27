@@ -148,13 +148,15 @@ test("an approved registration gets a login from the team; an admin can reset it
   await expect(login.locator("dd").nth(0)).toHaveText(username); // both stay for admins
   await expect(login.locator("dd").nth(1)).toHaveText(password);
 
-  // The seller signs in with it, and sees their registration.
+  // The seller signs in with it on the seller sign-in, lands on their dashboard, and sees their registration on
+  // their account page.
   const seller = await newPage(browser);
-  await seller.goto("/sign-in");
+  await seller.goto("/seller/sign-in");
   await seller.getByLabel("Username").fill(username);
   await seller.getByLabel("Password", { exact: true }).fill(password);
   await seller.getByRole("button", { name: "Sign in" }).click();
-  await expect(seller).toHaveURL(/\/account$/, { timeout: 20_000 });
+  await expect(seller).toHaveURL(/\/seller\/dashboard$/, { timeout: 20_000 });
+  await seller.goto("/account");
   const registration = seller.getByRole("region", { name: "Your seller registration" });
   await expect(registration).toContainText("Approved");
   await expect(registration).toContainText(/15 months, \d{1,2} \w{3} \d{4} to \d{1,2} \w{3} \d{4}/);
@@ -178,15 +180,15 @@ test("an approved registration gets a login from the team; an admin can reset it
   await expect(viewerLogin).toContainText(username);
   await expect(viewerLogin).not.toContainText(newPassword);
   await expect(viewerLogin.getByRole("button")).toHaveCount(0);
-  await seller.goto("/account");
-  await expect(seller).toHaveURL(/\/sign-in\?next=%2Faccount$/);
+  await seller.goto("/seller/dashboard");
+  await expect(seller).toHaveURL(/\/seller\/sign-in\?next=%2Fseller%2Fdashboard$/);
   await seller.getByLabel("Username").fill(username);
   await seller.getByLabel("Password", { exact: true }).fill(password);
   await seller.getByRole("button", { name: "Sign in" }).click();
   await expect(seller.getByRole("main").getByRole("alert")).toContainText("Username or password is incorrect", { timeout: 20_000 });
   await seller.getByLabel("Password", { exact: true }).fill(newPassword);
   await seller.getByRole("button", { name: "Sign in" }).click();
-  await expect(seller).toHaveURL(/\/account$/, { timeout: 20_000 });
+  await expect(seller).toHaveURL(/\/seller\/dashboard$/, { timeout: 20_000 });
   await page.reload();
 
   // Rejected: the login stops working at once, even for the open session.
@@ -194,8 +196,8 @@ test("an approved registration gets a login from the team; an admin can reset it
   const rejected = page.waitForResponse((r) => r.request().method() === "POST" && "next-action" in r.request().headers());
   await page.getByRole("option", { name: "Rejected" }).click();
   await rejected;
-  await seller.goto("/account");
-  await expect(seller).toHaveURL(/\/sign-in\?next=%2Faccount$/);
+  await seller.goto("/seller/dashboard");
+  await expect(seller).toHaveURL(/\/seller\/sign-in\?next=%2Fseller%2Fdashboard$/);
   await seller.getByLabel("Username").fill(username);
   await seller.getByLabel("Password", { exact: true }).fill(newPassword);
   await seller.getByRole("button", { name: "Sign in" }).click();

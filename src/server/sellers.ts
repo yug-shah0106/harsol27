@@ -8,6 +8,7 @@ import {
   documentLabel,
   SELLER_DOCUMENTS,
   sellerApplicationSchema,
+  sellerProfileSchema,
   uploadRequestSchema,
   type SellerDocumentKindValue,
 } from "@/lib/seller-schema";
@@ -71,6 +72,22 @@ async function verifyUpload(member: Member, key: string, field: string): Promise
 
 const docField = (kind: SellerDocumentKindValue) => `doc_${kind}`;
 
+const DETAIL_FIELDS = ["companyName", "contactName", "contactPhone", "contactEmail", "address", "city", "state"] as const;
+const readDetails = (form: FormData) => ({
+  ...Object.fromEntries(DETAIL_FIELDS.map((f) => [f, form.get(f) ?? ""])),
+  description: String(form.get("description") ?? "") || undefined,
+});
+
+function checkPhone(phone: string) {
+  if (!isValidPhoneNumber(phone)) throw new UserFacingError("Please correct the highlighted fields.", { contactPhone: "Enter a valid phone number." });
+}
+
+/** The name for the header's profile button when this member is a seller: the team made their login, so it has a username. */
+export async function sellerLoginName(userId: string): Promise<string | null> {
+  const user = await db().user.findUnique({ where: { id: userId }, select: { name: true, username: true } });
+  return user?.username ? user.name : null;
+}
+
 export function getMySeller(userId: string) {
   return db().seller.findUnique({
     where: { userId },
@@ -82,26 +99,15 @@ export function getMySeller(userId: string) {
 }
 
 /**
- * Creates the seller application, or resubmits it after a rejection. A new application needs every
- * required document (all but GST); a resubmission keeps any document not replaced. Everything (details, documents,
+ * Creates the seller application, or resubmits it after a rejection. Documents are optional (client,
+ * 2026-10-15; SELLER_DOCUMENTS keeps a `required` flag should that change); a resubmission keeps any document not replaced. Everything (details, documents,
  * history, team alert) is written in one transaction.
  */
 export async function submitApplication(member: Member, form: FormData): Promise<void> {
-  const parsed = sellerApplicationSchema.safeParse({
-    companyName: form.get("companyName") ?? "",
-    contactName: form.get("contactName") ?? "",
-    contactPhone: form.get("contactPhone") ?? "",
-    contactEmail: form.get("contactEmail") ?? "",
-    address: form.get("address") ?? "",
-    city: form.get("city") ?? "",
-    state: form.get("state") ?? "",
-    description: String(form.get("description") ?? "") || undefined,
-  });
+  const parsed = sellerApplicationSchema.safeParse(readDetails(form));
   if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
   const details = parsed.data;
-  if (!isValidPhoneNumber(details.contactPhone)) {
-    throw new UserFacingError("Please correct the highlighted fields.", { contactPhone: "Enter a valid phone number." });
-  }
+  checkPhone(details.contactPhone);
 
   const existing = await db().seller.findUnique({ where: { userId: member.id }, select: { id: true, status: true } });
   if (existing && existing.status !== "REJECTED") throw new UserFacingError("You have already applied. Check your seller page for its status.");
@@ -164,6 +170,21 @@ export async function submitApplication(member: Member, form: FormData): Promise
 
   // Replaced documents are no longer referenced; remove the files. A failure here loses nothing.
   for (const key of replacedKeys) await deleteObject(key).catch((error: unknown) => logError(error, { replacedKey: key }));
+}
+
+/**
+ * The seller's own profile edits on their dashboard (2026-10-27): contact, address and description, saved at once
+ * without a new review. The company name and documents go through company verification.
+ */
+export async function updateSellerProfile(member: Member, form: FormData): Promise<void> {
+  const parsed = sellerProfileSchema.safeParse(readDetails(form));
+  if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
+  checkPhone(parsed.data.contactPhone);
+  const { count } = await db().seller.updateMany({
+    where: { userId: member.id },
+    data: { ...parsed.data, description: parsed.data.description ?? null }, // an emptied description is cleared
+  });
+  if (count === 0) throw new UserFacingError("Send your company verification first.");
 }
 
 // ───────────── Staff ─────────────

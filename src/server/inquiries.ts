@@ -100,9 +100,9 @@ const inquiryListSelect = {
   seller: { select: { id: true, companyName: true, slug: true } },
 } satisfies Prisma.InquirySelect;
 
-/** For the staff overview. */
-export function countRecentInquiries(days: number) {
-  return db().inquiry.count({ where: { createdAt: { gte: new Date(Date.now() - days * 86_400_000) } } });
+/** For the staff overview (all sellers) and a seller's dashboard (theirs). */
+export function countRecentInquiries(days: number, sellerId?: string) {
+  return db().inquiry.count({ where: { sellerId, createdAt: { gte: new Date(Date.now() - days * 86_400_000) } } });
 }
 
 /** The buyer's own inquiries, newest first. */

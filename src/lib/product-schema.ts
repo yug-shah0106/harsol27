@@ -53,6 +53,13 @@ export function parseSpecifications(json: unknown): Specification[] {
   return parsed.success ? parsed.data : [];
 }
 
+/** A photo's name, such as the model or size it shows ("S1", "5 litre"); empty clears it. */
+export const photoNameSchema = z
+  .string()
+  .trim()
+  .max(60, "Keep the photo name to 60 characters or fewer.")
+  .regex(noControlChars, "Remove line breaks from the photo name.");
+
 const photoTypes = Object.keys(PHOTO_TYPES) as [PhotoContentType, ...PhotoContentType[]];
 
 export const photoUploadSchema = z.object({

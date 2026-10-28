@@ -2,7 +2,8 @@ import "server-only";
 import { APIError } from "better-auth/api";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { z } from "zod";
-import { phoneSchema } from "@/lib/lead-schema";
+import { Prisma } from "@/generated/prisma/client";
+import { fieldErrors, fullNameSchema, leadSchema, phoneSchema } from "@/lib/lead-schema";
 import { auth } from "./auth";
 import type { Member } from "./authz";
 import { clientIpFrom } from "./client-ip";
@@ -10,15 +11,58 @@ import { db } from "./db";
 import { env } from "./env";
 import { UserFacingError } from "./errors";
 import { issueOtp } from "./otp";
+import { hashPassword, MEMBER_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "./password";
+import { signInWithPassword } from "./password-auth";
 import { consumeRateLimit } from "./rate-limit";
 import { sendOtpSms } from "./sms";
 
 /*
- * Buyers and sellers sign in with the username and password the team gave them (password-auth.ts,
- * shared with staff): there is no self sign-up and no self-service password reset (client, 2026-10-19).
- * Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched off until an SMS provider is
- * connected (docs/FUTURE.md); nothing calls it.
+ * Buyers make their own account here and sign in with its email and password (client, 2026-10-24/25); sellers
+ * sign in with the username and password the team gives them (member-logins.ts). Both go through
+ * password-auth.ts, shared with staff. Nobody resets their own password: the team makes a new one. Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched
+ * off until an SMS provider is connected (docs/FUTURE.md); nothing calls it.
  */
+
+export const SIGN_UP_PER_IP = { max: 5, windowSeconds: 60 * 60 };
+export const EMAIL_TAKEN = "An account with this email already exists. Sign in, or ask the Harsol27 team for a new password.";
+
+const signUpSchema = z.object({
+  name: fullNameSchema,
+  mobile: phoneSchema,
+  email: leadSchema.shape.email,
+  password: z
+    .string()
+    .min(MEMBER_PASSWORD_MIN_LENGTH, `Use at least ${MEMBER_PASSWORD_MIN_LENGTH} characters.`)
+    .max(PASSWORD_MAX_LENGTH, `Use at most ${PASSWORD_MAX_LENGTH} characters.`),
+});
+
+/**
+ * A buyer's own account, signed in at once. No email or SMS check (none is set up): the mobile number goes to
+ * the sellers they send inquiries to. Rate-limited per network so accounts can't be made in bulk.
+ */
+export async function signUpBuyer(form: FormData, headers: Headers): Promise<void> {
+  await limit(`sign-up:ip:${clientIpFrom(headers, env().CLIENT_IP_HEADER) ?? "unknown"}`, SIGN_UP_PER_IP, "Too many accounts made from your network.");
+  const parsed = signUpSchema.safeParse(Object.fromEntries(["name", "mobile", "email", "password"].map((field) => [field, String(form.get(field) ?? "")])));
+  if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
+  const { name, mobile, email, password } = parsed.data;
+  if (await db().user.findUnique({ where: { email }, select: { id: true } })) throw new UserFacingError("Please correct the highlighted fields.", { email: EMAIL_TAKEN });
+
+  const passwordHash = await hashPassword(password);
+  try {
+    await db().$transaction(async (tx) => {
+      const user = await tx.user.create({ data: { name, email, mobile, role: "MEMBER" }, select: { id: true } });
+      // Better Auth's email/password provider looks for exactly this "credential" account row.
+      await tx.account.create({ data: { userId: user.id, accountId: user.id, providerId: "credential", password: passwordHash } });
+    });
+  } catch (error) {
+    // Someone signed up with this email a moment ago.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new UserFacingError("Please correct the highlighted fields.", { email: EMAIL_TAKEN });
+    }
+    throw error;
+  }
+  await signInWithPassword("buyer", { login: email, password }, headers);
+}
 
 const fieldError = (field: string, error: z.ZodError) => new UserFacingError("Please correct the highlighted field.", { [field]: error.issues[0]?.message ?? "Check this field." });
 

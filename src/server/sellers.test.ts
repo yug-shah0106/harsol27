@@ -5,7 +5,7 @@ import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
 import { purgeUnclaimedUploads } from "./retention";
-import { createDocumentUpload, decideSeller, submitApplication } from "./sellers";
+import { createDocumentUpload, decideSeller, submitApplication, updateSellerProfile } from "./sellers";
 import type { StaffUser } from "./staff-policy";
 import { headObject } from "./storage";
 
@@ -93,11 +93,10 @@ describe("seller application", () => {
     expect(seller.documents.map((d) => d.kind).sort()).toEqual(["ADDRESS_PROOF", "BUSINESS_REGISTRATION", "PAN_CARD"]);
   });
 
-  it("requires every other document on a first application", async () => {
+  it("takes an application without documents: they are optional (client, 2026-10-15)", async () => {
     const member = await newMember();
-    const docs = await allDocs(member);
-    delete docs.PAN_CARD;
-    await fieldError(submitApplication(member, await applicationForm(member, docs)), "doc_PAN_CARD");
+    await submitApplication(member, await applicationForm(member, {}));
+    expect(await db().seller.findUniqueOrThrow({ where: { userId: member.id }, select: { status: true, documents: true } })).toEqual({ status: "PENDING", documents: [] });
   });
 
   it("refuses a file whose bytes are not what it claims to be", async () => {
@@ -138,6 +137,22 @@ describe("seller application", () => {
     const member = await newMember();
     await submitApplication(member, await applicationForm(member, await allDocs(member)));
     await expect(submitApplication(member, await applicationForm(member, await allDocs(member)))).rejects.toThrow(/already applied/);
+  });
+});
+
+describe("profile edits on the dashboard", () => {
+  it("change the contact, address and description at once, never the company name or status", async () => {
+    const member = await newMember();
+    await expect(updateSellerProfile(member, await applicationForm(member, {}))).rejects.toThrow(/company verification first/);
+    const withDescription = await applicationForm(member, {});
+    withDescription.set("description", "Khakhra since 1990");
+    await submitApplication(member, withDescription);
+
+    const edit = await applicationForm(member, {}, { companyName: "Someone Else Ltd", contactPhone: "98250 99999", city: "Surat" });
+    await updateSellerProfile(member, edit); // no description: cleared
+    const seller = await db().seller.findUniqueOrThrow({ where: { userId: member.id }, omit: { contactPhone: false } });
+    expect(seller).toMatchObject({ companyName: `Patel Khakhra ${run}`, status: "PENDING", contactPhone: "+919825099999", city: "Surat", description: null });
+    await fieldError(updateSellerProfile(member, await applicationForm(member, {}, { contactPhone: "12" })), "contactPhone");
   });
 });
 

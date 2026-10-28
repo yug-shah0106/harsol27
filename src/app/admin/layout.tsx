@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Toran } from "@/components/festive";
 import { I18nProvider } from "@/components/i18n";
 import { Motion } from "@/components/motion";
-import { SkipLink, Wordmark } from "@/components/site-header";
+import { initials, SkipLink, Wordmark } from "@/components/site-header";
 import { MESSAGES } from "@/i18n";
 import { requireStaff } from "@/server/authz";
 import { signOutAction } from "./actions";
@@ -49,10 +49,4 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       </div>
     </I18nProvider>
   );
-}
-
-/** "Vansh Shah" → "VS"; one name → its first letter. */
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "")).toUpperCase();
 }

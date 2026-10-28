@@ -11,21 +11,24 @@ import { consumeRateLimit } from "./rate-limit";
 import { afterFailedLogin, isLocked, isStaffRole } from "./staff-policy";
 
 /**
- * Password sign-in, shared by staff (/staff/sign-in, by email) and members (/sign-in, by the username the
- * team gave them). Each page accepts only its own kind of account: a staff login on the member page fails
- * like a wrong password, so staff can only get a session through the staff page and its rules.
+ * Password sign-in, shared by staff (/staff/sign-in, by email), buyers (/sign-in, by the email they signed up
+ * with) and sellers (/seller/sign-in, by the username the team gave them; client, 2026-10-25). Staff pages and
+ * member pages accept only their own kind of account: a staff login on a member page fails like a wrong
+ * password, so staff can only get a session through the staff page and its rules.
  */
+const MEMBER = (role: unknown) => role === "MEMBER";
 const KINDS = {
   // rememberMe: false → a browser-session cookie, gone when the browser closes.
   staff: { accepts: isStaffRole, rememberMe: false, by: "email", error: "Email or password is incorrect, or the account is temporarily locked. Please try again later." },
-  member: { accepts: (role: unknown) => role === "MEMBER", rememberMe: true, by: "username", error: "Username or password is incorrect, or the account is temporarily locked. Please try again later." },
+  buyer: { accepts: MEMBER, rememberMe: true, by: "email", error: "Email or password is incorrect, or the account is temporarily locked. Please try again later." },
+  seller: { accepts: MEMBER, rememberMe: true, by: "username", error: "Username or password is incorrect, or the account is temporarily locked. Please try again later." },
 } as const;
 export type PasswordAccountKind = keyof typeof KINDS;
 
 // One message (per page) for an unknown login, a wrong password, locked and disabled accounts alike,
 // so the response never reveals whether an account exists or what state it is in.
 export const GENERIC_SIGN_IN_ERROR = KINDS.staff.error;
-export const GENERIC_MEMBER_SIGN_IN_ERROR = KINDS.member.error;
+export const GENERIC_MEMBER_SIGN_IN_ERROR = KINDS.seller.error;
 
 const IP_RULE = { max: 10, windowSeconds: 15 * 60 };
 
@@ -34,7 +37,7 @@ const credentialsSchema = {
   username: z.object({ login: z.string().trim().toLowerCase().min(1).max(30), password: z.string().min(1).max(PASSWORD_MAX_LENGTH) }),
 };
 
-/** `login` is the email (staff) or the username (members). */
+/** `login` is the email (staff, buyers) or the username (sellers). */
 export async function signInWithPassword(kind: PasswordAccountKind, input: { login: unknown; password: unknown }, requestHeaders: Headers): Promise<void> {
   const ip = clientIpFrom(requestHeaders, env().CLIENT_IP_HEADER) ?? "unknown";
   const limit = await consumeRateLimit(`${kind}-login:ip:${ip}`, IP_RULE);

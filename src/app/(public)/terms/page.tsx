@@ -22,7 +22,7 @@ const TITLE = { en: "Terms of use", hi: "उपयोग के नियम", g
 export default async function TermsPage() {
   const locale = await getLocale();
   return (
-    <ProsePage title={TITLE[locale]} updated="2026-10-21">
+    <ProsePage title={TITLE[locale]} updated="2026-10-24">
       <DraftNotice />
       {locale === "hi" ? <TermsHi /> : locale === "gu" ? <TermsGu /> : <TermsEn />}
     </ProsePage>
@@ -60,7 +60,7 @@ function TermsEn() {
           the period shown on your account page (normally {FEE.months} months from the day you registered).
         </li>
         <li>
-          You do not create your own account: once your registration is approved, our team gives you a username and password.
+          Your seller login comes from us: once your registration is approved, our team gives you a username and password.
           Keep them private. If you forget your password, contact us and we will set a new one.
         </li>
       </ul>
@@ -72,6 +72,9 @@ function TermsEn() {
       </ul>
       <h2>Buyers</h2>
       <ul>
+        <li>
+          You make your own buyer account. Keep your password private. If you forget it, contact us and we will set a new one.
+        </li>
         <li>A seller&apos;s contact details are shown after you send them an enquiry.</li>
         <li>Use contact details only to discuss genuine business with that seller. Collecting them in bulk is not allowed.</li>
       </ul>

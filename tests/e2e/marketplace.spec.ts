@@ -21,10 +21,10 @@ test("marketplace: a seller lists a product, a buyer finds it, inquires and gets
   const seller = await newPage(browser);
   const sellerCsp = watchCsp(seller);
   const sellerMobile = randomMobile();
-  await seller.goto("/sign-in?next=/seller");
+  await seller.goto("/sign-in?next=/seller/dashboard");
   await completeSignIn(seller, sellerMobile);
   const { contactPhone, contactEmail } = await makeApprovedSeller(sellerMobile.e164, company);
-  await seller.goto("/seller");
+  await seller.goto("/seller/dashboard");
   await expect(seller.getByText(/Active until/)).toBeVisible();
   await seller.getByRole("link", { name: "Manage products" }).click();
   await seller.getByRole("link", { name: "Add a product" }).click();
@@ -43,6 +43,14 @@ test("marketplace: a seller lists a product, a buyer finds it, inquires and gets
   await seller.getByLabel("Add photos").setInputFiles([await photo("#c8743a"), await photo("#3a6ec8")]);
   await expect(seller.getByText("Main photo")).toBeVisible({ timeout: 30_000 });
   await expect(seller.getByRole("img", { name: "Photo 2" })).toBeVisible({ timeout: 30_000 }); // worker made the web sizes
+  // Each photo gets a name (the size or model it shows), for buyers.
+  for (const [n, name] of [[1, "S1 small"], [2, "S2 family pack"]] as const) {
+    await seller.getByLabel(`Name of photo ${n}`, { exact: true }).fill(name);
+    await seller.getByRole("button", { name: `Save the name of photo ${n}` }).click();
+    await expect(seller.getByText("Saved.")).toHaveCount(n);
+  }
+  await seller.reload();
+  await expect(seller.getByLabel("Name of photo 2", { exact: true })).toHaveValue("S2 family pack");
   expect(sellerCsp).toEqual([]);
 
   // ── A visitor finds it; the contact is locked and NOT in the page at all ──
@@ -55,6 +63,8 @@ test("marketplace: a seller lists a product, a buyer finds it, inquires and gets
   await visitor.getByRole("link", { name: new RegExp(productName) }).click();
   await expect(visitor.getByRole("heading", { level: 1, name: productName })).toBeVisible();
   await expect(visitor.getByRole("cell", { name: "200 g" })).toBeVisible();
+  await expect(visitor.getByRole("img", { name: `${productName}: S1 small` })).toBeVisible(); // the photo names
+  await expect(visitor.getByText("S2 family pack")).toBeVisible();
   await expect(visitor.getByRole("link", { name: "Sign in to contact the seller" })).toBeVisible();
   const lockedHtml = await visitor.content();
   expect(lockedHtml).not.toContain(contactPhone);

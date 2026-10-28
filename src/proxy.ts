@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { comingSoonRoute } from "@/lib/coming-soon";
 
 /** Origin browsers upload documents to (R2 / local S3), allowed in connect-src. Nothing else is. */
 function storageOrigin(): string {
@@ -23,8 +22,6 @@ export function proxy(request: NextRequest) {
   if (path !== "/Seller-Registration" && ["/get-started", "/pre-registration", "/seller-registration"].includes(path.toLowerCase())) {
     return NextResponse.redirect(new URL("/Seller-Registration", request.url), 308);
   }
-  const route = comingSoonRoute(path);
-  if (route === "redirect") return NextResponse.redirect(new URL("/", request.url));
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
@@ -48,10 +45,7 @@ export function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response =
-    route === "rewrite"
-      ? NextResponse.rewrite(new URL("/coming-soon", request.url), { request: { headers: requestHeaders } })
-      : NextResponse.next({ request: { headers: requestHeaders } });
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
   return response;
 }

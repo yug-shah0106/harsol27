@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // The seller pages' old addresses (until 2026-10-27), still in sent emails and bookmarks.
+  async redirects() {
+    return [
+      { source: "/seller", destination: "/seller/dashboard", permanent: false },
+      { source: "/seller/apply", destination: "/seller/companyverification", permanent: false },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

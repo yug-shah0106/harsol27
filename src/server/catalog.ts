@@ -116,7 +116,7 @@ export async function getProductForPage(slug: string, viewer: Viewer, now = new 
       removedAt: true,
       industry: { select: { name: true, slug: true } },
       seller: { select: { id: true, userId: true, slug: true, companyName: true, city: true, state: true } },
-      photos: { where: { status: "READY" }, orderBy: { sortOrder: "asc" }, select: { id: true, width: true, height: true } },
+      photos: { where: { status: "READY" }, orderBy: { sortOrder: "asc" }, select: { id: true, width: true, height: true, name: true } },
     },
   });
   if (!product) return null;
