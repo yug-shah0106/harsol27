@@ -58,3 +58,6 @@ export const sellerApplicationSchema = z.object({
 });
 
 export type SellerApplicationInput = z.infer<typeof sellerApplicationSchema>;
+
+/** What a seller edits on their dashboard: everything but the company name, which stays as the team verified it. */
+export const sellerProfileSchema = sellerApplicationSchema.omit({ companyName: true });

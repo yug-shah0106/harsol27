@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { requireStaff } from "@/server/authz";
+import { requireStaff, SELLER_SIGN_IN_PATH } from "@/server/authz";
+import { baseEnv } from "@/server/env";
 import { listMembers, memberListParamsSchema, openPassword, type MemberListParams } from "@/server/member-logins";
 import { formatIst } from "../leads/format";
 import { ResetMemberPassword } from "./reset-password";
@@ -31,6 +32,12 @@ export default async function MembersPage({ searchParams }: PageProps<"/admin/me
   const isAdmin = staff.role === "ADMIN";
   const params = memberListParamsSchema.parse(await searchParams);
   const { items, total, pageCount } = await listMembers(params);
+  const site = baseEnv().BETTER_AUTH_URL;
+  // What to send on WhatsApp: sellers sign in with their username on the seller page, buyers with their email.
+  const signInText = (member: (typeof items)[number], password: string) =>
+    member.username
+      ? `Harsol27 seller sign-in: ${site}${SELLER_SIGN_IN_PATH}\nUsername: ${member.username}\nPassword: ${password}`
+      : `Harsol27 sign-in: ${site}/sign-in\nEmail: ${member.email}\nPassword: ${password}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -99,10 +106,10 @@ export default async function MembersPage({ searchParams }: PageProps<"/admin/me
                           {password && (
                             <span className="flex items-center gap-1 font-mono font-semibold">
                               {password}
-                              <CopyButton value={`Harsol27 sign-in\nUsername: ${member.username}\nPassword: ${password}`} what="username and password" compact />
+                              <CopyButton value={signInText(member, password)} what="sign-in details" compact />
                             </span>
                           )}
-                          {member.username && !member.disabledAt && <ResetMemberPassword userId={member.id} name={member.name} />}
+                          {!member.disabledAt && <ResetMemberPassword userId={member.id} name={member.name} />}
                         </div>
                       </TableCell>
                     )}

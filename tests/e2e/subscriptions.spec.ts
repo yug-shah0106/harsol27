@@ -11,7 +11,7 @@ test("subscriptions: an admin records a payment and the seller sees it; a viewer
   // ── An approved seller with no payment yet ──
   const seller = await newPage(browser);
   const mobile = randomMobile();
-  await seller.goto("/sign-in?next=/seller");
+  await seller.goto("/sign-in?next=/seller/dashboard");
   await completeSignIn(seller, mobile);
   await makeApprovedSeller(mobile.e164, company, null);
   await seller.goto("/seller/subscription");

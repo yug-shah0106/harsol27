@@ -99,14 +99,14 @@ export default async function AccountPage() {
               {seller.companyName} <Badge variant="secondary">{t.sellerStatuses[seller.status]}</Badge>
             </p>
             <Button asChild variant="outline" className="w-fit">
-              <Link href="/seller">{t.buyer.openSeller}</Link>
+              <Link href="/seller/dashboard">{t.buyer.openSeller}</Link>
             </Button>
           </>
         ) : lead?.decision === "APPROVED" ? (
           <>
             <p className="text-muted-foreground">{t.buyer.setUp}</p>
             <Button asChild className="w-fit">
-              <Link href="/seller/apply">{t.buyer.setUpButton}</Link>
+              <Link href="/seller/companyverification">{t.buyer.setUpButton}</Link>
             </Button>
           </>
         ) : lead ? (

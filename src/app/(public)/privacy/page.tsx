@@ -65,7 +65,7 @@ function PrivacyEn() {
       </ul>
       <h2>If you create a buyer account</h2>
       <ul>
-        <li>Your name, mobile number, email address and username.</li>
+        <li>Your name, mobile number and email address.</li>
         <li>
           Your password, which you choose. It is stored only as a one-way hash, so nobody can read it, our team included. If
           you forget it, our team sets a new one, which our admins can see so they can send it to you.

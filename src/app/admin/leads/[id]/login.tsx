@@ -25,6 +25,7 @@ export function LeadLogin({
   password,
   suggestion,
   canCreate,
+  signInUrl,
 }: {
   leadId: string;
   firstName: string;
@@ -33,6 +34,8 @@ export function LeadLogin({
   password: string | null;
   suggestion: string;
   canCreate: boolean;
+  /** The seller sign-in page, sent with the username and password. */
+  signInUrl: string;
 }) {
   const [state, action, pending] = useActionState(createLeadLoginAction, null);
   const [reset, resetAction] = useActionState(resetLeadPasswordAction, null);
@@ -65,7 +68,7 @@ export function LeadLogin({
         </dl>
         {canCreate && (
           <div className="flex flex-wrap items-center gap-2">
-            {password && <CopyButton value={`Harsol27 sign-in\nUsername: ${username}\nPassword: ${password}`} what="username and password" />}
+            {password && <CopyButton value={`Harsol27 seller sign-in: ${signInUrl}\nUsername: ${username}\nPassword: ${password}`} what="username and password" />}
             {!login.disabledAt && (
               <form action={resetAction}>
                 <input type="hidden" name="leadId" value={leadId} />

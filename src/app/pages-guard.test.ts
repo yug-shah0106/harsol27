@@ -14,6 +14,9 @@ function files(dir: string, names: string[]): string[] {
   });
 }
 
+// The one page there that must stay open: the seller sign-in itself.
+const PUBLIC = new Set(["(public)/seller/sign-in/page.tsx"]);
+
 const RULES = [
   { dir: "admin", names: ["page.tsx"], mustCall: /\brequire(Staff|Admin)\(\)/ },
   { dir: "api/admin", names: ["route.ts"], mustCall: /\brequire(Staff|Admin)\(\)/ },
@@ -23,7 +26,7 @@ const RULES = [
 
 describe("private pages check access themselves", () => {
   for (const { dir, names, mustCall } of RULES) {
-    const found = files(path.join(APP, dir), names);
+    const found = files(path.join(APP, dir), names).filter((file) => !PUBLIC.has(path.relative(APP, file)));
     it(`${dir} has pages`, () => expect(found.length).toBeGreaterThan(0));
     for (const file of found) {
       it(path.relative(APP, file), () => expect(readFileSync(file, "utf8")).toMatch(mustCall));

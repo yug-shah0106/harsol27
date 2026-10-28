@@ -65,16 +65,23 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
 
           {main && (
             <div className="flex flex-col gap-3">
-              <div className="overflow-hidden rounded-xl border border-border bg-secondary">
-                <ProductPhoto id={main.id} alt={product.name} width={main.width} height={main.height} sizes="(min-width: 1024px) 60vw, 92vw" priority className="h-auto w-full" />
-              </div>
+              {/* Each photo with the seller's name for it, when given: the model or size it shows ("S1", "5 litre"). */}
+              <figure className="overflow-hidden rounded-xl border border-border bg-secondary">
+                <ProductPhoto id={main.id} alt={main.name ? `${product.name}: ${main.name}` : product.name} width={main.width} height={main.height} sizes="(min-width: 1024px) 60vw, 92vw" priority className="h-auto w-full" />
+                {main.name && <figcaption className="bg-card px-3 py-2 text-sm font-semibold">{main.name}</figcaption>}
+              </figure>
               {rest.length > 0 && (
                 <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4" aria-label={p.morePhotos}>
                   {rest.map((photo, i) => (
-                    <li key={photo.id} className="overflow-hidden rounded-lg border border-border bg-secondary">
-                      <a href={`/media/photos/${photo.id}/1600.webp`} target="_blank" rel="noopener" aria-label={fill(p.photoOf, { n: i + 2, count: product.photos.length })}>
+                    <li key={photo.id} className="flex flex-col overflow-hidden rounded-lg border border-border bg-secondary">
+                      <a href={`/media/photos/${photo.id}/1600.webp`} target="_blank" rel="noopener" aria-label={`${photo.name ? `${photo.name}. ` : ""}${fill(p.photoOf, { n: i + 2, count: product.photos.length })}`}>
                         <ProductPhoto id={photo.id} alt="" width={photo.width} height={photo.height} sizes="(min-width: 640px) 20vw, 30vw" className="aspect-square h-full w-full object-cover" />
                       </a>
+                      {photo.name && (
+                        <span aria-hidden="true" className="truncate bg-card px-2 py-1.5 text-center text-sm font-semibold">
+                          {photo.name}
+                        </span>
+                      )}
                     </li>
                   ))}
                 </ul>

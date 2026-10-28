@@ -3,7 +3,7 @@ import { APIError } from "better-auth/api";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { fieldErrors, fullNameSchema, leadSchema, phoneSchema, usernameSchema } from "@/lib/lead-schema";
+import { fieldErrors, fullNameSchema, leadSchema, phoneSchema } from "@/lib/lead-schema";
 import { auth } from "./auth";
 import type { Member } from "./authz";
 import { clientIpFrom } from "./client-ip";
@@ -17,21 +17,19 @@ import { consumeRateLimit } from "./rate-limit";
 import { sendOtpSms } from "./sms";
 
 /*
- * Members sign in with a username and password (password-auth.ts, shared with staff). Sellers get theirs from
- * the team (member-logins.ts); buyers make their own here (client, 2026-10-24). Nobody resets their own
- * password: the team makes a new one. Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched
+ * Buyers make their own account here and sign in with its email and password (client, 2026-10-24/25); sellers
+ * sign in with the username and password the team gives them (member-logins.ts). Both go through
+ * password-auth.ts, shared with staff. Nobody resets their own password: the team makes a new one. Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched
  * off until an SMS provider is connected (docs/FUTURE.md); nothing calls it.
  */
 
 export const SIGN_UP_PER_IP = { max: 5, windowSeconds: 60 * 60 };
-export const USERNAME_TAKEN = "That username is taken. Try another.";
 export const EMAIL_TAKEN = "An account with this email already exists. Sign in, or ask the Harsol27 team for a new password.";
 
 const signUpSchema = z.object({
   name: fullNameSchema,
   mobile: phoneSchema,
   email: leadSchema.shape.email,
-  username: usernameSchema,
   password: z
     .string()
     .min(MEMBER_PASSWORD_MIN_LENGTH, `Use at least ${MEMBER_PASSWORD_MIN_LENGTH} characters.`)
@@ -44,31 +42,26 @@ const signUpSchema = z.object({
  */
 export async function signUpBuyer(form: FormData, headers: Headers): Promise<void> {
   await limit(`sign-up:ip:${clientIpFrom(headers, env().CLIENT_IP_HEADER) ?? "unknown"}`, SIGN_UP_PER_IP, "Too many accounts made from your network.");
-  const parsed = signUpSchema.safeParse(Object.fromEntries(["name", "mobile", "email", "username", "password"].map((field) => [field, String(form.get(field) ?? "")])));
+  const parsed = signUpSchema.safeParse(Object.fromEntries(["name", "mobile", "email", "password"].map((field) => [field, String(form.get(field) ?? "")])));
   if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
-  const { name, mobile, email, username, password } = parsed.data;
-
-  const taken = await db().user.findMany({ where: { OR: [{ username }, { email }] }, select: { username: true, email: true } });
-  const fields: Record<string, string> = {};
-  if (taken.some((user) => user.username === username)) fields.username = USERNAME_TAKEN;
-  if (taken.some((user) => user.email === email)) fields.email = EMAIL_TAKEN;
-  if (Object.keys(fields).length) throw new UserFacingError("Please correct the highlighted fields.", fields);
+  const { name, mobile, email, password } = parsed.data;
+  if (await db().user.findUnique({ where: { email }, select: { id: true } })) throw new UserFacingError("Please correct the highlighted fields.", { email: EMAIL_TAKEN });
 
   const passwordHash = await hashPassword(password);
   try {
     await db().$transaction(async (tx) => {
-      const user = await tx.user.create({ data: { name, email, username, mobile, role: "MEMBER" }, select: { id: true } });
+      const user = await tx.user.create({ data: { name, email, mobile, role: "MEMBER" }, select: { id: true } });
       // Better Auth's email/password provider looks for exactly this "credential" account row.
       await tx.account.create({ data: { userId: user.id, accountId: user.id, providerId: "credential", password: passwordHash } });
     });
   } catch (error) {
-    // Someone took the username or email a moment ago.
+    // Someone signed up with this email a moment ago.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new UserFacingError("Please correct the highlighted fields.", { username: USERNAME_TAKEN });
+      throw new UserFacingError("Please correct the highlighted fields.", { email: EMAIL_TAKEN });
     }
     throw error;
   }
-  await signInWithPassword("member", { login: username, password }, headers);
+  await signInWithPassword("buyer", { login: email, password }, headers);
 }
 
 const fieldError = (field: string, error: z.ZodError) => new UserFacingError("Please correct the highlighted field.", { [field]: error.issues[0]?.message ?? "Check this field." });

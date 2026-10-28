@@ -44,18 +44,27 @@ export async function makeMemberLogin(mobile: { local: string; e164: string }, n
 }
 
 /**
- * Makes a login for a new member and signs in with it on the sign-in page (where a protected page sends
- * you), landing wherever sign-in was meant to go.
+ * Makes a login for a new member and signs in with it on the sign-in page a protected page sent you to:
+ * the seller one (username) for seller pages, the buyers' one (email) for the rest. Lands wherever sign-in
+ * was meant to go.
  */
 export async function completeSignIn(page: Page, mobile: { local: string; e164: string }) {
   await makeMemberLogin(mobile);
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible({ timeout: 20_000 });
-  await signInMember(page, usernameFor(mobile));
+  await expect(page.getByRole("heading", { name: /sign in$/i })).toBeVisible({ timeout: 20_000 });
+  if (new URL(page.url()).pathname === "/seller/sign-in") await signInSeller(page, usernameFor(mobile));
+  else await signInMember(page, emailFor(mobile));
   await expect(page).not.toHaveURL(/\/sign-in/, { timeout: 20_000 }); // signed in and sent on (password hashing is slow by design)
 }
 
-/** Signs an existing member in with username and password (the page must be on /sign-in). */
-export async function signInMember(page: Page, username: string, password = MEMBER_PASSWORD) {
+/** Signs an existing member in with email and password (the page must be on /sign-in, the buyers' page). */
+export async function signInMember(page: Page, email: string, password = MEMBER_PASSWORD) {
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+}
+
+/** Signs a seller in with the username and password the team gave them (the page must be on /seller/sign-in). */
+export async function signInSeller(page: Page, username: string, password = MEMBER_PASSWORD) {
   await page.getByLabel("Username").fill(username);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();

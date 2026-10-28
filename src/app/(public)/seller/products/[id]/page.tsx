@@ -52,7 +52,7 @@ export default async function EditProductPage({ params, searchParams }: PageProp
             <h2 id="photos-heading" className="text-lg font-semibold">
               {s.photos}
             </h2>
-            <PhotoManager productId={product.id} photos={product.photos.map((p) => ({ id: p.id, status: p.status }))} />
+            <PhotoManager productId={product.id} photos={product.photos.map((p) => ({ id: p.id, status: p.status, name: p.name }))} />
           </section>
 
           <section aria-labelledby="details-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 sm:p-8">

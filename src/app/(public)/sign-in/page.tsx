@@ -9,8 +9,8 @@ import { SignInForm } from "./forms";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
-// Members sign in with a username and password: buyers chose theirs (/sign-up, since 2026-10-24), sellers got
-// theirs from the team once their Seller registration was approved. No Google sign-in, no self-service reset.
+// Buyers sign in here with the email and password of the account they made (/sign-up); sellers have their own
+// page, /seller/sign-in, for the team's username and password (client, 2026-10-25). No Google, no self-service reset.
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   const params = await searchParams;
   const next = safeReturnPath(params.next);
@@ -29,11 +29,10 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
             {s.createAccount}
           </Link>
           <br />
-          {s.selling}
-          <Link href="/Seller-Registration" className="font-semibold text-primary hover:underline">
-            {s.registerLink}
+          {s.sellerLine}
+          <Link href="/seller/sign-in" className="font-semibold text-primary hover:underline">
+            {s.sellerLink}
           </Link>
-          {s.sellingAfter}
         </>
       }
     >

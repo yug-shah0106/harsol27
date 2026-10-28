@@ -9,6 +9,9 @@ import { UserFacingError } from "./errors";
 import { canWrite, staffFromSession, type StaffUser } from "./staff-policy";
 
 export const STAFF_SIGN_IN_PATH = "/staff/sign-in";
+export const SELLER_SIGN_IN_PATH = "/seller/sign-in";
+/** Where a seller lands after signing in, whatever their status (client, 2026-10-27). */
+export const SELLER_HOME_PATH = "/seller/dashboard";
 
 /** Session for this request, read from the database (no cookie cache), memoised per render. */
 export const getSession = cache(async () => auth().api.getSession({ headers: await headers() }));
@@ -47,7 +50,8 @@ export async function requireMember(returnTo: string, options: { phoneOptional: 
 export async function requireMember(returnTo: string, options?: { phoneOptional: true }): Promise<Member> {
   const member = await getMember();
   const next = encodeURIComponent(safeReturnPath(returnTo));
-  if (!member) redirect(`/sign-in?next=${next}`);
+  // The seller pages have their own sign-in (the team's username and password); everything else the buyers' one.
+  if (!member) redirect(`${returnTo.startsWith("/seller") ? SELLER_SIGN_IN_PATH : "/sign-in"}?next=${next}`);
   if (!member.phone && !options?.phoneOptional) redirect(`${ADD_MOBILE_PATH}?next=${next}`);
   return member;
 }

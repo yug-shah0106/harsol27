@@ -30,7 +30,7 @@ export function sellerApplicationAlertEmail(change: SellerChangeForEmail, to: st
 /** To the seller: the outcome of a staff decision. Returns null for changes that need no email. */
 export function sellerDecisionEmail(change: SellerChangeForEmail, appUrl: string): Email | null {
   const { seller } = change;
-  const sellerPage = `${appUrl}/seller`;
+  const sellerPage = `${appUrl}/seller/dashboard`;
   let subject: string;
   let lines: string[];
   if (change.toStatus === "APPROVED" && change.fromStatus === "SUSPENDED") {

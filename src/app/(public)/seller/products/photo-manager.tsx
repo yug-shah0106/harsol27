@@ -8,13 +8,14 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { FormAlert } from "@/components/form-feedback";
 import { useI18n } from "@/components/i18n";
 import { ProductPhoto } from "@/components/product-photo";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PHOTO_TYPES } from "@/lib/file-type";
 import { fill, translateError } from "@/lib/i18n";
 import { MAX_PHOTOS_PER_PRODUCT, PHOTO_MAX_BYTES } from "@/lib/product-schema";
-import { attachPhotoAction, createPhotoUploadAction, deletePhotoAction, movePhotoAction } from "./actions";
+import { attachPhotoAction, createPhotoUploadAction, deletePhotoAction, movePhotoAction, renamePhotoAction } from "./actions";
 
-type Photo = { id: string; status: "PROCESSING" | "READY" | "FAILED" };
+type Photo = { id: string; status: "PROCESSING" | "READY" | "FAILED"; name: string | null };
 
 export function PhotoManager({ productId, photos }: { productId: string; photos: Photo[] }) {
   const router = useRouter();
@@ -89,7 +90,7 @@ export function PhotoManager({ productId, photos }: { productId: string; photos:
           }}
         />
         <p id="photo-hint" className="text-sm text-muted-foreground">
-          {fill(s.photoHint, { max: MAX_PHOTOS_PER_PRODUCT, count: photos.length })}
+          {fill(s.photoHint, { max: MAX_PHOTOS_PER_PRODUCT, count: photos.length })} {s.photoNamesHint}
         </p>
         <p id="photo-progress" aria-live="polite" className="text-sm">
           {progress}
@@ -122,6 +123,20 @@ export function PhotoManager({ productId, photos }: { productId: string; photos:
                   </span>
                 )}
               </div>
+              {/* Its name (a model or size), shown to buyers under the photo. */}
+              <ActionForm action={renamePhotoAction} successMessage={s.saved} className="flex flex-col gap-1 px-2 pt-2">
+                <input type="hidden" name="productId" value={productId} />
+                <input type="hidden" name="photoId" value={photo.id} />
+                <label htmlFor={`photo-name-${photo.id}`} className="sr-only">
+                  {fill(s.photoName, { n: i + 1 })}
+                </label>
+                <div className="flex gap-1">
+                  <Input id={`photo-name-${photo.id}`} name="name" defaultValue={photo.name ?? ""} maxLength={60} placeholder={s.photoNamePlaceholder} className="h-9 min-w-0" />
+                  <SubmitButton variant="outline" size="sm" className="h-9 shrink-0" aria-label={fill(s.savePhotoName, { n: i + 1 })}>
+                    {s.saveShort}
+                  </SubmitButton>
+                </div>
+              </ActionForm>
               <div className="flex items-center justify-between gap-1 p-2">
                 <span className="text-sm">{i === 0 ? s.mainPhoto : fill(s.photoN, { n: i + 1 })}</span>
                 <div className="flex gap-1">

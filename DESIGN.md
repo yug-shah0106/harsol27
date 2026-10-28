@@ -276,7 +276,7 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     under it (65px), so its rangoli runs up to the toran.
 - **Footer**: turmeric, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px):
   one slim row (20px padding): the copyright in `muted-foreground` on the left, the text links (About,
-  FAQ, Contact us, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
+  FAQ, Seller sign in, Contact us, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
 - **Contact us** (`/contact`, open while the site is closed): the text-page layout, a Gujarati pill
   "કોઈ પ્રશ્ન છે? અમારો સંપર્ક કરો.", then two white cards side by side (stacked on phones), each with an
   icon disc, a small label, the number or address large, and a pill button: kumkum "Chat on WhatsApp"
@@ -345,13 +345,31 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   form on a white card: the site's own fields (`Input`, `PasswordInput`, 48px tall) and a full-width
   kumkum button; "Forgot password?" under it. /staff/forgot-password and /staff/reset-password share that
   layout (staff only: members cannot reset their own password).
-- **Member sign-in** (`/sign-in`): the auth card with "Username" and "Password", the line "Forgot your
-  password? Contact the Harsol27 team." and, below, "New to Harsol27? Create an account" (to `/sign-up`) and
-  "Selling? Register your business" (to Seller registration). No Google, no self-service reset.
+- **Buyer sign-in** (`/sign-in`, the header's "Sign in"): the auth card with "Email" and "Password", the line
+  "Forgot your password? Contact the Harsol27 team." and, below, "New to Harsol27? Create an account" (to
+  `/sign-up`) and "Selling on Harsol27? Seller sign in". No Google, no self-service reset.
+- **Seller sign-in** (`/seller/sign-in`, since 2026-10-25; linked from the footer and the buyer sign-in): the
+  same card with "Username" and "Password" (the team's), then "No seller login yet? Register your business"
+  and "Buying? Sign in as a buyer". Seller pages send visitors here; a seller always lands on their dashboard.
+- **Seller area** (since 2026-10-27): a tab bar of Dashboard, Company verification, Product listing and, once
+  approved, Inquiries and Subscription. `/seller` and `/seller/apply` redirect to the new addresses.
+  - **Dashboard** (`/seller/dashboard`), laid out like the admin overview: the greeting card (date, Fraunces
+    "Good afternoon, Meera", company and status, rangoli, one rounded next-step button), then either their
+    three steps (registration, company verification, product listing; done ones bordered green with a tick)
+    or, once approved, "At a glance" stat cards (`StatCard`, shared with the admin) and the subscription
+    status; then the product listing (the latest five, or a dashed locked card) and the profile card (login
+    details, and the contact, address and "about" form, saved at once without a new review).
+  - **Company verification** (`/seller/companyverification`): the company details and documents form the team
+    approves; once sent, its status and what was sent.
+  - **Product listing** (`/seller/products`): open to every seller login, locked until approved. Each photo
+    has a name field (the model or size it shows, "S1", "5 litre"), shown to buyers under the photo.
+- **Header for a signed-in seller** (a login with a username): their initials in a kumkum circle and their
+  name (only the circle on phones) replace "Seller registration", and "Home" opens their dashboard; the
+  wordmark still goes to the public home.
 - **Buyer sign-up** (`/sign-up`, since 2026-10-24): the same card with Your name, Mobile number (sellers get
-  it with enquiries), Email, Username and Password (at least 8 characters); the account works at once and
-  signs in. Sellers don't sign up: the team makes their login from an approved registration, or links the
-  buyer account whose email and mobile number match it.
+  it with enquiries), Email (they sign in with it) and Password (at least 8 characters); the account works
+  at once and signs in. Sellers don't sign up: the team makes their login from an approved registration, or
+  links the buyer account whose email and mobile number match it (giving it the chosen username).
 - **Members list** (admin, `/admin/members`): every member login, buyers and sellers, searchable; admins
   can reset any member's password there (it asks first, then shows the new one to send on WhatsApp).
 - **Seller login** (admin lead page): an approved registration gets a username field (suggested from the

@@ -7,8 +7,15 @@ import { MobileMenu } from "@/components/mobile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { THEME_COOKIE } from "@/lib/preferences";
-import { getMember } from "@/server/authz";
+import { getMember, SELLER_HOME_PATH } from "@/server/authz";
 import { getMessages } from "@/server/locale";
+import { sellerLoginName } from "@/server/sellers";
+
+/** "Vansh Shah" → "VS"; one name → its first letter. */
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? (parts.at(-1)?.[0] ?? "") : "")).toUpperCase();
+}
 
 /** `label`: in the visitor's language on public pages; the admin's stays English. */
 export function SkipLink({ label = "Skip to main content" }: { label?: string }) {
@@ -50,10 +57,12 @@ export function Wordmark() {
  */
 export async function SiteHeader({ blend = false }: { blend?: boolean }) {
   const member = await getMember();
+  // A signed-in seller (2026-10-27): "Home" opens their dashboard, and their profile replaces "Seller registration".
+  const sellerName = member && (await sellerLoginName(member.id));
   const t = await getMessages();
   const dark = (await cookies()).get(THEME_COOKIE)?.value === "dark";
   const account = member ? { href: "/account", label: t.nav.account } : { href: "/sign-in", label: t.nav.signIn };
-  const links = [{ href: "/", label: t.nav.home }, { href: "/search", label: t.nav.search }, { href: "/about", label: t.nav.about }, account];
+  const links = [{ href: sellerName ? SELLER_HOME_PATH : "/", label: t.nav.home }, { href: "/search", label: t.nav.search }, { href: "/about", label: t.nav.about }, account];
   return (
     <header className={cn("sticky top-0 z-40 border-b border-border backdrop-blur-md print:static print:border-0", blend ? "header-blend bg-background/85" : "bg-card/85")}>
       {/* Full width: the wordmark in the left corner, the links and "Seller registration" in the right (same gutters as the
@@ -70,13 +79,23 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
             <LanguageSwitcher id="language" />
             <ThemeToggle initialDark={dark} />
           </nav>
-          <Button asChild className="rounded-full">
-            <Link href="/Seller-Registration">
-              {/* Short on phones, where the header is tight. */}
-              <span className="sm:hidden">{t.nav.register}</span>
-              <span className="hidden sm:inline">{t.nav.sellerRegistration}</span>
+          {sellerName ? (
+            // Initials in a circle, as in the admin header, then the name (only the circle on phones).
+            <Link href={SELLER_HOME_PATH} title={t.nav.dashboard} className="flex items-center gap-2 rounded-full py-1 pr-1 no-underline hover:text-primary sm:pr-3">
+              <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                {initials(sellerName)}
+              </span>
+              <span className="sr-only max-w-32 truncate text-sm font-semibold sm:not-sr-only">{sellerName}</span>
             </Link>
-          </Button>
+          ) : (
+            <Button asChild className="rounded-full">
+              <Link href="/Seller-Registration">
+                {/* Short on phones, where the header is tight. */}
+                <span className="sm:hidden">{t.nav.register}</span>
+                <span className="hidden sm:inline">{t.nav.sellerRegistration}</span>
+              </Link>
+            </Button>
+          )}
           <MobileMenu links={links} initialDark={dark} />
         </div>
       </div>
@@ -98,6 +117,7 @@ export async function SiteFooter() {
         <nav aria-label={t.footer.label} className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
           <Link href="/about" className="hover:underline">{t.footer.about}</Link>
           <Link href="/about#faq" className="hover:underline">{t.footer.faq}</Link>
+          <Link href="/seller/sign-in" className="hover:underline">{t.footer.sellerSignIn}</Link>
           <Link href="/contact" className="hover:underline">{t.footer.contact}</Link>
           <Link href="/terms" className="hover:underline">{t.footer.terms}</Link>
           <Link href="/privacy" className="hover:underline">{t.footer.privacy}</Link>

@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Search products", url: "/search" },
-      { name: "Your seller account", url: "/seller" },
+      { name: "Your seller account", url: "/seller/dashboard" },
     ],
   };
 }

@@ -5,22 +5,24 @@ import { usePathname } from "next/navigation";
 import { useI18n } from "@/components/i18n";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+// Inquiries and subscription appear once the company is verified (approved); the product listing says how to get there.
 const LINKS = [
-  { href: "/seller", key: "overview", exact: true },
-  { href: "/seller/products", key: "products" },
-  { href: "/seller/inquiries", key: "inquiries" },
-  { href: "/seller/subscription", key: "subscription" },
+  { href: "/seller/dashboard", key: "dashboard", approvedOnly: false },
+  { href: "/seller/companyverification", key: "verification", approvedOnly: false },
+  { href: "/seller/products", key: "products", approvedOnly: false },
+  { href: "/seller/inquiries", key: "inquiries", approvedOnly: true },
+  { href: "/seller/subscription", key: "subscription", approvedOnly: true },
 ] as const;
 
-export function SellerNav() {
+export function SellerNav({ approved = true }: { approved?: boolean }) {
   const pathname = usePathname();
   const { t } = useI18n();
   return (
     <nav aria-label={t.sellerArea.nav} className="border-b border-border">
       <ScrollArea orientation="horizontal">
         <ul className="flex w-max gap-1">
-          {LINKS.map((link) => {
-            const current = "exact" in link ? pathname === link.href : pathname.startsWith(link.href);
+          {LINKS.filter((link) => approved || !link.approvedOnly).map((link) => {
+            const current = pathname.startsWith(link.href);
             return (
               <li key={link.href}>
                 <Link

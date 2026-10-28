@@ -383,6 +383,7 @@ model ProductPhoto {
   uploadKey String?     @unique // the original upload, until processed
   width     Int? // of the largest version, once READY
   height    Int?
+  name      String? // the seller's name for what it shows, such as a model or size ("S1", "5 litre"); since 2026-10-27
   sortOrder Int
   createdAt DateTime    @default(now())
 

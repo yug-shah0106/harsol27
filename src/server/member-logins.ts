@@ -57,8 +57,8 @@ const loginSchema = z.object({ leadId: z.uuid(), username: usernameSchema });
 
 /**
  * Makes the member login for an approved registration, with a generated password. When the person already has a
- * buyer account with the registration's email and mobile number, that account is linked instead (`linked`): they
- * keep signing in with their own username and password.
+ * buyer account with the registration's email and mobile number, that account is linked instead (`linked`): it
+ * takes the chosen username (for the seller sign-in) unless it has one, and keeps its own password.
  */
 export async function createLeadLogin(input: Record<string, unknown>, actor: StaffUser): Promise<{ username: string; password: string | null; linked: boolean }> {
   const parsed = loginSchema.safeParse(input);
@@ -76,13 +76,15 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
       const other = await tx.user.findUnique({ where: { email: lead.email }, select: { id: true, role: true, username: true, mobile: true, lead: { select: { id: true } } } });
       if (other) {
         // Email and mobile both match: the same person's buyer account (neither is verified, so one alone is not enough).
-        if (other.role !== "MEMBER" || other.lead || !other.username || other.mobile !== lead.phone) {
+        if (other.role !== "MEMBER" || other.lead || other.mobile !== lead.phone) {
           throw new UserFacingError(`Another account already uses ${lead.email}, so a login cannot be made for this registration.`);
         }
         const { count } = await tx.lead.updateMany({ where: { id: leadId, userId: null }, data: { userId: other.id } });
         if (count === 0) throw new UserFacingError("Someone else made a login for this registration a moment ago. Reload the page to see it.");
-        await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_LINKED", entityType: "Lead", entityId: leadId, details: { username: other.username } } });
-        return other.username;
+        const linkedUsername = other.username ?? username;
+        if (!other.username) await tx.user.update({ where: { id: other.id }, data: { username } });
+        await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_LINKED", entityType: "Lead", entityId: leadId, details: { username: linkedUsername } } });
+        return linkedUsername;
       }
       const user = await tx.user.create({ data: { name: lead.fullName, email: lead.email, username, mobile: lead.phone, role: "MEMBER", issuedPassword: sealPassword(password) }, select: { id: true } });
       // Better Auth's email/password provider looks for exactly this "credential" account row.
@@ -108,7 +110,7 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
  * The old password stops working, every open session is signed out and a lockout is lifted. The new one stays
  * visible to admins, like a seller login's. `leadId`: from a registration's page; `userId`: from the Members list.
  */
-export async function resetMemberPassword(input: Record<string, unknown>, actor: StaffUser): Promise<{ username: string; password: string }> {
+export async function resetMemberPassword(input: Record<string, unknown>, actor: StaffUser): Promise<{ login: string; password: string }> {
   const leadId = z.uuid().safeParse(input.leadId);
   const userId = z.uuid().safeParse(input.userId);
   if (!leadId.success && !userId.success) throw new UserFacingError("This login no longer exists.");
@@ -116,19 +118,20 @@ export async function resetMemberPassword(input: Record<string, unknown>, actor:
   const passwordHash = await hashPassword(password);
 
   return db().$transaction(async (tx) => {
-    const select = { id: true, username: true, role: true, disabledAt: true } as const;
+    const select = { id: true, username: true, email: true, role: true, disabledAt: true } as const;
     const user = leadId.success
       ? (await tx.lead.findUnique({ where: { id: leadId.data }, select: { user: { select } } }))?.user
       : await tx.user.findUnique({ where: { id: userId.data! }, select });
-    if (!user?.username || user.role !== "MEMBER") throw new UserFacingError(leadId.success ? "This registration has no login yet." : "This login no longer exists.");
+    if (!user || user.role !== "MEMBER") throw new UserFacingError(leadId.success ? "This registration has no login yet." : "This login no longer exists.");
+    const login = user.username ?? user.email; // sellers sign in with a username, buyers with their email
     if (user.disabledAt) throw new UserFacingError("This login is switched off because the registration is not approved.");
     const { count } = await tx.account.updateMany({ where: { userId: user.id, providerId: "credential" }, data: { password: passwordHash } });
     if (count === 0) throw new UserFacingError("This login has no password to reset.");
     await tx.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, issuedPassword: sealPassword(password) } });
     await tx.session.deleteMany({ where: { userId: user.id } });
     const entity = leadId.success ? { entityType: "Lead", entityId: leadId.data } : { entityType: "User", entityId: user.id };
-    await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_PASSWORD_RESET", ...entity, details: { username: user.username } } });
-    return { username: user.username, password };
+    await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_PASSWORD_RESET", ...entity, details: { login } } });
+    return { login, password };
   });
 }
 

@@ -12,7 +12,7 @@ import { leadIndustryName, suggestUsername } from "@/lib/lead-schema";
 import { leadSubscription, registrationSubscription, toDateInput } from "@/lib/subscription";
 import { FEE } from "@/lib/fee";
 import { pickUtm } from "@/lib/utm";
-import { requireStaff } from "@/server/authz";
+import { requireStaff, SELLER_SIGN_IN_PATH } from "@/server/authz";
 import { getLead } from "@/server/leads";
 import { openPassword } from "@/server/member-logins";
 import { canWrite } from "@/server/staff-policy";
@@ -21,6 +21,7 @@ import { LeadDecision } from "../decision";
 import { LeadLogin } from "./login";
 import { SubscriptionForm } from "./subscription-form";
 import { categoryLabel, formatIst, subscriptionText } from "../format";
+import { baseEnv } from "@/server/env";
 
 export const metadata: Metadata = { title: "Lead" };
 
@@ -105,6 +106,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
           password={canWrite(staff) ? openPassword(lead.user?.issuedPassword) : null}
           suggestion={suggestUsername(lead)}
           canCreate={canWrite(staff)}
+          signInUrl={`${baseEnv().BETTER_AUTH_URL}${SELLER_SIGN_IN_PATH}`}
         />
       </section>
 

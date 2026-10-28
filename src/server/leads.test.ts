@@ -239,13 +239,14 @@ describe("member logins", () => {
   it("links the person's own buyer account when its email and mobile number match, and refuses another's", async () => {
     const email = `own.${run}@example.com`;
     const username = `own.${run}`.slice(0, 30);
-    const buyer = await db().user.create({ data: { name: "Asha Patel", email, username, mobile: "+919876543210", role: "MEMBER" } });
+    const buyer = await db().user.create({ data: { name: "Asha Patel", email, mobile: "+919876543210", role: "MEMBER" } }); // buyers have no username
     await submitLead(await form({ email }), headersFor(uniqueIp()));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
     await decideLead({ leadId: lead.id, decision: "APPROVED" }, admin);
 
-    const login = await createLeadLogin({ leadId: lead.id, username: `ignored.${run}` }, admin);
+    const login = await createLeadLogin({ leadId: lead.id, username }, admin);
     expect(login).toEqual({ username, password: null, linked: true });
+    expect((await db().user.findUniqueOrThrow({ where: { id: buyer.id } })).username).toBe(username); // for the seller sign-in
     expect((await db().lead.findUniqueOrThrow({ where: { id: lead.id } })).userId).toBe(buyer.id);
     expect(await db().auditLog.count({ where: { action: "MEMBER_LOGIN_LINKED", entityId: lead.id } })).toBe(1);
 
