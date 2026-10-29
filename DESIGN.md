@@ -361,8 +361,10 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     details, and the contact, address and "about" form, saved at once without a new review).
   - **Company verification** (`/seller/companyverification`): the company details and documents form the team
     approves; once sent, its status and what was sent.
-  - **Product listing** (`/seller/products`): open to every seller login, locked until approved. Each photo
-    has a name field (the model or size it shows, "S1", "5 litre"), shown to buyers under the photo.
+  - **Product listing** (`/seller/products`): open to every seller login; products can be added as soon as the
+    company verification is sent, and the team approves the company and its products together (2026-10-29):
+    until then each shows "Waiting for approval", and the admin seller page lists them above the decision.
+    Each photo has a name field (the model or size it shows, "S1", "5 litre"), shown to buyers under the photo.
 - **Header for a signed-in seller** (a login with a username): their initials in a kumkum circle and their
   name (only the circle on phones) replace "Seller registration", and "Home" opens their dashboard; the
   wordmark still goes to the public home.

@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Edit product", robots: { index: fals
 
 export default async function EditProductPage({ params, searchParams }: PageProps<"/seller/products/[id]">) {
   const { id } = await params;
-  const { seller } = await requireSellerPage(`/seller/products/${id}`);
+  const { seller } = await requireSellerPage(`/seller/products/${id}`, { listing: true });
   const product = await getMyProduct(seller.id, id);
   if (!product) notFound();
   const [locale, t] = [await getLocale(), await getMessages()];

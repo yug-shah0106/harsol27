@@ -9,7 +9,7 @@ import { ProductForm } from "../product-form";
 export const metadata: Metadata = { title: "Add a product", robots: { index: false } };
 
 export default async function NewProductPage() {
-  await requireSellerPage("/seller/products/new");
+  await requireSellerPage("/seller/products/new", { listing: true });
   const [locale, t] = [await getLocale(), await getMessages()];
   const s = t.sellerArea;
   const industries = (await listActiveIndustries())

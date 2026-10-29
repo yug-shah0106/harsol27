@@ -11,7 +11,7 @@ import {
   deletePhoto,
   movePhoto,
   renamePhoto,
-  requireApprovedSeller,
+  requireListingSeller,
   setProductHidden,
   updateProduct,
 } from "@/server/products";
@@ -19,7 +19,7 @@ import {
 const ok: ActionResult = { ok: true, data: undefined };
 
 async function account() {
-  return requireApprovedSeller(await requireMember("/seller/products"));
+  return requireListingSeller(await requireMember("/seller/products"));
 }
 
 export async function createProductAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {

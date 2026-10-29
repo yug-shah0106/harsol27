@@ -7,6 +7,7 @@ import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fill, HTML_LANG } from "@/lib/i18n";
+import { mayListProducts } from "@/lib/seller-status";
 import { subscriptionState } from "@/lib/subscription";
 import { requireMember, SELLER_HOME_PATH } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
@@ -35,9 +36,11 @@ export default async function SellerDashboardPage() {
     db().user.findUniqueOrThrow({ where: { id: member.id }, select: { name: true, username: true, lead: { select: { decision: true } } } }),
   ]);
   const approved = seller?.status === "APPROVED";
+  // Products open with the company verification and are approved together with it (seller-status.ts).
+  const listing = !!seller && mayListProducts(seller.status);
   const [contact, products, inquiriesThisWeek, inquiriesAll] = await Promise.all([
     seller && getSellerContact({ kind: "member", id: member.id }, seller.id),
-    approved ? listMyProducts(seller.id) : [],
+    seller && listing ? listMyProducts(seller.id) : [],
     approved ? countRecentInquiries(7, seller.id) : 0,
     approved ? db().inquiry.count({ where: { sellerId: seller.id } }) : 0,
   ]);
@@ -54,16 +57,15 @@ export default async function SellerDashboardPage() {
     ? { href: "/seller/companyverification", label: s.startButton }
     : seller.status === "REJECTED"
       ? { href: "/seller/companyverification", label: s.applyAgain }
-      : approved
+      : listing
         ? { href: "/seller/products/new", label: s.addProduct }
-        : seller.status === "PENDING"
-          ? { href: "/seller/companyverification", label: s.verification }
-          : null;
+        : null;
 
+  // Steps 2 and 3 are approved together.
   const steps = [
     { title: s.stepRegistration, status: user.lead ? t.decisions[user.lead.decision] : s.notRegistered, done: user.lead?.decision === "APPROVED", href: user.lead ? "/account" : "/Seller-Registration" },
     { title: s.verification, status: seller ? t.sellerStatuses[seller.status] : s.notSent, done: approved, href: "/seller/companyverification" },
-    { title: s.products, status: approved ? s.open : s.afterVerification, done: false, href: "/seller/products" },
+    { title: s.products, status: !listing ? s.afterVerification : products.length ? fill(products.length === 1 ? s.productAdded : s.productsAdded, { n: products.length }) : s.addYourProducts, done: approved, href: "/seller/products" },
   ];
 
   return (
@@ -122,9 +124,12 @@ export default async function SellerDashboardPage() {
         </>
       ) : (
         <section aria-labelledby="steps-heading" className="flex flex-col gap-4">
-          <h2 id="steps-heading" className="text-lg font-semibold">
-            {s.stepsTitle}
-          </h2>
+          <div className="flex flex-col gap-1">
+            <h2 id="steps-heading" className="text-lg font-semibold">
+              {s.stepsTitle}
+            </h2>
+            <p className="text-sm text-muted-foreground">{s.reviewTogether}</p>
+          </div>
           <ol className="grid gap-3 sm:grid-cols-3 sm:gap-4">
             {steps.map((step, i) => (
               <li key={step.title}>
@@ -143,23 +148,23 @@ export default async function SellerDashboardPage() {
         </section>
       )}
 
-      {/* The product listing: what buyers find. Locked until the company is verified. */}
+      {/* The product listing: what buyers find. Opens with the company verification, approved together with it. */}
       <section aria-labelledby="listing-heading" className="flex flex-col gap-4">
-        {/* "Add a product" is the greeting's button once approved. */}
+        {/* "Add a product" is the greeting's button. */}
         <h2 id="listing-heading" className="text-lg font-semibold">
           {s.products}
         </h2>
-        {!approved ? (
-          <LockedListing t={t} />
+        {!listing ? (
+          <LockedListing t={t} suspended={!!seller} />
         ) : products.length === 0 ? (
           <div className="flex flex-col gap-1 rounded-2xl border border-dashed border-border bg-card p-6">
             <p className="font-semibold">{s.noProducts}</p>
             <p className="text-muted-foreground">{s.listingHow}</p>
           </div>
         ) : (
-          <MyProductList products={products.slice(0, SHOWN_PRODUCTS)} subscriptionActive={subscriptionActive} t={t} />
+          <MyProductList products={products.slice(0, SHOWN_PRODUCTS)} subscriptionActive={subscriptionActive} awaitingApproval={!approved} t={t} />
         )}
-        {approved && (
+        {listing && (
           <Link href="/seller/products" className="w-fit text-sm font-medium text-primary underline">
             {s.manageProducts}
           </Link>

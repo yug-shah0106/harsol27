@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/action-form";
 import { ConfirmButton } from "@/components/confirm-button";
+import { ProductPhoto } from "@/components/product-photo";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import { EXPIRED_NOTICE, formatDay, formatRupees, subscriptionState, suggestPaid
 import { isPlaceholderEmail } from "@/server/auth";
 import { requireStaff } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
+import { listMyProducts } from "@/server/products";
 import { getSellerForStaff } from "@/server/sellers";
 import { canWrite } from "@/server/staff-policy";
 import { getSubscriptionForStaff } from "@/server/subscriptions";
@@ -30,7 +32,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
   if (!seller) notFound();
   const decisions = decisionsFor(seller.status);
   const contact = await getSellerContact({ kind: "staff" }, seller.id);
-  const [payments, reminders] = await getSubscriptionForStaff(seller.id);
+  const [[payments, reminders], products] = await Promise.all([getSubscriptionForStaff(seller.id), listMyProducts(seller.id)]);
   const today = indiaToday();
   const subscription = subscriptionState(seller.paidUntil, today);
 
@@ -92,6 +94,42 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
             );
           })}
         </ul>
+      </section>
+
+      {/* The company and its products are approved together (2026-10-29): the decision below covers both. */}
+      <section aria-labelledby="products-heading" className="flex flex-col gap-3">
+        <h2 id="products-heading" className="text-lg font-semibold">
+          Products ({products.length})
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Approving the seller approves these products too. Buyers see them once the subscription is active.
+        </p>
+        {products.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">No products added yet.</p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
+            {products.map((product) => (
+              <li key={product.id} className="flex items-center gap-4 p-4">
+                <div className="size-14 shrink-0 overflow-hidden rounded-md bg-secondary">
+                  {product.photos[0] && <ProductPhoto id={product.photos[0].id} alt="" sizes="56px" className="h-full w-full object-cover" />}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <Link href={`/admin/products/${product.id}`} className="font-medium text-primary underline">
+                    {product.name}
+                  </Link>
+                  <span className="text-sm text-muted-foreground">
+                    {product.industry.name} · {product._count.photos} {product._count.photos === 1 ? "photo" : "photos"}
+                    {product.isHidden && " · hidden by the seller"}
+                    {product.removedAt && " · removed by staff"}
+                  </span>
+                </div>
+                <Link href={`/products/${product.slug}`} className="shrink-0 text-sm font-medium text-primary underline">
+                  Preview<span className="sr-only"> {product.name}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {canWrite(staff) ? (

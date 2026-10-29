@@ -9,34 +9,47 @@ import type { listMyProducts } from "@/server/products";
 
 type MyProduct = Awaited<ReturnType<typeof listMyProducts>>[number];
 
-/** Why buyers can or cannot see a product, worst first. */
-function stateOf(p: MyProduct, subscriptionActive: boolean) {
-  return p.removedAt ? "removed" : p.isHidden ? "hidden" : !p.industry.isActive ? "industryInactive" : !subscriptionActive ? "subscriptionInactive" : "live";
+/** Why buyers can or cannot see a product, worst first. `awaitingApproval`: the seller is not approved yet. */
+function stateOf(p: MyProduct, subscriptionActive: boolean, awaitingApproval = false) {
+  return p.removedAt ? "removed"
+    : p.isHidden ? "hidden"
+    : awaitingApproval ? "awaiting"
+    : !p.industry.isActive ? "industryInactive"
+    : !subscriptionActive ? "subscriptionInactive"
+    : "live";
 }
 
 export const isLive = (p: MyProduct, subscriptionActive: boolean) => stateOf(p, subscriptionActive) === "live";
 
-/** Before the company is verified: what the listing will be, and the way there. */
-export function LockedListing({ t }: { t: Messages }) {
+/** Before the company verification is sent (or while suspended): why the listing is closed, and the way on. */
+export function LockedListing({ t, suspended = false }: { t: Messages; suspended?: boolean }) {
   const s = t.sellerArea;
   return (
     <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border bg-card p-6">
       <Lock aria-hidden="true" className="size-6 text-muted-foreground" />
-      <p className="font-semibold">{s.listingLocked}</p>
+      <p className="font-semibold">{suspended ? s.status.SUSPENDED : s.listingLocked}</p>
       <p className="text-muted-foreground">{s.listingHow}</p>
-      <Button asChild variant="outline" className="rounded-full">
-        <Link href="/seller/companyverification">{s.verification}</Link>
-      </Button>
+      {!suspended && (
+        <Button asChild variant="outline" className="rounded-full">
+          <Link href="/seller/companyverification">{s.verification}</Link>
+        </Button>
+      )}
     </div>
   );
 }
 
+/** Until approved: the team checks the products together with the company verification. */
+export function ReviewTogether({ t }: { t: Messages }) {
+  return <p className="rounded-lg border border-border bg-secondary p-3 text-sm">{t.sellerArea.reviewTogether}</p>;
+}
+
 /** The seller's products as rows: main photo, name, industry, counts and whether buyers see it. */
-export function MyProductList({ products, subscriptionActive, t }: { products: MyProduct[]; subscriptionActive: boolean; t: Messages }) {
+export function MyProductList({ products, subscriptionActive, awaitingApproval = false, t }: { products: MyProduct[]; subscriptionActive: boolean; awaitingApproval?: boolean; t: Messages }) {
   const s = t.sellerArea;
   const badges = {
     removed: { label: s.removedBadge, variant: "destructive" },
     hidden: { label: s.hiddenBadge, variant: "outline" },
+    awaiting: { label: s.awaitingBadge, variant: "secondary" },
     industryInactive: { label: s.industryInactive, variant: "outline" },
     subscriptionInactive: { label: s.subscriptionInactive, variant: "outline" },
     live: { label: s.live, variant: "default" },
@@ -44,7 +57,7 @@ export function MyProductList({ products, subscriptionActive, t }: { products: M
   return (
     <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
       {products.map((product) => {
-        const badge = badges[stateOf(product, subscriptionActive)];
+        const badge = badges[stateOf(product, subscriptionActive, awaitingApproval)];
         return (
           <li key={product.id} className="flex items-center gap-4 p-4">
             <div className="size-16 shrink-0 overflow-hidden rounded-md bg-secondary">
