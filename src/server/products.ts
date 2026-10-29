@@ -4,6 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { detectPhotoType, PHOTO_TYPES } from "@/lib/file-type";
 import { fieldErrors } from "@/lib/lead-schema";
 import { MAX_PHOTOS_PER_PRODUCT, photoNameSchema, photoUploadSchema, productSchema, specificationsFromForm } from "@/lib/product-schema";
+import { mayListProducts } from "@/lib/seller-status";
 import type { Member } from "./authz";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
@@ -23,10 +24,11 @@ const isUuid = (v: unknown): v is string => z.uuid().safeParse(v).success;
 
 export type SellerAccount = { id: string; userId: string };
 
-/** Products can only be managed by an approved seller (suspended or pending sellers cannot). */
-export async function requireApprovedSeller(member: Member): Promise<SellerAccount> {
+/** Products can be managed from the company verification on, approved together with it (seller-status.ts). */
+export async function requireListingSeller(member: Member): Promise<SellerAccount> {
   const seller = await db().seller.findUnique({ where: { userId: member.id }, select: { id: true, userId: true, status: true } });
-  if (!seller || seller.status !== "APPROVED") throw new UserFacingError("Only approved sellers can manage products.");
+  if (!seller) throw new UserFacingError("Send your company verification first.");
+  if (!mayListProducts(seller.status)) throw new UserFacingError("Your seller account is suspended. Please contact the Harsol27 team.");
   return { id: seller.id, userId: seller.userId };
 }
 

@@ -14,7 +14,7 @@ import {
   deletePhoto,
   movePhoto,
   removeProduct,
-  requireApprovedSeller,
+  requireListingSeller,
   restoreProduct,
   setProductHidden,
   updateProduct,
@@ -63,7 +63,7 @@ async function fieldError(promise: Promise<unknown>, field: string) {
 beforeAll(async () => {
   industryId = (await makeIndustry()).id;
   const { owner } = await makeSeller();
-  account = await requireApprovedSeller(owner);
+  account = await requireListingSeller(owner);
 });
 
 afterAll(async () => {
@@ -72,9 +72,13 @@ afterAll(async () => {
 });
 
 describe("seller products", () => {
-  it("only approved sellers can manage products", async () => {
+  it("products can be managed from the company verification on (approved with it), never while suspended", async () => {
+    for (const status of ["PENDING", "REJECTED", "APPROVED"] as const) {
+      const { owner } = await makeSeller({ status });
+      await expect(requireListingSeller(owner)).resolves.toMatchObject({ userId: owner.id });
+    }
     const { owner } = await makeSeller({ status: "SUSPENDED" });
-    await expect(requireApprovedSeller(owner)).rejects.toThrow(/approved sellers/);
+    await expect(requireListingSeller(owner)).rejects.toThrow(/suspended/);
   });
 
   it("creates a product with a URL slug and details, ignoring empty detail rows", async () => {
@@ -93,7 +97,7 @@ describe("seller products", () => {
   it("never lets a seller edit or hide another seller's product", async () => {
     const id = await createProduct(account, productForm());
     const { owner: other } = await makeSeller();
-    const otherAccount = await requireApprovedSeller(other);
+    const otherAccount = await requireListingSeller(other);
     await expect(updateProduct(otherAccount, id, productForm({ name: "Hijacked" }))).rejects.toThrow(/could not be found/);
     await expect(setProductHidden(otherAccount, id, true)).rejects.toThrow(/could not be found/);
   });

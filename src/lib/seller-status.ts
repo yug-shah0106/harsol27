@@ -7,6 +7,12 @@ export const SELLER_STATUS_LABELS: Record<SellerStatusValue, string> = {
   SUSPENDED: "Suspended",
 };
 
+/**
+ * Products can be added once the company verification is sent: the team approves the company and its products
+ * together (2026-10-29), and buyers see them only once the seller is approved. Suspended sellers cannot change them.
+ */
+export const mayListProducts = (status: SellerStatusValue) => status !== "SUSPENDED";
+
 /** Every decision staff can take, from which status, to which, and whether a reason is required. */
 export const SELLER_DECISIONS = {
   approve: { label: "Approve", from: ["PENDING"], to: "APPROVED", needsReason: false },

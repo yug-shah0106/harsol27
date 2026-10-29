@@ -1,6 +1,9 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { FormAlert } from "@/components/form-feedback";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { fill } from "@/lib/i18n";
 import { SELLER_DOCUMENTS } from "@/lib/seller-schema";
 import { requireMember } from "@/server/authz";
@@ -34,6 +37,18 @@ export default async function CompanyVerificationPage() {
           <p>{s.status[seller.status]}</p>
           {seller.status === "SUSPENDED" && seller.statusChanges[0]?.reason && <p className="mt-1 font-normal">{fill(s.reason, { reason: seller.statusChanges[0].reason })}</p>}
         </FormAlert>
+        {/* The team approves the company and its products together: the products come next. */}
+        {seller.status === "PENDING" && (
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-5">
+            <p>{s.reviewTogether}</p>
+            <Button asChild className="rounded-full">
+              <Link href="/seller/products/new">
+                {s.addProduct}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        )}
         <section aria-labelledby="details-heading" className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5">
           <h2 id="details-heading" className="text-lg font-semibold">
             {s.details}
