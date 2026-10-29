@@ -5,10 +5,11 @@ import { leadIndustryName } from "@/lib/lead-schema";
 import { db } from "./db";
 import { sendEmail, type Email, type EmailConfig } from "./email";
 import { addDays, daysUntil, dueReminder, EXPIRED_NOTICE_LATEST_DAYS, EXPIRING_SOON_DAYS, REMINDER_DAYS, toDateInput } from "@/lib/subscription";
-import { enqueueInTransaction, getBoss, QUEUES, type InquiryJob, type LeadJob, type PasswordResetJob, type PhotoJob, type ReminderJob, type SellerChangeJob } from "./jobs";
+import { openIssuedPassword } from "./issued-password";
+import { enqueueInTransaction, getBoss, QUEUES, type InquiryJob, type LeadJob, type MemberLoginJob, type PasswordResetJob, type PhotoJob, type ReminderJob, type SellerChangeJob } from "./jobs";
 import { leadConfirmationEmail, leadTeamAlertEmail, type LeadForEmail } from "./lead-emails";
 import { logError, logInfo } from "./log";
-import { passwordResetEmail, type PasswordResetForEmail } from "./member-emails";
+import { memberLoginEmail, passwordResetEmail, type MemberLoginForEmail, type PasswordResetForEmail } from "./member-emails";
 import { getOpsStatus, opsAlertEmail } from "./ops";
 import { purgeExpiredRequestMetadata, purgeStaleOtpChallenges, purgeUnclaimedUploads } from "./retention";
 import { processPhoto } from "./photo-processing";
@@ -25,7 +26,8 @@ import {
 } from "./seller-emails";
 import { indiaToday } from "./visibility";
 
-export type WorkerConfig = { email: EmailConfig; teamAlertEmails: string[]; appUrl: string };
+/** `authSecret` (BETTER_AUTH_SECRET) opens the issued member passwords it emails (issued-password.ts). */
+export type WorkerConfig = { email: EmailConfig; teamAlertEmails: string[]; appUrl: string; authSecret: string };
 
 // Batches let pg-boss fetch again immediately while the queue is full (with a batch of 1 it waits a
 // polling interval between jobs). Results are reported per job: one failed email is retried on its
@@ -108,6 +110,18 @@ async function loadReminder({ reminderId }: ReminderJob): Promise<ReminderForEma
   return reminder;
 }
 
+/**
+ * A login the team made or reset, for the member's own address. Not sent to a switched-off login, nor when the
+ * issued password can't be opened (then the admin page says "Not known" and they reset it).
+ */
+async function loadMemberLogin(job: MemberLoginJob, authSecret: string): Promise<MemberLoginForEmail | null> {
+  const user = await db().user.findUnique({ where: { id: job.userId }, select: { email: true, name: true, username: true, role: true, disabledAt: true, issuedPassword: true } });
+  if (!user || user.role !== "MEMBER" || user.disabledAt) return null;
+  const password = job.kind === "linked" ? null : openIssuedPassword(user.issuedPassword, authSecret);
+  if (job.kind !== "linked" && !password) return null;
+  return { ...job, email: user.email, name: user.name, username: user.username, password };
+}
+
 /** A reset link goes only to an active member (staff passwords are managed with `pnpm staff`). */
 async function loadPasswordReset({ userId, token }: PasswordResetJob): Promise<PasswordResetForEmail | null> {
   const user = await db().user.findUnique({ where: { id: userId }, select: { email: true, name: true, role: true, disabledAt: true } });
@@ -173,6 +187,9 @@ export async function registerWorkers(boss: PgBoss, config: WorkerConfig, only?:
   );
 
   if (wanted(QUEUES.passwordResetEmail)) await boss.work<PasswordResetJob>(QUEUES.passwordResetEmail, WORK_OPTIONS, emailHandler(config, loadPasswordReset, (reset) => passwordResetEmail(reset, appUrl)));
+  if (wanted(QUEUES.memberLoginEmail)) await boss.work<MemberLoginJob>(QUEUES.memberLoginEmail, WORK_OPTIONS,
+    emailHandler(config, (job: MemberLoginJob) => loadMemberLogin(job, config.authSecret), (login) => memberLoginEmail(login, appUrl)),
+  );
 
   if (wanted(QUEUES.inquiryNotification)) await boss.work<InquiryJob>(QUEUES.inquiryNotification, WORK_OPTIONS, emailHandler(config, loadInquiry, (inquiry) => newInquiryEmail(inquiry, appUrl)));
 

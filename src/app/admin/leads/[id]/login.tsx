@@ -26,6 +26,7 @@ export function LeadLogin({
   suggestion,
   canCreate,
   signInUrl,
+  email,
 }: {
   leadId: string;
   firstName: string;
@@ -36,6 +37,8 @@ export function LeadLogin({
   canCreate: boolean;
   /** The seller sign-in page, sent with the username and password. */
   signInUrl: string;
+  /** The registration's email: the login and every new password are emailed there (2026-10-29). */
+  email: string;
 }) {
   const [state, action, pending] = useActionState(createLeadLoginAction, null);
   const [reset, resetAction] = useActionState(resetLeadPasswordAction, null);
@@ -46,11 +49,11 @@ export function LeadLogin({
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
         {state?.ok &&
           (state.data ? (
-            <FormAlert kind="success">{firstName} already had a buyer account with this email and mobile number: it is now linked to this registration, and they sign in with it.</FormAlert>
+            <FormAlert kind="success">{firstName} already had a buyer account with this email and mobile number: it is now linked to this registration, and they sign in with it. Their username is emailed to {email}.</FormAlert>
           ) : (
-            <FormAlert kind="success">Login made. Send these to {firstName} on WhatsApp.</FormAlert>
+            <FormAlert kind="success">Login made and emailed to {email}. You can also send it to {firstName} on WhatsApp.</FormAlert>
           ))}
-        {reset?.ok && <FormAlert kind="success">Password reset. Send the new one to {firstName} on WhatsApp.</FormAlert>}
+        {reset?.ok && <FormAlert kind="success">Password reset and emailed to {email}.</FormAlert>}
         {reset && !reset.ok && <FormAlert kind="error">{reset.error}</FormAlert>}
         <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
           <dt className="text-muted-foreground">Username</dt>
@@ -75,7 +78,7 @@ export function LeadLogin({
                 <ConfirmButton
                   variant="outline"
                   title="Reset this seller's password?"
-                  description={`Their current password stops working and they are signed out everywhere. Then send the new one to ${firstName}.`}
+                  description={`Their current password stops working and they are signed out everywhere. The new one is emailed to ${email}.`}
                 >
                   Reset password
                 </ConfirmButton>
@@ -115,7 +118,7 @@ export function LeadLogin({
           </Button>
         </div>
         <p id="username-hint" className="text-sm text-muted-foreground">
-          3 to 30 letters, numbers, dots or underscores. A password is made for you.
+          3 to 30 letters, numbers, dots or underscores. A password is made for you, and both are emailed to {email}.
         </p>
         <FieldMessage id="username-error" message={fieldError} />
       </div>

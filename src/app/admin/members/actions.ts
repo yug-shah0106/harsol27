@@ -5,7 +5,7 @@ import { requireAdmin } from "@/server/authz";
 import { runAction, type ActionResult } from "@/server/errors";
 import { resetMemberPassword } from "@/server/member-logins";
 
-/** A new password for a member who forgot theirs; the Members list then shows it, to send on WhatsApp. */
+/** A new password for a member who forgot theirs: emailed to them, and shown on the Members list. */
 export async function resetMemberPasswordAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   return runAction("resetMemberPassword", async () => {
     const actor = await requireAdmin();

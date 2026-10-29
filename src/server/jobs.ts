@@ -17,6 +17,7 @@ export const QUEUES = {
   subscriptionSummary: "subscription-summary", // weekly, to the team
   opsCheck: "ops-check", // daily: backups, worker, failed jobs → email the team if anything is wrong
   passwordResetEmail: "password-reset-email",
+  memberLoginEmail: "member-login-email",
 } as const;
 
 export type LeadJob = { leadId: string };
@@ -28,6 +29,12 @@ export type InquiryJob = { inquiryId: string };
 export type ReminderJob = { reminderId: string };
 /** The reset token itself: Better Auth keeps only its row (which expires in an hour), so the job carries it. */
 export type PasswordResetJob = { userId: string; token: string };
+/**
+ * A member login the team made, linked or gave a new password: the worker emails it to the member. The password is
+ * not in the job (pg-boss keeps jobs for days): the worker opens the encrypted copy on the User. `auditId` makes
+ * each one emailed once.
+ */
+export type MemberLoginJob = { userId: string; auditId: string; kind: "created" | "linked" | "reset" };
 
 // Retries with exponential backoff, capped at one hour between attempts (about a day in total).
 const QUEUE_OPTIONS = { retryLimit: 12, retryDelay: 30, retryBackoff: true, retryDelayMax: 3600 };

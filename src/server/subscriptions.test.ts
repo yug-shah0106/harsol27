@@ -150,7 +150,7 @@ describe("renewal reminders", () => {
     const boss = await getBoss();
     await registerWorkers(
       boss,
-      { email: { apiKey: "re_test", from: "Harsol27 <test@example.test>" }, teamAlertEmails: ["team@example.test"], appUrl: "https://harsol27.test" },
+      { email: { apiKey: "re_test", from: "Harsol27 <test@example.test>" }, teamAlertEmails: ["team@example.test"], appUrl: "https://harsol27.test", authSecret: "x".repeat(32) },
       new Set([QUEUES.subscriptionReminderEmail, QUEUES.subscriptionSummary]),
     );
 

@@ -139,7 +139,7 @@ test("an approved registration gets a login from the team; an admin can reset it
   const username = `${name.split(" ")[2]!.toLowerCase()}`; // the unique part, so no other test has it
   await login.getByLabel("Username").fill(username);
   await login.getByRole("button", { name: "Create login" }).click();
-  await expect(login).toContainText("Login made. Send these to");
+  await expect(login).toContainText("Login made and emailed to"); // the worker in these tests runs photos only: nothing is really sent
   const password = (await login.locator("dd").nth(1).innerText()).trim();
   expect(password).toMatch(/^[a-zA-Z2-9]{12}$/);
   await expect(login.getByRole("button", { name: "Copy username and password" })).toBeVisible();
@@ -165,7 +165,7 @@ test("an approved registration gets a login from the team; an admin can reset it
   // the seller is signed out.
   await login.getByRole("button", { name: "Reset password" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Reset password" }).click();
-  await expect(login).toContainText("Password reset. Send the new one to", { timeout: 20_000 });
+  await expect(login).toContainText("Password reset and emailed to", { timeout: 20_000 });
   const newPassword = (await login.locator("dd").nth(1).innerText()).trim();
   expect(newPassword).toMatch(/^[a-zA-Z2-9]{12}$/);
   expect(newPassword).not.toBe(password);

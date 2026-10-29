@@ -2,7 +2,9 @@ import { spawnSync } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { db } from "./db";
 import { getBoss } from "./jobs";
+import { env } from "./env";
 import { createPaymentUpload, submitLead } from "./leads";
+import { createLeadLogin, resetMemberPassword } from "./member-logins";
 import { registerWorkers } from "./workers";
 
 const run = crypto.randomUUID().slice(0, 8);
@@ -24,13 +26,16 @@ describe("email pipeline: form → queue → worker → Resend", () => {
   it("delivers the confirmation and the team alert for a submitted lead", async () => {
     // Email stubbed: nothing leaves the test. Other requests (the screenshot upload to local storage) go through.
     const sent: { to: unknown; subject: string; key: string | null }[] = [];
+    const texts = new Map<string, string>(); // by idempotency key
     const realFetch = globalThis.fetch;
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string, init: RequestInit) => {
         if (!String(url).startsWith("https://api.resend.com")) return realFetch(url, init);
-        const body = JSON.parse(String(init.body)) as { to: unknown; subject: string };
-        sent.push({ to: body.to, subject: body.subject, key: new Headers(init.headers).get("idempotency-key") });
+        const body = JSON.parse(String(init.body)) as { to: unknown; subject: string; text: string };
+        const key = new Headers(init.headers).get("idempotency-key");
+        sent.push({ to: body.to, subject: body.subject, key });
+        if (key) texts.set(key, body.text);
         return new Response('{"id":"x"}', { status: 200 });
       }),
     );
@@ -40,6 +45,7 @@ describe("email pipeline: form → queue → worker → Resend", () => {
       email: { apiKey: "re_test", from: "Harsol27 <test@example.test>" },
       teamAlertEmails: ["team@example.test"],
       appUrl: "https://harsol27.test",
+      authSecret: env().BETTER_AUTH_SECRET,
     });
 
     // The payment screenshot, uploaded the way the browser does it.
@@ -56,7 +62,21 @@ describe("email pipeline: form → queue → worker → Resend", () => {
     const mine = sent.filter((s) => s.key?.endsWith(lead.id));
     expect(mine).toContainEqual({ to: email, subject: "We have received your details · Harsol27", key: `lead-confirmation/${lead.id}` });
     expect(mine).toContainEqual({ to: ["team@example.test"], subject: `New lead: Worker Father Test (Worker ${run})`, key: `lead-team-alert/${lead.id}` });
-  }, 20_000);
+
+    // Approved, the team makes the login: username and password go straight to the registration's email (2026-10-29).
+    const admin = await db().user.create({ data: { name: "Worker Admin", email: `worker-admin.${run}@example.test`, role: "ADMIN" } });
+    const actor = { id: admin.id, name: admin.name, email: admin.email, role: "ADMIN" as const };
+    await db().lead.update({ where: { id: lead.id }, data: { decision: "APPROVED" } });
+    const login = await createLeadLogin({ leadId: lead.id, username: `worker.${run}` }, actor);
+    const reset = await resetMemberPassword({ leadId: lead.id }, actor); // and a new password, later
+    const loginEmails = () => sent.filter((s) => s.key?.startsWith("member-login:") && s.to === email);
+    await expect.poll(() => loginEmails().length, { timeout: 15_000 }).toBe(2);
+    const [made, renewed] = ["Your Harsol27 seller login", "Your new Harsol27 password"].map((subject) => loginEmails().find((s) => s.subject === subject)!);
+    expect(texts.get(made!.key!)).toContain(`Username: worker.${run}`);
+    expect(texts.get(renewed!.key!)).toContain(`Password: ${reset.password}`); // whichever email is read, the newest password
+    expect(texts.get(made!.key!)).toContain("Sign in: https://harsol27.test/seller/sign-in");
+    expect(made!.key).not.toContain(login.password!);
+  }, 30_000);
 });
 
 describe("worker process", () => {

@@ -109,7 +109,7 @@ export default async function MembersPage({ searchParams }: PageProps<"/admin/me
                               <CopyButton value={signInText(member, password)} what="sign-in details" compact />
                             </span>
                           )}
-                          {!member.disabledAt && <ResetMemberPassword userId={member.id} name={member.name} />}
+                          {!member.disabledAt && <ResetMemberPassword userId={member.id} name={member.name} email={member.email} />}
                         </div>
                       </TableCell>
                     )}
