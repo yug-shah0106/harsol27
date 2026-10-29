@@ -64,6 +64,10 @@ test("lead form: a valid submission shows a confirmation", async ({ page }) => {
   });
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByRole("status")).toContainText("We have received your details");
+  // With the thank-you, the invitation to the sellers' WhatsApp group.
+  await expect(page.getByText("Please also join our sellers' WhatsApp group.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Join the sellers' group on WhatsApp" })).toHaveAttribute("href", "https://chat.whatsapp.com/GEfoxJohXeT5I1cl3mvT1k");
+  await expectAccessible(page);
   expect(csp).toEqual([]);
 });
 
