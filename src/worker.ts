@@ -17,7 +17,7 @@ async function main() {
   const only = process.env.WORKER_QUEUES ? new Set(process.env.WORKER_QUEUES.split(",").map((q) => q.trim())) : undefined;
   await registerWorkers(
     boss,
-    { email: { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM }, teamAlertEmails: config.TEAM_ALERT_EMAILS, appUrl: config.BETTER_AUTH_URL },
+    { email: { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM }, teamAlertEmails: config.TEAM_ALERT_EMAILS, appUrl: config.BETTER_AUTH_URL, authSecret: config.BETTER_AUTH_SECRET },
     only,
   );
   logInfo("worker started", { queues: only ? [...only] : Object.values(QUEUES) });

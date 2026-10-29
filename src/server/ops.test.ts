@@ -81,7 +81,7 @@ describe("the daily check", () => {
       }),
     );
     const boss = await getBoss();
-    await registerWorkers(boss, { email: { apiKey: "re_test", from: "Harsol27 <test@example.test>" }, teamAlertEmails: ["team@example.test"], appUrl: "https://h.test" }, new Set([QUEUES.opsCheck]));
+    await registerWorkers(boss, { email: { apiKey: "re_test", from: "Harsol27 <test@example.test>" }, teamAlertEmails: ["team@example.test"], appUrl: "https://h.test", authSecret: "x".repeat(32) }, new Set([QUEUES.opsCheck]));
     await boss.send(QUEUES.opsCheck, {}); // what the 09:15 schedule does; no backup exists, so there is a problem
     await expect.poll(() => sent.find((s) => s.subject.startsWith("Harsol27 needs attention")), { timeout: 15_000 }).toMatchObject({ to: ["team@example.test"] });
   }, 20_000);

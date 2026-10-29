@@ -48,8 +48,12 @@ const schema = baseSchema.extend(storageSchema.shape).extend({
   }
 });
 
-/** What the background worker needs: it sends email, so it gets the email settings and no auth secret. */
+/**
+ * What the background worker needs: the email settings, and since 2026-10-29 the auth secret, to open the issued
+ * member passwords it emails (issued-password.ts). It signs nobody in.
+ */
 const workerSchema = baseSchema.extend(storageSchema.shape).extend({
+  BETTER_AUTH_SECRET: z.string().min(32, "must be at least 32 characters"),
   RESEND_API_KEY: z.string().startsWith("re_", "must be a Resend API key (starts with re_)"),
   /** e.g. "Harsol27 <hello@harsol27.com>". Must be on a domain verified in Resend. */
   EMAIL_FROM: z.string().min(3),

@@ -107,6 +107,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
           suggestion={suggestUsername(lead)}
           canCreate={canWrite(staff)}
           signInUrl={`${baseEnv().BETTER_AUTH_URL}${SELLER_SIGN_IN_PATH}`}
+          email={lead.email}
         />
       </section>
 

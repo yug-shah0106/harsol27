@@ -1,17 +1,20 @@
 import "server-only";
-import { createCipheriv, createDecipheriv, hkdfSync, randomBytes, randomInt } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma/client";
 import { fieldErrors, usernameSchema } from "@/lib/lead-schema";
 import { db } from "./db";
 import { env } from "./env";
 import { UserFacingError } from "./errors";
+import { openIssuedPassword, sealIssuedPassword } from "./issued-password";
+import { enqueueInTransaction, getBoss, QUEUES, type MemberLoginJob } from "./jobs";
 import { hashPassword } from "./password";
 import type { StaffUser } from "./staff-policy";
 
 /*
  * Seller logins are made by the team (client, 2026-10-19): an admin picks a username for an approved Seller
- * registration and gets a generated password, to send on WhatsApp. Rejecting the registration later switches
+ * registration and gets a generated password. Since 2026-10-29 the login (and every new password) is emailed to
+ * the member's own address at once, by the worker; admins can still copy it for WhatsApp. Rejecting the registration later switches
  * the login off (leads.ts → decideLead). Buyers make their own (member-auth.ts → signUpBuyer, since 2026-10-24).
  * Nobody resets their own password: an admin makes a new one, from the registration or the Members list.
  *
@@ -28,30 +31,10 @@ export function generatePassword(length = 12): string {
   return Array.from({ length }, () => PASSWORD_LETTERS[randomInt(PASSWORD_LETTERS.length)]).join("");
 }
 
-// AES-256-GCM, with a key derived from BETTER_AUTH_SECRET: a database copy alone does not reveal passwords.
-function passwordKey(): Buffer {
-  return Buffer.from(hkdfSync("sha256", env().BETTER_AUTH_SECRET, "", "harsol27 issued member password", 32));
-}
-
-function sealPassword(password: string): string {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", passwordKey(), iv);
-  const data = Buffer.concat([cipher.update(password, "utf8"), cipher.final()]);
-  return [iv, cipher.getAuthTag(), data].map((part) => part.toString("base64url")).join(".");
-}
+const sealPassword = (password: string) => sealIssuedPassword(password, env().BETTER_AUTH_SECRET);
 
 /** The issued password, or null when there is none or it can't be opened (BETTER_AUTH_SECRET changed: reset it). */
-export function openPassword(sealed: string | null | undefined): string | null {
-  if (!sealed) return null;
-  try {
-    const [iv, tag, data] = sealed.split(".").map((part) => Buffer.from(part, "base64url"));
-    const decipher = createDecipheriv("aes-256-gcm", passwordKey(), iv!);
-    decipher.setAuthTag(tag!);
-    return Buffer.concat([decipher.update(data!), decipher.final()]).toString("utf8");
-  } catch {
-    return null;
-  }
-}
+export const openPassword = (sealed: string | null | undefined) => openIssuedPassword(sealed, env().BETTER_AUTH_SECRET);
 
 const loginSchema = z.object({ leadId: z.uuid(), username: usernameSchema });
 
@@ -66,6 +49,7 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
   const { leadId, username } = parsed.data;
   const password = generatePassword();
   const passwordHash = await hashPassword(password);
+  const boss = await getBoss();
 
   try {
     const existing = await db().$transaction(async (tx) => {
@@ -83,7 +67,8 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
         if (count === 0) throw new UserFacingError("Someone else made a login for this registration a moment ago. Reload the page to see it.");
         const linkedUsername = other.username ?? username;
         if (!other.username) await tx.user.update({ where: { id: other.id }, data: { username } });
-        await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_LINKED", entityType: "Lead", entityId: leadId, details: { username: linkedUsername } } });
+        const audit = await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_LINKED", entityType: "Lead", entityId: leadId, details: { username: linkedUsername } }, select: { id: true } });
+        await enqueueInTransaction(boss, tx, QUEUES.memberLoginEmail, { userId: other.id, auditId: audit.id, kind: "linked" } satisfies MemberLoginJob);
         return linkedUsername;
       }
       const user = await tx.user.create({ data: { name: lead.fullName, email: lead.email, username, mobile: lead.phone, role: "MEMBER", issuedPassword: sealPassword(password) }, select: { id: true } });
@@ -92,7 +77,8 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
       // Conditional: if someone else made a login a moment ago, this one is rolled back.
       const { count } = await tx.lead.updateMany({ where: { id: leadId, userId: null }, data: { userId: user.id } });
       if (count === 0) throw new UserFacingError("Someone else made a login for this registration a moment ago. Reload the page to see it.");
-      await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_CREATED", entityType: "Lead", entityId: leadId, details: { username } } });
+      const audit = await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_LOGIN_CREATED", entityType: "Lead", entityId: leadId, details: { username } }, select: { id: true } });
+      await enqueueInTransaction(boss, tx, QUEUES.memberLoginEmail, { userId: user.id, auditId: audit.id, kind: "created" } satisfies MemberLoginJob);
       return null;
     });
     if (existing) return { username: existing, password: null, linked: true };
@@ -110,12 +96,13 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
  * The old password stops working, every open session is signed out and a lockout is lifted. The new one stays
  * visible to admins, like a seller login's. `leadId`: from a registration's page; `userId`: from the Members list.
  */
-export async function resetMemberPassword(input: Record<string, unknown>, actor: StaffUser): Promise<{ login: string; password: string }> {
+export async function resetMemberPassword(input: Record<string, unknown>, actor: StaffUser): Promise<{ login: string; password: string; email: string }> {
   const leadId = z.uuid().safeParse(input.leadId);
   const userId = z.uuid().safeParse(input.userId);
   if (!leadId.success && !userId.success) throw new UserFacingError("This login no longer exists.");
   const password = generatePassword();
   const passwordHash = await hashPassword(password);
+  const boss = await getBoss();
 
   return db().$transaction(async (tx) => {
     const select = { id: true, username: true, email: true, role: true, disabledAt: true } as const;
@@ -130,8 +117,9 @@ export async function resetMemberPassword(input: Record<string, unknown>, actor:
     await tx.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, issuedPassword: sealPassword(password) } });
     await tx.session.deleteMany({ where: { userId: user.id } });
     const entity = leadId.success ? { entityType: "Lead", entityId: leadId.data } : { entityType: "User", entityId: user.id };
-    await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_PASSWORD_RESET", ...entity, details: { login } } });
-    return { login, password };
+    const audit = await tx.auditLog.create({ data: { actorId: actor.id, action: "MEMBER_PASSWORD_RESET", ...entity, details: { login } }, select: { id: true } });
+    await enqueueInTransaction(boss, tx, QUEUES.memberLoginEmail, { userId: user.id, auditId: audit.id, kind: "reset" } satisfies MemberLoginJob);
+    return { login, password, email: user.email };
   });
 }
 
