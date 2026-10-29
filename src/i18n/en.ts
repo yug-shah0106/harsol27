@@ -107,6 +107,8 @@ export const en = {
     intro: "Share a few details about your business. Our team will contact you to help you get started.",
     thanks: "Thank you! We have received your details.",
     thanksMore: "Our team will contact you soon. A confirmation is on its way to your email address.",
+    joinGroup: "Please also join our sellers' WhatsApp group.",
+    joinGroupButton: "Join the sellers' group on WhatsApp",
     firstName: "First name",
     middleName: "Middle name",
     lastName: "Last name",

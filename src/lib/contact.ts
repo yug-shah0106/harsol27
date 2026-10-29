@@ -5,7 +5,8 @@ export const CONTACT = {
   email: "sh27jyt@gmail.com",
   // The trust's address (client, 2026-10-23), on the Contact us page. "8V42+7JV" is its Google Maps Plus Code.
   address: ["8V42+7JV, Devchand Nagar, Sripal Nagar", "Bhayandar West, Mira Bhayandar", "Maharashtra 401101"],
-  // The WhatsApp group new registrants are invited to, in their confirmation email (client, 2026-10-21).
+  // The sellers' WhatsApp group new registrants are invited to: in their confirmation email (client, 2026-10-21)
+  // and on the form's thank-you (2026-10-30).
   whatsappGroupLink: "https://chat.whatsapp.com/GEfoxJohXeT5I1cl3mvT1k",
 };
 

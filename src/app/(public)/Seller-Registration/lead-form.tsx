@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Download } from "lucide-react";
+import { CircleCheck, Download, MessageCircle } from "lucide-react";
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import { CopyButton } from "@/components/copy-button";
 import { FieldMessage, FormAlert } from "@/components/form-feedback";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
+import { CONTACT } from "@/lib/contact";
 import { PAYMENT_ACCOUNT, PAYMENT_QR_DOWNLOAD, PAYMENT_QR_SRC, rupees, type FeeToday } from "@/lib/fee";
 import { DOCUMENT_TYPES } from "@/lib/file-type";
 import { fill, formatLongDate, HTML_LANG, translateError } from "@/lib/i18n";
@@ -57,6 +58,15 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
           <p className="text-base">{r.thanks}</p>
           <p className="mt-1 font-normal text-foreground">{r.thanksMore}</p>
         </FormAlert>
+        {/* The sellers' WhatsApp group, as in the confirmation email (client, 2026-10-30). */}
+        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4">
+          <p>{r.joinGroup}</p>
+          <Button asChild className="rounded-full">
+            <a href={CONTACT.whatsappGroupLink} target="_blank" rel="noopener noreferrer">
+              <MessageCircle aria-hidden="true" /> {r.joinGroupButton}
+            </a>
+          </Button>
+        </div>
       </div>
     );
   }
