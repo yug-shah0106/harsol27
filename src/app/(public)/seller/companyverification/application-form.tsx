@@ -13,7 +13,7 @@ import { DOCUMENT_TYPES } from "@/lib/file-type";
 import { fill, translateError } from "@/lib/i18n";
 import { fieldErrors } from "@/lib/lead-schema";
 import { DOCUMENT_MAX_BYTES, INDIAN_STATES, SELLER_DOCUMENTS, sellerApplicationSchema } from "@/lib/seller-schema";
-import { createUploadAction, submitApplicationAction } from "./actions";
+import { createUploadAction, saveCompanyDetailsAction } from "./actions";
 
 export type ApplicationDefaults = {
   companyName: string;
@@ -24,7 +24,7 @@ export type ApplicationDefaults = {
   city: string;
   state: string;
   description: string;
-  /** Current file name per document kind, when resubmitting after a rejection. */
+  /** Current file name per document kind, when saving again. */
   existingDocuments: Partial<Record<string, string>>;
 };
 
@@ -35,7 +35,7 @@ const TEXT_FIELDS = ["companyName", "contactName", "contactPhone", "contactEmail
 export function ApplicationForm({ defaults, resubmission }: { defaults: ApplicationDefaults; resubmission: boolean }) {
   const { t } = useI18n();
   const s = t.sellerArea;
-  const [state, formAction, pending] = useActionState(submitApplicationAction, null);
+  const [state, formAction, pending] = useActionState(saveCompanyDetailsAction, null);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [uploads, setUploads] = useState<Record<string, UploadState>>({});
   const formRef = useRef<HTMLFormElement>(null);
@@ -165,7 +165,7 @@ export function ApplicationForm({ defaults, resubmission }: { defaults: Applicat
       </fieldset>
 
       <Button type="submit" size="lg" disabled={busy} className="w-full sm:w-fit">
-        {pending ? s.submitting : resubmission ? s.submitAgain : s.submitApplication}
+        {pending ? s.saving : s.saveCompany}
       </Button>
     </form>
   );

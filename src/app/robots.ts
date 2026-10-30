@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default function robots(): MetadataRoute.Robots {
   const origin = baseEnv().BETTER_AUTH_URL;
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/account", "/seller/", "/sign-in", "/staff", "/api", "/search"] },
+    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/account", "/seller/", "/sign-in", "/forgot-password", "/reset-password", "/staff", "/api", "/search"] },
     sitemap: `${origin}/sitemap.xml`,
   };
 }

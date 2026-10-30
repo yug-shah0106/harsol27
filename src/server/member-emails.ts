@@ -3,7 +3,8 @@ import { escapeHtml, type Email } from "./email";
 import type { MemberLoginJob } from "./jobs";
 import { emailLayout } from "./lead-emails";
 
-export type PasswordResetForEmail = { email: string; name: string; token: string };
+/** `staff`: the link opens the staff page; members (buyers and sellers) have their own. */
+export type PasswordResetForEmail = { email: string; name: string; token: string; staff: boolean };
 
 /** `password` is null for a linked account, which keeps the password its owner chose. */
 export type MemberLoginForEmail = MemberLoginJob & { email: string; name: string; username: string | null; password: string | null };
@@ -23,7 +24,7 @@ export function memberLoginEmail(login: MemberLoginForEmail, appUrl: string): Em
       ? ["Your new Harsol27 password", "The Harsol27 team has set a new password for your login. Your old password no longer works."]
       : ["Your Harsol27 seller login", "Your Seller registration is approved, and your seller login is ready."];
   const next = login.kind === "reset" ? [] : ["From your seller dashboard you can then send your company verification and list your products."];
-  const after = "Keep this email to yourself. If you forget your password, contact the Harsol27 team and we will set a new one.";
+  const after = `Keep this email to yourself. If you forget your password, choose "Forgot password?" on the sign-in page: we will email you a link to set a new one.`;
   return {
     to: login.email,
     subject,
@@ -45,16 +46,17 @@ export function memberLoginEmail(login: MemberLoginForEmail, appUrl: string): Em
   };
 }
 
-/** Sent when a staff member asks to reset their password (/staff/forgot-password). The link works once, for an hour. */
+/** Sent when someone asks to reset their password (/forgot-password, /staff/forgot-password). The link works once, for an hour. */
 export function passwordResetEmail(reset: PasswordResetForEmail, appUrl: string): Email {
-  const link = `${appUrl}/staff/reset-password?token=${encodeURIComponent(reset.token)}`;
+  const link = `${appUrl}${reset.staff ? "/staff" : ""}/reset-password?token=${encodeURIComponent(reset.token)}`;
+  const account = reset.staff ? "your Harsol27 staff account" : "your Harsol27 account";
   return {
     to: reset.email,
     subject: "Reset your Harsol27 password",
     text: [
       `Hello ${reset.name},`,
       "",
-      "We received a request to reset the password for your Harsol27 staff account. Open this link to choose a new one:",
+      `We received a request to reset the password for ${account}. Open this link to choose a new one:`,
       "",
       link,
       "",
@@ -62,7 +64,7 @@ export function passwordResetEmail(reset: PasswordResetForEmail, appUrl: string)
     ].join("\n"),
     html: emailLayout(
       `<p>Hello ${escapeHtml(reset.name)},</p>` +
-        "<p>We received a request to reset the password for your Harsol27 staff account.</p>" +
+        `<p>We received a request to reset the password for ${account}.</p>` +
         `<p><a href="${escapeHtml(link)}" style="display:inline-block;background:#56664f;color:#ffffff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600">Choose a new password</a></p>` +
         `<p style="color:#5e5650;font-size:14px">The link works once, for 1 hour. If you did not ask for this, ignore this email: your password stays the same.</p>`,
     ),

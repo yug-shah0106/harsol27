@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { HTML_LANG, industryName } from "@/lib/i18n";
+import { mayListProducts } from "@/lib/seller-status";
+import { requireMember, SELLER_HOME_PATH } from "@/server/authz";
 import { listActiveIndustries } from "@/server/industries";
 import { getLocale, getMessages } from "@/server/locale";
-import { requireSellerPage } from "../../seller-page";
+import { getMySeller } from "@/server/sellers";
 import { ProductForm } from "../product-form";
 
 export const metadata: Metadata = { title: "Add a product", robots: { index: false } };
 
 export default async function NewProductPage() {
-  await requireSellerPage("/seller/products/new", { listing: true });
+  // Open from the start: the first product starts a draft seller (products.ts → ensureListingSeller).
+  const member = await requireMember("/seller/products/new");
+  const seller = await getMySeller(member.id);
+  if (seller && !mayListProducts(seller.status)) redirect(SELLER_HOME_PATH);
   const [locale, t] = [await getLocale(), await getMessages()];
   const s = t.sellerArea;
   const industries = (await listActiveIndustries())

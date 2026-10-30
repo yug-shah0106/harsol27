@@ -96,7 +96,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
         </ul>
       </section>
 
-      {/* The company and its products are approved together (2026-10-29): the decision below covers both. */}
+      {/* The company and its products are sent and approved together (2026-10-30): the decision below covers both. */}
       <section aria-labelledby="products-heading" className="flex flex-col gap-3">
         <h2 id="products-heading" className="text-lg font-semibold">
           Products ({products.length})

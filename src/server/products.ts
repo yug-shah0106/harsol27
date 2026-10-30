@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { detectPhotoType, PHOTO_TYPES } from "@/lib/file-type";
 import { fieldErrors } from "@/lib/lead-schema";
 import { MAX_PHOTOS_PER_PRODUCT, photoNameSchema, photoUploadSchema, productSchema, specificationsFromForm } from "@/lib/product-schema";
@@ -24,12 +24,46 @@ const isUuid = (v: unknown): v is string => z.uuid().safeParse(v).success;
 
 export type SellerAccount = { id: string; userId: string };
 
-/** Products can be managed from the company verification on, approved together with it (seller-status.ts). */
+/** Products can be managed at every stage but suspension, and are approved with the company (seller-status.ts). */
 export async function requireListingSeller(member: Member): Promise<SellerAccount> {
   const seller = await db().seller.findUnique({ where: { userId: member.id }, select: { id: true, userId: true, status: true } });
   if (!seller) throw new UserFacingError("Send your company verification first.");
   if (!mayListProducts(seller.status)) throw new UserFacingError("Your seller account is suspended. Please contact the Harsol27 team.");
   return { id: seller.id, userId: seller.userId };
+}
+
+/**
+ * For the first product: listing is open from the start (client, 2026-10-30), so a seller who has not saved their
+ * company details yet gets a draft, filled from their Seller registration. Nothing reaches the team until
+ * sellers.ts → sendForApproval.
+ */
+export async function ensureListingSeller(member: Member): Promise<SellerAccount> {
+  if (await db().seller.findUnique({ where: { userId: member.id }, select: { id: true } })) return requireListingSeller(member);
+  const user = await db().user.findUniqueOrThrow({ where: { id: member.id }, select: { name: true, lead: { select: { city: true, state: true, address: true, phone: true, email: true } } } });
+  const { lead } = user;
+  try {
+    return await db().$transaction(async (tx) => {
+      const slug = await uniqueSlug(user.name, "seller", async (prefix) => (await tx.seller.findMany({ where: { slug: { startsWith: prefix } }, select: { slug: true } })).map((s) => s.slug));
+      return tx.seller.create({
+        data: {
+          userId: member.id,
+          status: "DRAFT",
+          slug,
+          companyName: user.name, // until the company details are saved
+          contactName: user.name,
+          contactPhone: lead?.phone ?? member.phone ?? "",
+          contactEmail: lead?.email ?? member.email ?? "",
+          city: lead?.city ?? "",
+          state: lead?.state ?? "Gujarat",
+          address: lead?.address,
+        },
+        select: { id: true, userId: true },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return requireListingSeller(member); // two tabs at once
+    throw error;
+  }
 }
 
 /** The product, if it belongs to this seller. Never another seller's, whatever id is sent. */

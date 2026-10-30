@@ -43,7 +43,7 @@ export default async function SellersPage({ searchParams }: PageProps<"/admin/se
             name="status"
             defaultValue={params.status ?? ""}
             className="w-full sm:w-48"
-            options={[{ value: "", label: "Any" }, ...(Object.keys(SELLER_STATUS_LABELS) as SellerStatusValue[]).map((s) => ({ value: s, label: SELLER_STATUS_LABELS[s] }))]}
+            options={[{ value: "", label: "Any" }, ...(Object.keys(SELLER_STATUS_LABELS) as SellerStatusValue[]).filter((status) => status !== "DRAFT").map((s) => ({ value: s, label: SELLER_STATUS_LABELS[s] }))]}
           />
         </div>
         <Button type="submit">Apply</Button>

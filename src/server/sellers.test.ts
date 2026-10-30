@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { SELLER_DOCUMENT_KINDS } from "@/lib/seller-schema";
+import { makeIndustry } from "../../tests/factories";
 import type { Member, MemberWithPhone } from "./authz";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
 import { getBoss, QUEUES } from "./jobs";
 import { purgeUnclaimedUploads } from "./retention";
-import { createDocumentUpload, decideSeller, submitApplication, updateSellerProfile } from "./sellers";
+import { ensureListingSeller } from "./products";
+import { createDocumentUpload, decideSeller, listSellers, saveCompanyDetails, sendForApproval, updateSellerProfile } from "./sellers";
 import type { StaffUser } from "./staff-policy";
 import { headObject } from "./storage";
 
@@ -13,6 +15,7 @@ const run = crypto.randomUUID().slice(0, 8);
 const PDF = new TextEncoder().encode("%PDF-1.4\n% test document\n");
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 let admin: StaffUser;
+let industryId: string | undefined;
 
 async function newMember(): Promise<MemberWithPhone> {
   const phone = `+9197${String(Math.floor(Math.random() * 1e8)).padStart(8, "0")}`;
@@ -44,6 +47,19 @@ async function applicationForm(member: Member, docs: Partial<Record<string, stri
   for (const [k, v] of Object.entries(fields)) fd.set(k, v);
   for (const [kind, key] of Object.entries(docs)) if (key) fd.set(`doc_${kind}`, key);
   return fd;
+}
+
+async function addProduct(sellerId: string) {
+  industryId ??= (await makeIndustry()).id;
+  await db().product.create({ data: { sellerId, industryId, name: "Steel kettle", slug: `kettle-${crypto.randomUUID()}`, description: "Steel kettles in five sizes, S1 to S5." } });
+}
+
+/** A seller's whole path to the team: company details saved, a product listed, both sent for approval. */
+async function submitApplication(member: Member, form: FormData) {
+  await saveCompanyDetails(member, form);
+  const seller = await db().seller.findUniqueOrThrow({ where: { userId: member.id }, select: { id: true, _count: { select: { products: true } } } });
+  if (seller._count.products === 0) await addProduct(seller.id);
+  await sendForApproval(member);
 }
 
 async function allDocs(member: Member) {
@@ -137,6 +153,45 @@ describe("seller application", () => {
     const member = await newMember();
     await submitApplication(member, await applicationForm(member, await allDocs(member)));
     await expect(submitApplication(member, await applicationForm(member, await allDocs(member)))).rejects.toThrow(/already applied/);
+  });
+});
+
+describe("company details and products go to the team together (client, 2026-10-30)", () => {
+  it("saving keeps a draft the team cannot see; sending needs both, then they get one application", async () => {
+    const member = await newMember();
+    await expect(sendForApproval(member)).rejects.toThrow(/company details first/);
+
+    const companyName = `Draft Kettles ${run}`;
+    await saveCompanyDetails(member, await applicationForm(member, {}, { companyName }));
+    const draft = await db().seller.findUniqueOrThrow({ where: { userId: member.id }, include: { statusChanges: true } });
+    expect(draft).toMatchObject({ status: "DRAFT", statusChanges: [] });
+    expect(draft.detailsSavedAt).not.toBeNull();
+    expect((await listSellers({ q: companyName, page: 1 })).total).toBe(0); // not the team's yet
+
+    await expect(sendForApproval(member)).rejects.toThrow(/at least one product/);
+    await addProduct(draft.id);
+    await sendForApproval(member);
+    const sent = await db().seller.findUniqueOrThrow({ where: { id: draft.id }, include: { statusChanges: true } });
+    expect(sent.status).toBe("PENDING");
+    expect(sent.statusChanges).toMatchObject([{ fromStatus: null, toStatus: "PENDING" }]);
+    expect((await listSellers({ q: companyName, page: 1 })).total).toBe(1);
+    await expect(sendForApproval(member)).rejects.toThrow(/already applied/);
+  });
+
+  it("products can come first: the first one starts a draft, and the company details then replace its name and address", async () => {
+    const member = await newMember();
+    const account = await ensureListingSeller(member);
+    expect(await ensureListingSeller(member)).toEqual(account); // once
+    const draft = await db().seller.findUniqueOrThrow({ where: { id: account.id } });
+    expect(draft).toMatchObject({ status: "DRAFT", companyName: "Seller Test", detailsSavedAt: null });
+    await addProduct(account.id);
+    await expect(sendForApproval(member)).rejects.toThrow(/company details first/); // both are needed
+
+    const companyName = `Products First ${run}`;
+    await saveCompanyDetails(member, await applicationForm(member, {}, { companyName }));
+    const saved = await db().seller.findUniqueOrThrow({ where: { id: account.id } });
+    expect(saved).toMatchObject({ status: "DRAFT", companyName, slug: `products-first-${run}` });
+    await sendForApproval(member);
   });
 });
 

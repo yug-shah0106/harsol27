@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { FieldMessage, FormAlert } from "@/components/form-feedback";
 import { useI18n } from "@/components/i18n";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
 import { fill, translateError } from "@/lib/i18n";
 import type { ActionResult } from "@/server/errors";
-import { saveMobileAction, sellerSignInAction, signInAction, signUpAction } from "./actions";
+import { forgotPasswordAction, resetPasswordAction, saveMobileAction, sellerSignInAction, signInAction, signUpAction } from "./actions";
 
 /**
  * Controlled fields, so what was typed survives React's form reset when the server says no.
@@ -63,6 +64,15 @@ function Submit({ pending, label, pendingLabel }: { pending: boolean; label: str
 const fieldsOf = (state: ActionResult<unknown> | null) => (state && !state.ok ? (state.fields ?? {}) : {});
 const formError = (state: ActionResult<unknown> | null) => (state && !state.ok && !state.fields ? state.error : null);
 
+/** Under the password, on both sign-in pages (2026-10-30: members reset their own, by an emailed link). */
+function ForgotLink({ label }: { label: string }) {
+  return (
+    <Link href="/forgot-password" className="w-fit text-sm font-semibold text-primary hover:underline">
+      {label}
+    </Link>
+  );
+}
+
 /** Buyers: the email and password they signed up with. */
 export function SignInForm({ next }: { next: string }) {
   const { t } = useI18n();
@@ -77,8 +87,7 @@ export function SignInForm({ next }: { next: string }) {
       <AuthField id="email" label={s.email} type="email" autoComplete="email" required maxLength={254} placeholder={s.emailPlaceholder} {...bind("email")} />
       <div className="flex flex-col gap-2">
         <AuthField id="password" label={s.password} type="password" autoComplete="current-password" required maxLength={128} placeholder={s.passwordPlaceholder} {...bind("password")} />
-        {/* No self-service reset: the team gives a new password when one is forgotten. */}
-        <p className="text-sm text-muted-foreground">{s.forgot}</p>
+        <ForgotLink label={s.forgotLink} />
       </div>
       <Submit pending={pending} label={s.submit} pendingLabel={s.submitting} />
     </form>
@@ -99,7 +108,7 @@ export function SellerSignInForm({ next }: { next: string }) {
       <AuthField id="username" label={t.sellerSignIn.username} autoComplete="username" autoCapitalize="none" spellCheck={false} required maxLength={30} placeholder={t.sellerSignIn.usernamePlaceholder} {...bind("username")} />
       <div className="flex flex-col gap-2">
         <AuthField id="password" label={s.password} type="password" autoComplete="current-password" required maxLength={128} placeholder={s.passwordPlaceholder} {...bind("password")} />
-        <p className="text-sm text-muted-foreground">{s.forgot}</p>
+        <ForgotLink label={s.forgotLink} />
       </div>
       <Submit pending={pending} label={s.submit} pendingLabel={s.submitting} />
     </form>
@@ -159,6 +168,49 @@ export function MobileForm({ next, current }: { next: string; current: string })
         {...bind("mobile")}
       />
       <Submit pending={pending} label={t.mobile.submit} pendingLabel={t.mobile.saving} />
+    </form>
+  );
+}
+
+/** The email on their account; a reset link goes there if there is one (the reply is the same either way). */
+export function ForgotPasswordForm() {
+  const { t } = useI18n();
+  const s = t.forgotPassword;
+  const [state, action, pending] = useActionState(forgotPasswordAction, null);
+  const bind = useValues({ email: "" });
+  if (state?.ok) return <FormAlert kind="success">{fill(s.sent, { email: state.data.email })}</FormAlert>;
+  const fields = fieldsOf(state);
+  const error = formError(state);
+  return (
+    <form action={action} className="group flex flex-col gap-5">
+      {error && <FormAlert kind="error">{translateError(t, error)}</FormAlert>}
+      <AuthField id="email" label={s.email} type="email" autoComplete="email" required maxLength={254} placeholder={s.emailPlaceholder} error={fields.email && translateError(t, fields.email)} {...bind("email")} />
+      <Submit pending={pending} label={s.submit} pendingLabel={s.sending} />
+    </form>
+  );
+}
+
+/** From the emailed link: the new password (at least `minPassword` characters). */
+export function ResetPasswordForm({ token, minPassword }: { token: string; minPassword: number }) {
+  const { t } = useI18n();
+  const s = t.forgotPassword;
+  const [state, action, pending] = useActionState(resetPasswordAction, null);
+  const bind = useValues({ password: "" });
+  const fields = fieldsOf(state);
+  const error = formError(state);
+  return (
+    <form action={action} className="group flex flex-col gap-5">
+      {error && (
+        <FormAlert kind="error">
+          {translateError(t, error)}{" "}
+          <Link href="/forgot-password" className="underline">
+            {s.askNewLink}
+          </Link>
+        </FormAlert>
+      )}
+      <input type="hidden" name="token" value={token} />
+      <AuthField id="password" label={s.newPassword} type="password" autoComplete="new-password" required minLength={minPassword} maxLength={128} hint={fill(s.passwordHint, { min: minPassword })} error={fields.password && translateError(t, fields.password)} {...bind("password")} />
+      <Submit pending={pending} label={s.save} pendingLabel={s.saving} />
     </form>
   );
 }

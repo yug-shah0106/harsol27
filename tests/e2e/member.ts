@@ -86,8 +86,8 @@ export async function makeApprovedSeller(e164: string, company: string, paidForD
   const contactEmail = `sales.${Date.now()}.${Math.random().toString(36).slice(2, 7)}@seller.example.test`;
   await withDb((db) =>
     db.query(
-      `INSERT INTO "Seller" ("id","userId","companyName","slug","city","state","contactName","contactPhone","contactEmail","status","paidUntil","createdAt","updatedAt")
-       SELECT gen_random_uuid(), "id", $2, $3, 'Rajkot', 'Gujarat', 'Kiran Patel', $4, $5, 'APPROVED', current_date + $6::int, now(), now()
+      `INSERT INTO "Seller" ("id","userId","companyName","slug","city","state","contactName","contactPhone","contactEmail","status","paidUntil","detailsSavedAt","createdAt","updatedAt")
+       SELECT gen_random_uuid(), "id", $2, $3, 'Rajkot', 'Gujarat', 'Kiran Patel', $4, $5, 'APPROVED', current_date + $6::int, now(), now(), now()
        FROM "User" WHERE "mobile" = $1`,
       [e164, company, `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Math.random().toString(36).slice(2, 7)}`, contactPhone, contactEmail, paidForDays],
     ),

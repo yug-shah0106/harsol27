@@ -12,7 +12,7 @@ import {
   uploadRequestSchema,
   type SellerDocumentKindValue,
 } from "@/lib/seller-schema";
-import { SELLER_DECISION_NAMES, SELLER_DECISIONS } from "@/lib/seller-status";
+import { mayEditApplication, SELLER_DECISION_NAMES, SELLER_DECISIONS } from "@/lib/seller-status";
 import type { Member } from "./authz";
 import { db } from "./db";
 import { UserFacingError } from "./errors";
@@ -99,18 +99,19 @@ export function getMySeller(userId: string) {
 }
 
 /**
- * Creates the seller application, or resubmits it after a rejection. Documents are optional (client,
- * 2026-10-15; SELLER_DOCUMENTS keeps a `required` flag should that change); a resubmission keeps any document not replaced. Everything (details, documents,
- * history, team alert) is written in one transaction.
+ * Saves the company verification form as a draft: nothing goes to the team until sendForApproval. Works from no
+ * seller yet, a draft (made here, or by the first product: products.ts → ensureListingSeller) or a rejection.
+ * Documents are optional (client, 2026-10-15; SELLER_DOCUMENTS keeps a `required` flag should that change); saving
+ * again keeps any document not replaced.
  */
-export async function submitApplication(member: Member, form: FormData): Promise<void> {
+export async function saveCompanyDetails(member: Member, form: FormData): Promise<void> {
   const parsed = sellerApplicationSchema.safeParse(readDetails(form));
   if (!parsed.success) throw new UserFacingError("Please correct the highlighted fields.", fieldErrors(parsed.error));
   const details = parsed.data;
   checkPhone(details.contactPhone);
 
   const existing = await db().seller.findUnique({ where: { userId: member.id }, select: { id: true, status: true } });
-  if (existing && existing.status !== "REJECTED") throw new UserFacingError("You have already applied. Check your seller page for its status.");
+  if (existing && !mayEditApplication(existing.status)) throw new UserFacingError("You have already applied. Check your seller page for its status.");
 
   const keys = new Map<SellerDocumentKindValue, string>();
   const missing: Record<string, string> = {};
@@ -124,22 +125,22 @@ export async function submitApplication(member: Member, form: FormData): Promise
   const uploads = new Map<SellerDocumentKindValue, VerifiedUpload>();
   for (const [kind, key] of keys) uploads.set(kind, await verifyUpload(member, key, docField(kind)));
 
-  const boss = await getBoss();
   const replacedKeys: string[] = [];
   await db().$transaction(async (tx) => {
+    // The web address follows the company name until the team has it; never public before approval.
+    const slugFor = () =>
+      uniqueSlug(details.companyName, "seller", async (prefix) =>
+        (await tx.seller.findMany({ where: { slug: { startsWith: prefix }, id: { not: existing?.id } }, select: { slug: true } })).map((s) => s.slug),
+      );
     let sellerId: string;
-    let fromStatus: "REJECTED" | null = null;
     if (existing) {
+      const slug = existing.status === "DRAFT" ? await slugFor() : undefined;
       // Conditional: if staff changed the status meanwhile, nothing is overwritten.
-      const { count } = await tx.seller.updateMany({ where: { id: existing.id, status: "REJECTED" }, data: { ...details, status: "PENDING" } });
+      const { count } = await tx.seller.updateMany({ where: { id: existing.id, status: existing.status }, data: { ...details, slug, detailsSavedAt: new Date() } });
       if (count === 0) throw new UserFacingError("Your application changed while you were editing it. Reload the page.");
       sellerId = existing.id;
-      fromStatus = "REJECTED";
     } else {
-      const slug = await uniqueSlug(details.companyName, "seller", async (prefix) =>
-        (await tx.seller.findMany({ where: { slug: { startsWith: prefix } }, select: { slug: true } })).map((s) => s.slug),
-      );
-      sellerId = (await tx.seller.create({ data: { ...details, userId: member.id, slug }, select: { id: true } })).id;
+      sellerId = (await tx.seller.create({ data: { ...details, userId: member.id, slug: await slugFor(), status: "DRAFT", detailsSavedAt: new Date() }, select: { id: true } })).id;
     }
 
     for (const [kind, upload] of uploads) {
@@ -154,22 +155,41 @@ export async function submitApplication(member: Member, form: FormData): Promise
         await tx.sellerDocument.create({ data: { ...data, sellerId, kind: kind as SellerDocumentKind } });
       }
     }
-
-    const change = await tx.sellerStatusChange.create({
-      data: { sellerId, fromStatus, toStatus: "PENDING", actorId: member.id },
-      select: { id: true },
-    });
-    await enqueueInTransaction(boss, tx, QUEUES.sellerApplicationAlert, { changeId: change.id } satisfies SellerChangeJob);
   }).catch((error: unknown) => {
-    // Two first-time submissions at once: the one-seller-per-account constraint stops the second.
+    // Two first saves at once: the one-seller-per-account constraint stops the second.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new UserFacingError("You have already applied. Check your seller page for its status.");
+      throw new UserFacingError("Your application changed while you were editing it. Reload the page.");
     }
     throw error;
   });
 
   // Replaced documents are no longer referenced; remove the files. A failure here loses nothing.
   for (const key of replacedKeys) await deleteObject(key).catch((error: unknown) => logError(error, { replacedKey: key }));
+}
+
+/**
+ * Sends the company details and products to the team, together (client, 2026-10-30): both must be there. The
+ * status, history and team alert are written in one transaction; the team then approves both with one decision.
+ */
+export async function sendForApproval(member: Member): Promise<void> {
+  const seller = await db().seller.findUnique({
+    where: { userId: member.id },
+    select: { id: true, status: true, detailsSavedAt: true, _count: { select: { products: { where: { removedAt: null } } } } },
+  });
+  if (!seller?.detailsSavedAt) throw new UserFacingError("Fill in your company details first.");
+  if (!mayEditApplication(seller.status)) throw new UserFacingError("You have already applied. Check your seller page for its status.");
+  if (seller._count.products === 0) throw new UserFacingError("Add at least one product first.");
+
+  const boss = await getBoss();
+  await db().$transaction(async (tx) => {
+    const { count } = await tx.seller.updateMany({ where: { id: seller.id, status: seller.status }, data: { status: "PENDING" } });
+    if (count === 0) throw new UserFacingError("Your application changed while you were editing it. Reload the page.");
+    const change = await tx.sellerStatusChange.create({
+      data: { sellerId: seller.id, fromStatus: seller.status === "REJECTED" ? "REJECTED" : null, toStatus: "PENDING", actorId: member.id },
+      select: { id: true },
+    });
+    await enqueueInTransaction(boss, tx, QUEUES.sellerApplicationAlert, { changeId: change.id } satisfies SellerChangeJob);
+  });
 }
 
 /**
@@ -201,7 +221,7 @@ export type SellerListParams = z.infer<typeof sellerListParamsSchema>;
 
 export async function listSellers(params: SellerListParams) {
   const where: Prisma.SellerWhereInput = {
-    status: params.status,
+    status: params.status ?? { not: "DRAFT" }, // the team sees a seller once it is sent for approval
     ...(params.q && {
       OR: [
         { companyName: { contains: params.q, mode: "insensitive" } },

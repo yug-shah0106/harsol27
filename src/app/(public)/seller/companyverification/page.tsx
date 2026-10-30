@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fill } from "@/lib/i18n";
 import { SELLER_DOCUMENTS } from "@/lib/seller-schema";
+import { mayEditApplication } from "@/lib/seller-status";
 import { requireMember } from "@/server/authz";
 import { getSellerContact } from "@/server/contact-access";
 import { getMessages } from "@/server/locale";
@@ -15,8 +16,9 @@ import { ApplicationForm, type ApplicationDefaults } from "./application-form";
 
 export const metadata: Metadata = { title: "Company verification", robots: { index: false } };
 
-// The second approval (client, 2026-10-24): company details and documents, checked by the team. The form
-// while nothing is sent or after a rejection; otherwise its status and what was sent.
+// Company details and documents (the second approval, client, 2026-10-24). The form until they are sent, or after a
+// rejection: saving keeps a draft, and the dashboard sends it with the products (one approval, 2026-10-30). Otherwise
+// its status and what was sent.
 export default async function CompanyVerificationPage() {
   const member = await requireMember("/seller/companyverification");
   const seller = await getMySeller(member.id);
@@ -25,7 +27,7 @@ export default async function CompanyVerificationPage() {
   const s = t.sellerArea;
 
   const nav = <SellerNav approved={seller?.status === "APPROVED"} />;
-  if (seller && seller.status !== "REJECTED") {
+  if (seller && !mayEditApplication(seller.status)) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
         {nav}
@@ -74,7 +76,7 @@ export default async function CompanyVerificationPage() {
 
   const defaults: ApplicationDefaults = seller
     ? {
-        companyName: seller.companyName,
+        companyName: seller.detailsSavedAt ? seller.companyName : "", // a draft from the first product holds the person's name
         contactName: seller.contactName,
         contactPhone: contact?.phone ?? member.phone,
         contactEmail: contact?.email ?? member.email ?? "",
@@ -100,17 +102,17 @@ export default async function CompanyVerificationPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12 sm:px-6">
       {nav}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-extrabold tracking-tight">{seller ? s.updateTitle : s.applyTitle}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{seller?.detailsSavedAt ? s.updateTitle : s.applyTitle}</h1>
         <p className="text-muted-foreground">{s.applyIntro}</p>
       </div>
-      {seller && (
+      {seller?.status === "REJECTED" && (
         <FormAlert kind="error">
           <p>{s.status.REJECTED}</p>
           {seller.statusChanges[0]?.reason && <p className="mt-1 font-normal">{fill(s.reason, { reason: seller.statusChanges[0].reason })}</p>}
         </FormAlert>
       )}
       <div className="rounded-xl border border-border bg-card p-5 sm:p-8">
-        <ApplicationForm defaults={defaults} resubmission={!!seller} />
+        <ApplicationForm defaults={defaults} resubmission={!!seller?.detailsSavedAt} />
       </div>
     </div>
   );

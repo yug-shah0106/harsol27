@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
+import { FormAlert } from "@/components/form-feedback";
 import { safeReturnPath } from "@/lib/return-path";
 import { getMember, SELLER_HOME_PATH } from "@/server/authz";
 import { getMessages } from "@/server/locale";
@@ -15,7 +16,7 @@ export default async function SellerSignInPage({ searchParams }: PageProps<"/sel
   const params = await searchParams;
   const member = await getMember();
   if (member) redirect(safeReturnPath(params.next, SELLER_HOME_PATH));
-  const { sellerSignIn: s } = await getMessages();
+  const { sellerSignIn: s, signIn } = await getMessages();
 
   return (
     <AuthCard
@@ -36,6 +37,7 @@ export default async function SellerSignInPage({ searchParams }: PageProps<"/sel
         </>
       }
     >
+      {params.reset === "1" && <FormAlert kind="success">{signIn.resetDone}</FormAlert>}
       <SellerSignInForm next={safeReturnPath(params.next, "")} />
     </AuthCard>
   );

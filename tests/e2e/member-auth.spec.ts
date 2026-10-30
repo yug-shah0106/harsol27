@@ -4,7 +4,8 @@ import { completeSignIn, emailFor, makeApprovedSeller, makeMemberLogin, randomMo
 import { passwordOf, STAFF } from "./staff";
 
 // Buyer and seller accounts: buyers make their own and sign in with its email (/sign-in); sellers sign in with the
-// username and password the team gives an approved registration (/seller/sign-in). No Google, no self-service reset.
+// username and password the team gives an approved registration (/seller/sign-in). No Google; a forgotten password
+// is reset by an emailed link (since 2026-10-30).
 
 const GENERIC = "Username or password is incorrect, or the account is temporarily locked.";
 const BUYER_GENERIC = "Email or password is incorrect, or the account is temporarily locked.";
@@ -56,21 +57,58 @@ test("a seller's sign-in goes to their dashboard: first the way to company verif
   await expect(again.getByRole("heading", { name: "Your products" })).toBeVisible();
 });
 
-test("nobody can reset their own password: the sign-in pages point to each other, to sign-up and to registration", async ({ browser }) => {
+test("the sign-in pages point to each other, to sign-up, to registration and to Forgot password", async ({ browser }) => {
   const page = await newPage(browser);
   await page.goto("/sign-in");
-  await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveCount(0);
-  await expect(page.getByText("Forgot your password? Contact the Harsol27 team.")).toBeVisible();
+  await expect(page.getByRole("main").getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
   await expect(page.getByRole("main").getByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/sign-up");
   await expect(page.getByRole("contentinfo").getByRole("link", { name: "Seller sign in" })).toHaveAttribute("href", "/seller/sign-in");
   await page.getByRole("main").getByRole("link", { name: "Seller sign in" }).click();
   await expect(page).toHaveURL(/\/seller\/sign-in$/);
+  await expect(page.getByRole("main").getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
   await page.getByRole("link", { name: "Register your business" }).click();
   await expect(page).toHaveURL(/\/Seller-Registration$/);
+  expect((await page.request.get("/sign-in/google")).status()).toBe(404);
+});
 
-  for (const gone of ["/forgot-password", "/reset-password?token=abc", "/sign-in/google"]) {
-    expect((await page.request.get(gone)).status(), gone).toBe(404);
-  }
+test("a member resets a forgotten password by an emailed link, once, and signs in with the new one", async ({ browser }) => {
+  const mobile = randomMobile();
+  await makeMemberLogin(mobile); // a seller: signs in with a username, but the link goes to their account's email
+  const page = await newPage(browser);
+  const csp = watchCsp(page);
+  await page.goto("/seller/sign-in");
+  await page.getByRole("main").getByRole("link", { name: "Forgot password?" }).click();
+  await expect(page.getByRole("heading", { name: "Forgot your password?" })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByLabel("Email").fill(emailFor(mobile));
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByRole("main").getByRole("status")).toContainText(`If a Harsol27 account uses ${emailFor(mobile)}, we have emailed it a link`, SLOW);
+
+  // The email goes out from the worker; the test reads the link's token from the database.
+  const token = await withDb(async (db) => {
+    const { rows } = await db.query(
+      `SELECT v."identifier" FROM "Verification" v JOIN "User" u ON u."id"::text = v."value"
+       WHERE u."email" = $1 AND v."identifier" LIKE 'reset-password:%' ORDER BY v."createdAt" DESC LIMIT 1`,
+      [emailFor(mobile)],
+    );
+    return String((rows[0] as { identifier: string }).identifier).replace("reset-password:", "");
+  });
+  await page.goto(`/reset-password?token=${token}`);
+  await expect(page.getByText("At least 8 characters.")).toBeVisible();
+  await page.getByLabel("New password", { exact: true }).fill("a-new-kite-password");
+  await page.getByRole("button", { name: "Set new password" }).click();
+  await expect(page).toHaveURL(/\/seller\/sign-in\?reset=1$/, SLOW); // a seller: back to the seller sign-in
+  await expect(page.getByText("Your password is changed. Sign in with your new one.")).toBeVisible();
+  await signInSeller(page, usernameFor(mobile), "a-new-kite-password");
+  await expect(page).toHaveURL(/\/seller\/dashboard$/, SLOW);
+  expect(csp).toEqual([]);
+
+  // The link works once.
+  const again = await newPage(browser);
+  await again.goto(`/reset-password?token=${token}`);
+  await again.getByLabel("New password", { exact: true }).fill("yet-another-password");
+  await again.getByRole("button", { name: "Set new password" }).click();
+  await expect(again.getByRole("main").getByRole("alert")).toContainText("This reset link has expired or was already used", SLOW);
 });
 
 test("a buyer makes their own account with email and password, is signed in at once, and a used email is refused", async ({ browser }) => {

@@ -238,6 +238,7 @@ model LeadStatusChange {
 // ───────────────────────── Sellers & subscriptions ─────────────────────────
 
 enum SellerStatus {
+  DRAFT // being filled in: company details and products, not sent to the team yet (since 2026-10-30)
   PENDING
   APPROVED
   REJECTED
@@ -245,23 +246,24 @@ enum SellerStatus {
 }
 
 model Seller {
-  id           String       @id @default(uuid(7)) @db.Uuid
-  userId       String       @unique @db.Uuid
-  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
-  companyName  String
-  slug         String       @unique
-  description  String?
-  city         String
-  state        String // validated against the fixed list of Indian states/UTs
-  address      String?
-  contactName  String
-  contactPhone String // PROTECTED: read only through server/contact-access.ts
-  contactEmail String // PROTECTED
-  status       SellerStatus @default(PENDING)
-  paidUntil    DateTime?    @db.Date // null = never paid → not public
+  id             String       @id @default(uuid(7)) @db.Uuid
+  userId         String       @unique @db.Uuid
+  user           User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+  companyName    String
+  slug           String       @unique
+  description    String?
+  city           String
+  state          String // validated against the fixed list of Indian states/UTs
+  address        String?
+  contactName    String
+  contactPhone   String // PROTECTED: read only through server/contact-access.ts
+  contactEmail   String // PROTECTED
+  status         SellerStatus @default(PENDING)
+  paidUntil      DateTime?    @db.Date // null = never paid → not public
+  detailsSavedAt DateTime? // when the seller saved the company verification form; until then a DRAFT holds only what the Seller registration gave
   // Company-detail columns are added in Phase 3 once the document list is decided.
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   documents     SellerDocument[]
   statusChanges SellerStatusChange[]

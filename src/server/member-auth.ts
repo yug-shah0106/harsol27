@@ -19,7 +19,7 @@ import { sendOtpSms } from "./sms";
 /*
  * Buyers make their own account here and sign in with its email and password (client, 2026-10-24/25); sellers
  * sign in with the username and password the team gives them (member-logins.ts). Both go through
- * password-auth.ts, shared with staff. Nobody resets their own password: the team makes a new one. Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched
+ * password-auth.ts, shared with staff. A forgotten password is reset by an emailed link (password-reset.ts). Sign-in by SMS code (requestOtp / verifyOtpAndSignIn below) is switched
  * off until an SMS provider is connected (docs/FUTURE.md); nothing calls it.
  */
 
