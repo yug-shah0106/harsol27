@@ -27,7 +27,7 @@ export async function makeIndustry(isActive = true) {
 }
 
 /** An approved seller, paid up for 30 days unless told otherwise. */
-export async function makeSeller(options: { status?: "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"; paidUntil?: Date | null; owner?: Member } = {}) {
+export async function makeSeller(options: { status?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED"; paidUntil?: Date | null; owner?: Member } = {}) {
   const owner = options.owner ?? (await makeMember());
   const id = uid();
   const seller = await db().seller.create({
@@ -38,6 +38,7 @@ export async function makeSeller(options: { status?: "PENDING" | "APPROVED" | "R
       city: "Rajkot",
       state: "Gujarat",
       contactName: "Contact Person",
+      detailsSavedAt: new Date(),
       contactPhone: "+919825011111",
       contactEmail: `seller-${id}@example.test`,
       status: options.status ?? "APPROVED",

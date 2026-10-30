@@ -8,7 +8,6 @@ import { env } from "./env";
 import { checkOtp } from "./otp";
 import { enqueuePasswordResetEmail } from "./jobs";
 import { hashPassword, MEMBER_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, verifyPassword } from "./password";
-import { isStaffRole } from "./staff-policy";
 
 /** Placeholder address for phone-only members (Better Auth requires a unique email). Never deliverable. */
 export function memberPlaceholderEmail(phone: string): string {
@@ -18,10 +17,10 @@ export function memberPlaceholderEmail(phone: string): string {
 export const isPlaceholderEmail = (email: string) => email.endsWith("@phone.harsol27.invalid");
 
 /**
- * Better Auth is used as a library: its HTTP handler is NOT mounted. Every sign-in and staff password
- * reset goes through our own server actions, which apply our rate limits, lockout and role checks before
- * calling `auth().api.*`. There is no sign-up and no Google sign-in: the team makes every login
- * (member-logins.ts, `pnpm staff`), client decision 2026-10-19.
+ * Better Auth is used as a library: its HTTP handler is NOT mounted. Every sign-in and password reset goes
+ * through our own server actions, which apply our rate limits, lockout and role checks before calling
+ * `auth().api.*`. No Google sign-in; buyers sign up through our own action (member-auth.ts), seller logins are
+ * made by the team (member-logins.ts), staff with `pnpm staff`.
  */
 function createAuth() {
   const { BETTER_AUTH_URL, BETTER_AUTH_SECRET, CLIENT_IP_HEADER } = env();
@@ -39,13 +38,14 @@ function createAuth() {
       minPasswordLength: MEMBER_PASSWORD_MIN_LENGTH,
       maxPasswordLength: PASSWORD_MAX_LENGTH,
       password: { hash: hashPassword, verify: verifyPassword },
-      // Reset links go to staff only (/staff/forgot-password), by the worker. Members cannot reset their
-      // own: the team gives them a new password (client, 2026-10-19).
+      // Reset links, emailed by the worker: staff (/staff/forgot-password) and, since 2026-10-30, members
+      // (/forgot-password). password-reset.ts checks who may ask before Better Auth gets here.
       sendResetPassword: async ({ user, token }) => {
-        if (isStaffRole((user as { role?: unknown }).role)) await enqueuePasswordResetEmail(user.id, token);
+        await enqueuePasswordResetEmail(user.id, token);
       },
+      // The password is theirs now: the copy an admin issued (member-logins.ts) no longer applies.
       onPasswordReset: async ({ user }) => {
-        await db().user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
+        await db().user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null, issuedPassword: null } });
       },
       revokeSessionsOnPasswordReset: true,
     },

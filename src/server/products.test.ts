@@ -72,8 +72,8 @@ afterAll(async () => {
 });
 
 describe("seller products", () => {
-  it("products can be managed from the company verification on (approved with it), never while suspended", async () => {
-    for (const status of ["PENDING", "REJECTED", "APPROVED"] as const) {
+  it("products can be managed at every stage (approved with the company), never while suspended", async () => {
+    for (const status of ["DRAFT", "PENDING", "REJECTED", "APPROVED"] as const) {
       const { owner } = await makeSeller({ status });
       await expect(requireListingSeller(owner)).resolves.toMatchObject({ userId: owner.id });
     }

@@ -13,6 +13,7 @@ import { memberLoginEmail, passwordResetEmail, type MemberLoginForEmail, type Pa
 import { getOpsStatus, opsAlertEmail } from "./ops";
 import { purgeExpiredRequestMetadata, purgeStaleOtpChallenges, purgeUnclaimedUploads } from "./retention";
 import { processPhoto } from "./photo-processing";
+import { isStaffRole } from "./staff-policy";
 import {
   newInquiryEmail,
   sellerApplicationAlertEmail,
@@ -122,10 +123,14 @@ async function loadMemberLogin(job: MemberLoginJob, authSecret: string): Promise
   return { ...job, email: user.email, name: user.name, username: user.username, password };
 }
 
-/** A reset link goes only to an active member (staff passwords are managed with `pnpm staff`). */
+/**
+ * A reset link for an active account: staff, or a member (since 2026-10-30). Until then only members passed here
+ * while only staff were queued, so staff reset emails were never sent.
+ */
 async function loadPasswordReset({ userId, token }: PasswordResetJob): Promise<PasswordResetForEmail | null> {
   const user = await db().user.findUnique({ where: { id: userId }, select: { email: true, name: true, role: true, disabledAt: true } });
-  return user && user.role === "MEMBER" && !user.disabledAt ? { email: user.email, name: user.name, token } : null;
+  if (!user || user.disabledAt || (user.role !== "MEMBER" && !isStaffRole(user.role))) return null;
+  return { email: user.email, name: user.name, token, staff: isStaffRole(user.role) };
 }
 
 /** The team's weekly call list: approved sellers expiring soon or recently expired, with phone numbers. */

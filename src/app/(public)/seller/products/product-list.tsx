@@ -6,14 +6,15 @@ import { Button } from "@/components/ui/button";
 import { fill, industryName } from "@/lib/i18n";
 import type { Messages } from "@/i18n/en";
 import type { listMyProducts } from "@/server/products";
+import { SendForApproval } from "../dashboard/send-for-approval";
 
 type MyProduct = Awaited<ReturnType<typeof listMyProducts>>[number];
 
-/** Why buyers can or cannot see a product, worst first. `awaitingApproval`: the seller is not approved yet. */
-function stateOf(p: MyProduct, subscriptionActive: boolean, awaitingApproval = false) {
+/** Why buyers can or cannot see a product, worst first. `awaiting`: the seller is not approved yet. */
+function stateOf(p: MyProduct, subscriptionActive: boolean, awaiting = false) {
   return p.removedAt ? "removed"
     : p.isHidden ? "hidden"
-    : awaitingApproval ? "awaiting"
+    : awaiting ? "awaiting"
     : !p.industry.isActive ? "industryInactive"
     : !subscriptionActive ? "subscriptionInactive"
     : "live";
@@ -21,15 +22,27 @@ function stateOf(p: MyProduct, subscriptionActive: boolean, awaitingApproval = f
 
 export const isLive = (p: MyProduct, subscriptionActive: boolean) => stateOf(p, subscriptionActive) === "live";
 
-/** Before the company verification is sent (or while suspended): why the listing is closed, and the way on. */
-export function LockedListing({ t, suspended = false }: { t: Messages; suspended?: boolean }) {
+/** A suspended seller cannot change their listing. */
+export function SuspendedListing({ t }: { t: Messages }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-dashed border-border bg-card p-6">
+      <Lock aria-hidden="true" className="size-6 shrink-0 text-muted-foreground" />
+      <p className="font-semibold">{t.sellerArea.status.SUSPENDED}</p>
+    </div>
+  );
+}
+
+/**
+ * Before approval: both are approved together, and what is left to do. `ready`: company details saved and a product
+ * added, so they can be sent; until then a link to the company details if those are missing.
+ */
+export function ReviewTogether({ t, ready, detailsSaved }: { t: Messages; ready: boolean; detailsSaved: boolean }) {
   const s = t.sellerArea;
   return (
-    <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border bg-card p-6">
-      <Lock aria-hidden="true" className="size-6 text-muted-foreground" />
-      <p className="font-semibold">{suspended ? s.status.SUSPENDED : s.listingLocked}</p>
-      <p className="text-muted-foreground">{s.listingHow}</p>
-      {!suspended && (
+    <div className="flex flex-col items-start gap-3 rounded-lg border border-border bg-secondary p-3 text-sm">
+      <p>{s.reviewTogether}</p>
+      {ready && <SendForApproval label={s.sendForApproval} />}
+      {!detailsSaved && (
         <Button asChild variant="outline" className="rounded-full">
           <Link href="/seller/companyverification">{s.verification}</Link>
         </Button>
@@ -38,18 +51,13 @@ export function LockedListing({ t, suspended = false }: { t: Messages; suspended
   );
 }
 
-/** Until approved: the team checks the products together with the company verification. */
-export function ReviewTogether({ t }: { t: Messages }) {
-  return <p className="rounded-lg border border-border bg-secondary p-3 text-sm">{t.sellerArea.reviewTogether}</p>;
-}
-
 /** The seller's products as rows: main photo, name, industry, counts and whether buyers see it. */
-export function MyProductList({ products, subscriptionActive, awaitingApproval = false, t }: { products: MyProduct[]; subscriptionActive: boolean; awaitingApproval?: boolean; t: Messages }) {
+export function MyProductList({ products, subscriptionActive, awaitingLabel, t }: { products: MyProduct[]; subscriptionActive: boolean; awaitingLabel?: string; t: Messages }) {
   const s = t.sellerArea;
   const badges = {
     removed: { label: s.removedBadge, variant: "destructive" },
     hidden: { label: s.hiddenBadge, variant: "outline" },
-    awaiting: { label: s.awaitingBadge, variant: "secondary" },
+    awaiting: { label: awaitingLabel ?? "", variant: "secondary" },
     industryInactive: { label: s.industryInactive, variant: "outline" },
     subscriptionInactive: { label: s.subscriptionInactive, variant: "outline" },
     live: { label: s.live, variant: "default" },
@@ -57,7 +65,7 @@ export function MyProductList({ products, subscriptionActive, awaitingApproval =
   return (
     <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
       {products.map((product) => {
-        const badge = badges[stateOf(product, subscriptionActive, awaitingApproval)];
+        const badge = badges[stateOf(product, subscriptionActive, !!awaitingLabel)];
         return (
           <li key={product.id} className="flex items-center gap-4 p-4">
             <div className="size-16 shrink-0 overflow-hidden rounded-md bg-secondary">

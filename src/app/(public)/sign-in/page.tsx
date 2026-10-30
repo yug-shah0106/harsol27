@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthCard } from "@/components/auth-card";
+import { FormAlert } from "@/components/form-feedback";
 import { safeReturnPath } from "@/lib/return-path";
 import { getMember } from "@/server/authz";
 import { getMessages } from "@/server/locale";
@@ -10,7 +11,8 @@ import { SignInForm } from "./forms";
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
 // Buyers sign in here with the email and password of the account they made (/sign-up); sellers have their own
-// page, /seller/sign-in, for the team's username and password (client, 2026-10-25). No Google, no self-service reset.
+// page, /seller/sign-in, for the team's username and password (client, 2026-10-25). No Google. A forgotten password
+// is reset by an emailed link (/forgot-password, 2026-10-30).
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   const params = await searchParams;
   const next = safeReturnPath(params.next);
@@ -36,6 +38,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
         </>
       }
     >
+      {params.reset === "1" && <FormAlert kind="success">{s.resetDone}</FormAlert>}
       <SignInForm next={next} />
     </AuthCard>
   );

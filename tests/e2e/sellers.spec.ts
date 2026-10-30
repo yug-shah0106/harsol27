@@ -10,18 +10,35 @@ const DOCUMENTS = [
   ["Address proof (for example an electricity bill)", "bill.pdf"],
 ] as const;
 
-test("seller journey: apply with documents → rejected with reason → resubmit → approved", async ({ browser }) => {
+test("seller journey: company details and products, sent together → rejected with reason → sent again → one approval", async ({ browser }) => {
   test.setTimeout(90_000); // two people, four uploads, three accessibility checks
-  // ── The seller applies ──
+  // ── Product listing is open from the start ──
   const seller = await newPage(browser);
   const csp = watchCsp(seller);
   const company = `E2E Khakhra House ${unique()}`;
-  await seller.goto("/sign-in?next=/seller/companyverification");
+  await seller.goto("/sign-in?next=/seller/products");
   await completeSignIn(seller, randomMobile());
+  await expect(seller).toHaveURL(/\/seller\/products$/);
+  await expect(seller.getByRole("heading", { name: "Your products" })).toBeVisible();
+
+  // ── The seller lists a product first: that starts a draft, which the team can't see ──
+  const productName = `Steel kettle ${unique()}`;
+  await seller.getByRole("link", { name: "Add a product" }).click();
+  await seller.getByLabel("Product name").fill(productName);
+  await choose(seller, "Industry", "Food Products");
+  await seller.getByLabel("Description").fill("Steel kettles in five sizes, S1 to S5, polished, with a riveted handle.");
+  await seller.getByRole("button", { name: "Create product and add photos" }).click();
+  await expect(seller.getByText("Product created. Now add some photos.")).toBeVisible();
+  await seller.goto("/seller/products");
+  await expect(seller.getByRole("listitem").filter({ hasText: productName })).toContainText("Not sent yet");
+  await expect(seller.getByRole("button", { name: "Send for approval" })).toHaveCount(0); // the company details are still missing
+
+  // ── Then the company details: saving does not send them ──
+  await seller.getByRole("main").getByRole("link", { name: "Company verification" }).last().click();
   await expect(seller).toHaveURL(/\/seller\/companyverification$/);
 
   // Submitting empty shows every problem as text, and focuses the first one.
-  await seller.getByRole("button", { name: "Submit application" }).click();
+  await seller.getByRole("button", { name: "Save company details" }).click();
   await expect(seller.getByLabel("Company name")).toBeFocused();
   await expect(seller.getByText("Enter your company name.")).toBeVisible();
   await expect(seller.getByText(/^Upload your /)).toHaveCount(0); // every document is optional (client, 2026-10-15)
@@ -37,25 +54,21 @@ test("seller journey: apply with documents → rejected with reason → resubmit
     await expect(seller.getByText(`Uploaded: ${file}`)).toBeVisible();
   }
   await expectAccessible(seller);
-  await seller.getByRole("button", { name: "Submit application" }).click();
-  await expect(seller).toHaveURL(/\/seller\/companyverification$/);
-  await expect(seller.getByText("Our team is checking your company details, documents and products together")).toBeVisible();
+  await seller.getByRole("button", { name: "Save company details" }).click();
+  await expect(seller).toHaveURL(/\/seller\/dashboard$/);
   expect(csp).toEqual([]); // direct-to-storage uploads are allowed by the CSP
 
-  // ── While the team checks, the seller lists a product: both are approved together (2026-10-29) ──
-  const productName = `Steel kettle ${unique()}`;
-  await seller.getByRole("link", { name: "Add a product" }).click();
-  await seller.getByLabel("Product name").fill(productName);
-  await choose(seller, "Industry", "Food Products");
-  await seller.getByLabel("Description").fill("Steel kettles in five sizes, S1 to S5, polished, with a riveted handle.");
-  await seller.getByRole("button", { name: "Create product and add photos" }).click();
-  await expect(seller.getByText("Product created. Now add some photos.")).toBeVisible();
-  await seller.goto("/seller/products");
-  await expect(seller.getByRole("listitem").filter({ hasText: productName })).toContainText("Waiting for approval");
-
-  // ── An admin reviews the company and its products, opens a document, and rejects with a reason ──
   const admin = await newPage(browser);
   await signInAs(admin, STAFF.admin);
+  await admin.goto(`/admin/sellers?q=${encodeURIComponent(company)}`);
+  await expect(admin.getByRole("link", { name: company })).toHaveCount(0); // a draft is not the team's yet
+
+  // ── Both are there: one button sends them together ──
+  await seller.getByRole("button", { name: "Send for approval" }).click();
+  await expect(seller.getByText("Our team is checking your company details, documents and products together")).toBeVisible();
+  await expect(seller.getByRole("button", { name: "Send for approval" })).toHaveCount(0);
+
+  // ── An admin reviews the company and its products, opens a document, and rejects with a reason ──
   await admin.goto("/admin/sellers?status=PENDING");
   await admin.getByRole("link", { name: company }).click();
   await expect(admin.getByRole("heading", { level: 1, name: company })).toBeVisible();
@@ -76,21 +89,24 @@ test("seller journey: apply with documents → rejected with reason → resubmit
   await expect(admin.getByRole("status")).toContainText("Decision saved.");
   await expect(admin.getByText("Pending review → Not approved")).toBeVisible();
 
-  // ── The seller sees the reason on the dashboard, replaces one document and applies again ──
+  // ── The seller sees the reason on the dashboard, replaces one document and sends both again ──
   await seller.goto("/seller/dashboard");
   await expect(seller.getByText("Reason: The PAN card is not readable.")).toBeVisible();
-  await expect(seller.getByRole("navigation", { name: "Seller" }).getByRole("link", { name: "Inquiries" })).toHaveCount(0); // not verified yet
+  await expect(seller.getByRole("navigation", { name: "Seller" }).getByRole("link", { name: "Inquiries" })).toHaveCount(0); // not approved yet
   await expect(seller.getByRole("region", { name: "Product listing" }).getByRole("link", { name: productName })).toBeVisible(); // kept, to fix with it
   await seller.getByRole("link", { name: "Edit and apply again" }).click();
   await expect(seller).toHaveURL(/\/seller\/companyverification$/);
   await expect(seller.getByText("Current file: pan.pdf")).toBeVisible();
   await seller.getByLabel("PAN card").setInputFiles(PNG_FILE("pan-clear.png"));
   await expect(seller.getByText("Uploaded: pan-clear.png")).toBeVisible();
-  await seller.getByRole("button", { name: "Submit again" }).click();
+  await seller.getByRole("button", { name: "Save company details" }).click();
+  await expect(seller).toHaveURL(/\/seller\/dashboard$/);
+  await seller.getByRole("button", { name: "Send for approval" }).click();
   await expect(seller.getByText("Our team is checking your company details, documents and products together")).toBeVisible();
+  await seller.goto("/seller/companyverification");
   await expect(seller.getByText("pan-clear.png")).toBeVisible();
 
-  // ── Approved ──
+  // ── One approval covers both ──
   await admin.reload();
   await admin.getByRole("button", { name: "Approve" }).click();
   await expect(admin.getByText("Pending review → Approved")).toBeVisible();

@@ -16,7 +16,8 @@ import type { StaffUser } from "./staff-policy";
  * registration and gets a generated password. Since 2026-10-29 the login (and every new password) is emailed to
  * the member's own address at once, by the worker; admins can still copy it for WhatsApp. Rejecting the registration later switches
  * the login off (leads.ts → decideLead). Buyers make their own (member-auth.ts → signUpBuyer, since 2026-10-24).
- * Nobody resets their own password: an admin makes a new one, from the registration or the Members list.
+ * Members reset a forgotten password themselves by an emailed link (password-reset.ts, since 2026-10-30); an admin can
+ * also make them a new one, from the registration or the Members list.
  *
  * The client wants the password to stay visible to admins (2026-10-19), so besides the argon2id hash that
  * sign-in checks, it is kept encrypted on the User (issuedPassword). Members never choose a password, so
@@ -92,7 +93,7 @@ export async function createLeadLogin(input: Record<string, unknown>, actor: Sta
 }
 
 /**
- * A new password for a member who has forgotten theirs (members can't reset their own: client, 2026-10-19).
+ * A new password from an admin, for a member who has forgotten theirs (they can also reset it themselves: /forgot-password).
  * The old password stops working, every open session is signed out and a lockout is lifted. The new one stays
  * visible to admins, like a seller login's. `leadId`: from a registration's page; `userId`: from the Members list.
  */

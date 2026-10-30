@@ -1,6 +1,7 @@
-export type SellerStatusValue = "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
+export type SellerStatusValue = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "SUSPENDED";
 
 export const SELLER_STATUS_LABELS: Record<SellerStatusValue, string> = {
+  DRAFT: "Draft (not sent yet)",
   PENDING: "Pending review",
   APPROVED: "Approved",
   REJECTED: "Not approved",
@@ -8,10 +9,14 @@ export const SELLER_STATUS_LABELS: Record<SellerStatusValue, string> = {
 };
 
 /**
- * Products can be added once the company verification is sent: the team approves the company and its products
- * together (2026-10-29), and buyers see them only once the seller is approved. Suspended sellers cannot change them.
+ * A seller fills in both their company details and their products, then sends them for approval together; the team
+ * approves both with one decision (client, 2026-10-30). Buyers see products only once the seller is approved.
+ * Suspended sellers cannot change their products.
  */
 export const mayListProducts = (status: SellerStatusValue) => status !== "SUSPENDED";
+
+/** Company details can be changed, and sent for approval, only before the team has them or after a rejection. */
+export const mayEditApplication = (status: SellerStatusValue) => status === "DRAFT" || status === "REJECTED";
 
 /** Every decision staff can take, from which status, to which, and whether a reason is required. */
 export const SELLER_DECISIONS = {

@@ -344,27 +344,34 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   (`staff/layout.tsx`), and centred below a Fraunces "Staff sign in", the line "Admins login." and the
   form on a white card: the site's own fields (`Input`, `PasswordInput`, 48px tall) and a full-width
   kumkum button; "Forgot password?" under it. /staff/forgot-password and /staff/reset-password share that
-  layout (staff only: members cannot reset their own password).
+  layout (members have their own pages, below).
 - **Buyer sign-in** (`/sign-in`, the header's "Sign in"): the auth card with "Email" and "Password", the line
-  "Forgot your password? Contact the Harsol27 team." and, below, "New to Harsol27? Create an account" (to
-  `/sign-up`) and "Selling on Harsol27? Seller sign in". No Google, no self-service reset.
+  a "Forgot password?" link and, below, "New to Harsol27? Create an account" (to `/sign-up`) and "Selling on
+  Harsol27? Seller sign in". No Google.
+- **Forgot password** (members, since 2026-10-30; linked under the password on both sign-in pages): the auth card
+  with one Email field ("sellers: the email from your Seller registration") and "Send reset link"; the same reply
+  whether or not an account uses it. The emailed link opens `/reset-password` ("Choose a new password", at least
+  8 characters), then the right sign-in page with "Your password is changed."
 - **Seller sign-in** (`/seller/sign-in`, since 2026-10-25; linked from the footer and the buyer sign-in): the
   same card with "Username" and "Password" (the team's), then "No seller login yet? Register your business"
   and "Buying? Sign in as a buyer". Seller pages send visitors here; a seller always lands on their dashboard.
 - **Seller area** (since 2026-10-27): a tab bar of Dashboard, Company verification, Product listing and, once
   approved, Inquiries and Subscription. `/seller` and `/seller/apply` redirect to the new addresses.
+  - **One application** (client, 2026-10-30): the seller fills in company details and products, in either order,
+    then one **Send for approval** button (dashboard and Product listing, once both are there) sends them to the
+    team together; one Approve covers both. Until then the seller is a draft the team can't see.
   - **Dashboard** (`/seller/dashboard`), laid out like the admin overview: the greeting card (date, Fraunces
-    "Good afternoon, Meera", company and status, rangoli, one rounded next-step button), then either their
+    "Good afternoon, Meera", company and status, rangoli, the next step or Send for approval), then either their
     three steps (registration, company verification, product listing; done ones bordered green with a tick)
     or, once approved, "At a glance" stat cards (`StatCard`, shared with the admin) and the subscription
-    status; then the product listing (the latest five, or a dashed locked card) and the profile card (login
-    details, and the contact, address and "about" form, saved at once without a new review).
-  - **Company verification** (`/seller/companyverification`): the company details and documents form the team
-    approves; once sent, its status and what was sent.
-  - **Product listing** (`/seller/products`): open to every seller login; products can be added as soon as the
-    company verification is sent, and the team approves the company and its products together (2026-10-29):
-    until then each shows "Waiting for approval", and the admin seller page lists them above the decision.
-    Each photo has a name field (the model or size it shows, "S1", "5 litre"), shown to buyers under the photo.
+    status; then the product listing (the latest five) and the profile card (login details, and once sent the
+    contact, address and "about" form, saved at once without a new review).
+  - **Company verification** (`/seller/companyverification`): the company details and documents form, saved as a
+    draft; once sent, its status and what was sent.
+  - **Product listing** (`/seller/products`): open to every seller login from the start, with no lock (only a
+    suspended seller can't change it). Until approval each product shows "Not sent yet" or "Waiting for approval",
+    and the admin seller page lists them above the decision. Each photo has a name field (the model or size it
+    shows, "S1", "5 litre"), shown to buyers under the photo.
 - **Header for a signed-in seller** (a login with a username): their initials in a kumkum circle and their
   name (only the circle on phones) replace "Seller registration", and "Home" opens their dashboard; the
   wordmark still goes to the public home.

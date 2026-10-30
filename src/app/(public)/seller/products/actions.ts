@@ -9,6 +9,7 @@ import {
   createPhotoUpload,
   createProduct,
   deletePhoto,
+  ensureListingSeller,
   movePhoto,
   renamePhoto,
   requireListingSeller,
@@ -25,7 +26,7 @@ async function account() {
 export async function createProductAction(_prev: ActionResult | null, formData: FormData): Promise<ActionResult> {
   let id: string | undefined;
   const result = await runAction("createProduct", async () => {
-    id = await createProduct(await account(), formData);
+    id = await createProduct(await ensureListingSeller(await requireMember("/seller/products")), formData);
     return ok;
   });
   if (result.ok && id) redirect(`/seller/products/${id}?created=1`); // next step: add photos

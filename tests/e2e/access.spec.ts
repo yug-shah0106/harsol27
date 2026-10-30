@@ -7,8 +7,8 @@ import { signInAs, STAFF } from "./staff";
 // where expected (the page itself, a sign-in page, or "not found"). The server decides, not the menu.
 
 const MEMBER_PAGES = ["/account", "/account/inquiries", "/seller/dashboard", "/seller/companyverification", "/seller/products", "/seller/products/new", "/seller/inquiries", "/seller/subscription"];
-// The product listing itself opens for every member (locked until the company is verified); these need approval.
-const SELLER_ONLY = ["/seller/products/new", "/seller/inquiries", "/seller/subscription"];
+// Product listing is open from the start (client, 2026-10-30); these need an approved seller.
+const SELLER_ONLY = ["/seller/inquiries", "/seller/subscription"];
 const ADMIN_PAGES = ["/admin", "/admin/leads", "/admin/sellers", "/admin/products", "/admin/inquiries", "/admin/industries", "/admin/subscriptions"];
 test.setTimeout(90_000); // each test opens every private page, several times over
 
@@ -40,9 +40,9 @@ test("visitors are sent to the right sign-in page for everything private", async
 });
 
 test("buyers and sellers reach their own pages only", async ({ browser }) => {
-  // A buyer with no seller account: the dashboard and company verification; the rest lead to the dashboard.
+  // No seller page yet: the dashboard, company verification and product listing; the rest lead to the dashboard.
   const buyer = await member(browser);
-  for (const path of ["/account", "/account/inquiries", "/seller/dashboard", "/seller/companyverification", "/seller/products"]) expect(await land(buyer.page, path), path).toEqual({ at: path, status: 200 });
+  for (const path of ["/account", "/account/inquiries", "/seller/dashboard", "/seller/companyverification", "/seller/products", "/seller/products/new"]) expect(await land(buyer.page, path), path).toEqual({ at: path, status: 200 });
   for (const path of SELLER_ONLY) expect((await land(buyer.page, path)).at, path).toBe("/seller/dashboard");
   // The old addresses still work.
   expect((await land(buyer.page, "/seller")).at).toBe("/seller/dashboard");
@@ -61,7 +61,7 @@ test("buyers and sellers reach their own pages only", async ({ browser }) => {
 
   // Suspended (or still pending): back to the dashboard, which explains why.
   await setSellerStatus(seller.mobile.e164, "SUSPENDED");
-  for (const path of SELLER_ONLY) expect((await land(seller.page, path)).at, path).toBe("/seller/dashboard");
+  for (const path of [...SELLER_ONLY, "/seller/products/new"]) expect((await land(seller.page, path)).at, path).toBe("/seller/dashboard");
 });
 
 test("staff reach the admin area; staff sessions are not buyer accounts", async ({ browser }) => {
