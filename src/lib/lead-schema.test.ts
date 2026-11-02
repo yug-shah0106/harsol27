@@ -14,6 +14,7 @@ const valid = {
   email: " Asha@Example.COM ",
   businessCategory: "MANUFACTURING",
   industryIds: ["0199b5c0-0000-7000-8000-000000000001"],
+  upiTransactionId: " 4123 4567 8901 ",
   paymentProof: "lead-payments/0199b5c0-0000-7000-8000-000000000009.png",
 };
 
@@ -37,6 +38,7 @@ describe("leadSchema", () => {
       website: "",
       mapsLink: "",
       instagram: "",
+      upiTransactionId: "412345678901",
       paymentProof: valid.paymentProof,
     });
   });
@@ -109,6 +111,10 @@ describe("leadSchema", () => {
     ["email", "asha@"],
     ["businessCategory", "FARMING"],
     ["industryIds", ["steel"]],
+    ["upiTransactionId", ""],
+    ["upiTransactionId", "1234567"],
+    ["upiTransactionId", "4123-4567-8901"],
+    ["upiTransactionId", "=HYPERLINK(1)"],
     ["paymentProof", ""],
   ])("rejects %s = %j with a message for that field", (field, value) => {
     const result = leadSchema.safeParse({ ...valid, [field]: value });
@@ -121,7 +127,7 @@ describe("leadSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(Object.keys(fieldErrors(result.error)).sort()).toEqual(
-        ["address", "businessCategory", "city", "email", "fatherName", "firstName", "industryIds", "lastName", "nativePlace", "paymentProof", "phone", "pincode", "state"].sort(),
+        ["address", "businessCategory", "city", "email", "fatherName", "firstName", "industryIds", "lastName", "nativePlace", "paymentProof", "phone", "pincode", "state", "upiTransactionId"].sort(),
       );
     }
   });

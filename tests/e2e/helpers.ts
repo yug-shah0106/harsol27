@@ -49,7 +49,7 @@ export async function choose(page: Page, label: string, option: string) {
   await expect(page.getByRole("combobox", { name: label, exact: true })).toHaveText(option);
 }
 
-export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string }) {
+export async function fillLeadForm(page: Page, values: { name: string; phone: string; email: string; category: string; industry: string; upiTransactionId?: string }) {
   await page.getByLabel("First name").fill(values.name);
   await page.getByLabel("Middle name").fill("Ramesh");
   await page.getByLabel("Last name").fill("Patel");
@@ -59,6 +59,7 @@ export async function fillLeadForm(page: Page, values: { name: string; phone: st
   await page.getByLabel("Email").fill(values.email);
   await choose(page, "Category", values.category);
   await choose(page, "Industry", values.industry);
+  await page.getByLabel("UPI transaction ID").fill(values.upiTransactionId ?? "412345678901");
   await addPaymentScreenshot(page);
 }
 

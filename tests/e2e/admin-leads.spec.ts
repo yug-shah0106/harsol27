@@ -2,14 +2,35 @@ import { expect, test, type Page } from "@playwright/test";
 import { choose, expectAccessible, fillLeadForm, newPage, unique } from "./helpers";
 import { signInAs, STAFF, uniqueIp } from "./staff";
 
-async function submitLead(page: Page, name: string, email: string) {
+async function submitLead(page: Page, name: string, email: string, upiTransactionId?: string) {
   await page.goto("/?utm_source=newsletter&utm_campaign=diwali&ignored=1"); // arrives by a campaign link
   await page.waitForFunction(() => sessionStorage.getItem("harsol27.utm"));
   await page.goto("/Seller-Registration");
-  await fillLeadForm(page, { name, phone: "98250 54321", email, category: "Trading", industry: "Ceramics & Tiles" });
+  await fillLeadForm(page, { name, phone: "98250 54321", email, category: "Trading", industry: "Ceramics & Tiles", upiTransactionId });
   await page.getByRole("button", { name: "Submit" }).click();
   await expect(page.getByRole("status")).toContainText("We have received your details");
 }
+
+test("a seller's UPI transaction ID reaches the UPI transactions tab, its download and the lead", async ({ browser }) => {
+  const name = `Lead Upi Journey ${unique()}`;
+  const upiTransactionId = `T${Date.now()}`;
+  const visitor = await newPage(browser, uniqueIp());
+  await submitLead(visitor, name, `upi.${unique()}@example.test`, upiTransactionId);
+  await visitor.close();
+
+  const page = await (await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": uniqueIp() } })).newPage();
+  await signInAs(page, STAFF.admin);
+  await page.getByRole("navigation", { name: "Admin" }).getByRole("link", { name: "UPI transactions" }).click();
+  const row = page.getByRole("row").filter({ hasText: upiTransactionId });
+  await expect(row.getByRole("link", { name })).toBeVisible();
+  await expectAccessible(page);
+
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByRole("link", { name: "Download" }).click()]);
+  expect(download.suggestedFilename()).toMatch(/^harsol27-upi-transactions-\d{4}-\d{2}-\d{2}\.xlsx$/);
+
+  await row.getByRole("link", { name }).click();
+  await expect(page.getByText(upiTransactionId)).toBeVisible();
+});
 
 test("admin finds a new lead, sees staff-only details, and changes its status with history", async ({ browser }) => {
   const ip = uniqueIp();

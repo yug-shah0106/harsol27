@@ -39,6 +39,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
     // An admin checks the screenshot, then approves the payment: the subscription counts from then on.
     ["Payment", <LeadDecision key="pay" lead={lead} subject="PAYMENT" canDecide={canWrite(staff)} />],
     ["Payment screenshot", lead.paymentProofKey ? <ExternalLink key="p" href={`/api/admin/leads/${lead.id}/payment-proof`} label="View the screenshot" /> : "Not added"],
+    ["UPI transaction ID", lead.upiTransactionId ?? "Not added"],
     ["Subscription", subscriptionText(lead)],
     ["WhatsApp number", <a key="p" href={`tel:${lead.phone}`} className="text-primary underline">{lead.phone}</a>],
     ["Email", <a key="e" href={`mailto:${lead.email}`} className="text-primary underline">{lead.email}</a>],

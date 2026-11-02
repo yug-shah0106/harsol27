@@ -190,6 +190,7 @@ model Lead {
   subscriptionUntil DateTime?        @db.Date
   paymentProofKey   String? // storage key of the payment screenshot (Pre-registration requires one since 2026-10-17)
   paymentProofName  String? // its file name as uploaded; display only
+  upiTransactionId  String? // from the payment app's receipt, as typed without spaces (required since 2026-10-31, older leads have none)
   status            LeadStatus       @default(NEW)
   sourceIp          String?          @db.Inet // staff-only; null if the proxy sent no client IP
   userAgent         String? // staff-only

@@ -21,7 +21,7 @@ import { headObject, presignUpload, readObjectStart } from "./storage";
 /** Per client IP. Generous enough for an office or mobile network sharing one address. */
 export const LEAD_IP_RULE = { max: 10, windowSeconds: 60 * 60 };
 
-const LEAD_FIELDS = ["firstName", "fatherName", "lastName", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "phone", "email", "businessCategory", "industryOther", "website", "instagram", "mapsLink", "paymentProof"] as const;
+const LEAD_FIELDS = ["firstName", "fatherName", "lastName", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "phone", "email", "businessCategory", "industryOther", "website", "instagram", "mapsLink", "upiTransactionId", "paymentProof"] as const;
 
 // ───────────── Payment screenshot (browser → storage directly, like seller documents) ─────────────
 
@@ -300,6 +300,16 @@ export async function listPaidLeads() {
     .map((lead) => ({ ...lead, subscription: leadSubscription(lead) }))
     .filter((lead) => lead.subscription)
     .sort((a, b) => a.subscription!.until.getTime() - b.subscription!.until.getTime());
+}
+
+/** Registrations that gave a UPI transaction ID, newest first: the UPI transactions tab and its spreadsheet. */
+export function listUpiTransactions() {
+  // ponytail: no paging, the download needs every row anyway; page the tab if it grows past a few thousand.
+  return db().lead.findMany({
+    where: { upiTransactionId: { not: null } },
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    select: { id: true, upiTransactionId: true, fullName: true, phone: true, email: true, payment: true, createdAt: true },
+  });
 }
 
 // ───────────── Staff: the overview ─────────────

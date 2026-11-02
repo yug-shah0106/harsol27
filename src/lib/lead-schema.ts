@@ -170,6 +170,12 @@ export const leadSchema = z
       ctx.addIssue({ code: "custom", message: "Enter your Instagram name, like @yourshop." });
       return z.NEVER;
     }),
+  // 12 digits for most UPI apps, but PhonePe's own ID and a bank transfer's UTR run longer and have letters, so this
+  // only catches slips ("4123 4567 8901" is fine too). The team checks it against the bank's statement.
+  upiTransactionId: z
+    .string({ error: "Enter your UPI transaction ID." })
+    .transform((value) => value.replace(/\s/g, ""))
+    .pipe(z.string().min(1, "Enter your UPI transaction ID.").regex(/^[A-Za-z0-9]{8,35}$/, "Enter the transaction ID from your payment app: 8 to 35 letters and numbers.")),
   // The storage key of the uploaded payment screenshot (the browser uploads it first; see leads.ts).
   paymentProof: z.string({ error: "Add a screenshot of your payment." }).trim().min(1, "Add a screenshot of your payment.").max(200),
   })

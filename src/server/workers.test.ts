@@ -54,7 +54,7 @@ describe("email pipeline: form → queue → worker → Resend", () => {
     expect((await fetch(ticket.uploadUrl, { method: "PUT", body: png, headers: { "Content-Type": "image/png" } })).ok).toBe(true);
 
     const form = new FormData();
-    for (const [k, v] of Object.entries({ firstName: "Worker", fatherName: "Father", lastName: "Test", nativePlace: "Harsol", address: "1 Relief Road", city: "Ahmedabad", state: "Gujarat", pincode: "380001", phone: "9876543210", email, businessCategory: "RETAIL", industryIds: industryId, paymentProof: ticket.key })) form.set(k, v);
+    for (const [k, v] of Object.entries({ firstName: "Worker", fatherName: "Father", lastName: "Test", nativePlace: "Harsol", address: "1 Relief Road", city: "Ahmedabad", state: "Gujarat", pincode: "380001", phone: "9876543210", email, businessCategory: "RETAIL", industryIds: industryId, upiTransactionId: "412345678901", paymentProof: ticket.key })) form.set(k, v);
     await submitLead(form, new Headers({ "x-forwarded-for": "198.51.100.9" }));
     const lead = await db().lead.findFirstOrThrow({ where: { email } });
 

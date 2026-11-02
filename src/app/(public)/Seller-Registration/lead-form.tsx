@@ -22,7 +22,7 @@ import { createPaymentUploadAction, submitLeadAction } from "./actions";
 type Industry = { id: string; name: string };
 type UploadState = { status: "idle" } | { status: "uploading" } | { status: "done"; key: string; fileName: string } | { status: "error"; message: string };
 
-const FIELD_ORDER = ["firstName", "fatherName", "lastName", "phone", "email", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "businessCategory", "industryIds", "industryOther", "website", "instagram", "mapsLink", "paymentProof"];
+const FIELD_ORDER = ["firstName", "fatherName", "lastName", "phone", "email", "nativePlace", "nativePlaceOther", "address", "city", "state", "pincode", "businessCategory", "industryIds", "industryOther", "website", "instagram", "mapsLink", "upiTransactionId", "paymentProof"];
 
 /** `industries`: already in the visitor's language and order (page.tsx). */
 export function LeadForm({ industries, fee }: { industries: Industry[]; fee: FeeToday }) {
@@ -371,6 +371,25 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
             </dl>
           </div>
         </div>
+        <Field data-invalid={!!errors.upiTransactionId}>
+          <FieldLabel htmlFor="upiTransactionId">{r.transactionId}</FieldLabel>
+          <Input
+            id="upiTransactionId"
+            name="upiTransactionId"
+            required
+            maxLength={40}
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
+            aria-invalid={!!errors.upiTransactionId}
+            aria-describedby={["upiTransactionId-hint", describe("upiTransactionId")].filter(Boolean).join(" ")}
+            onChange={clear("upiTransactionId")}
+          />
+          <p id="upiTransactionId-hint" className="text-sm text-muted-foreground">
+            {r.transactionIdHint}
+          </p>
+          <FieldMessage id="upiTransactionId-error" message={errors.upiTransactionId} />
+        </Field>
         <Field data-invalid={!!proofMessage}>
           <FieldLabel htmlFor="paymentProof">{r.screenshot}</FieldLabel>
           <input type="hidden" name="paymentProof" value={proof.status === "done" ? proof.key : ""} />

@@ -41,6 +41,7 @@ async function form(overrides: Record<string, string | string[]> = {}) {
     email: `Asha.${run}@Example.com`,
     businessCategory: "MANUFACTURING",
     industryIds: [industryId],
+    upiTransactionId: "4123 4567 8901",
     paymentProof: "paymentProof" in overrides ? "" : await paymentUpload(),
     ...overrides,
   };
@@ -127,7 +128,7 @@ describe("submitLead", () => {
 
     const paid = await paymentUpload();
     await submitLead(await form({ email, paymentProof: paid }), headersFor(uniqueIp()));
-    expect(await db().lead.findFirstOrThrow({ where: { email } })).toMatchObject({ paymentProofKey: paid, paymentProofName: "paid.png" });
+    expect(await db().lead.findFirstOrThrow({ where: { email } })).toMatchObject({ paymentProofKey: paid, paymentProofName: "paid.png", upiTransactionId: "412345678901" });
     // One screenshot backs one lead only.
     await expectFieldError(submitLead(await form({ email: `pay2.${run}@example.com`, paymentProof: paid }), headersFor(uniqueIp())), "paymentProof");
   });
