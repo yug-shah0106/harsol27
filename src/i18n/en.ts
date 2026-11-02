@@ -150,7 +150,7 @@ export const en = {
     paySteps: [
       "Scan the QR code with any UPI app, like Google Pay, PhonePe or Paytm, or use the details below.",
       "Pay {amount}.",
-      "Take a screenshot of the payment and add it below.",
+      "Add the UPI transaction ID and a screenshot of the payment below.",
     ],
     bankTitle: "Pay by UPI ID or bank transfer",
     accountName: "Account name",
@@ -159,6 +159,8 @@ export const en = {
     ifsc: "IFSC",
     bank: "Bank",
     branch: "{branch} branch",
+    transactionId: "UPI transaction ID",
+    transactionIdHint: "The number on your payment receipt, shown as UPI transaction ID, UTR or UPI Ref No. Only the Harsol27 team can see it.",
     screenshot: "Payment screenshot",
     screenshotHint: "JPG, PNG or PDF, up to 5 MB. Only the Harsol27 team can see it.",
     uploading: "Uploading…",

@@ -16,13 +16,13 @@ export const metadata: Metadata = pageMetadata({
 // their encrypted passwords, the services that hold the data). Questions go to the team's contact (lib/contact.ts).
 // How long registrations are kept, and requests to delete them, wait for the client's decision. Legal review is
 // required before launch (see docs/FUTURE.md). 2026-10-24: the language cookie; Hindi and Gujarati (translations.tsx);
-// buyer accounts, inquiries and selling, now the full site is open.
+// buyer accounts, inquiries and selling, now the full site is open. 2026-10-31: the UPI transaction ID.
 const TITLE = { en: "Privacy policy", hi: "गोपनीयता नीति", gu: "ગોપનીયતા નીતિ" } as const;
 
 export default async function PrivacyPage() {
   const locale = await getLocale();
   return (
-    <ProsePage title={TITLE[locale]} updated="2026-10-24">
+    <ProsePage title={TITLE[locale]} updated="2026-10-31">
       <DraftNotice />
       {locale === "hi" ? <PrivacyHi /> : locale === "gu" ? <PrivacyGu /> : <PrivacyEn />}
     </ProsePage>
@@ -42,7 +42,7 @@ function PrivacyEn() {
         <li>Your first name, your middle name and your last name, your WhatsApp number and email address.</li>
         <li>Your native place, and your address, city, state and pincode.</li>
         <li>If you give them: your business&apos;s website, Instagram name and Google Maps link.</li>
-        <li>A screenshot of your payment. It is kept in private storage, and only the Harsol27 team can open it.</li>
+        <li>Your UPI transaction ID, and a screenshot of your payment. The screenshot is kept in private storage, and only the Harsol27 team can see them.</li>
         <li>Your business category and industry.</li>
         <li>
           The IP address and browser details of the device used to send the form. These are used only to investigate

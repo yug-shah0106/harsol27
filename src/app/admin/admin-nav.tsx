@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/sellers", label: "Sellers" },
   { href: "/admin/subscriptions", label: "Subscriptions" },
+  { href: "/admin/upi-transactions", label: "UPI transactions" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/inquiries", label: "Inquiries" },
   { href: "/admin/members", label: "Members" },

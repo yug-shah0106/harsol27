@@ -132,6 +132,7 @@ test("lead form: a native place and an industry that aren't listed are chosen as
   await expect(page.getByRole("listbox")).toHaveCount(0);
   await expect(industry).toHaveText("Other (not listed)");
   const own = page.getByLabel("Your industry");
+  await page.getByLabel("UPI transaction ID").fill("412345678901");
   await addPaymentScreenshot(page);
 
   await page.getByRole("button", { name: "Submit" }).click();
