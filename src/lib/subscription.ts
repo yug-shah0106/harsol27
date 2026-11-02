@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 
 // Subscription rules, shared by the admin form, the seller pages, the reminder job and the emails.
 // Dates are whole days stored as UTC midnight (Postgres `date`), and "today" is the date in India

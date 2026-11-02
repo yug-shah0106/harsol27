@@ -32,11 +32,11 @@ export default async function EditProductPage({ params, searchParams }: PageProp
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-2">
-        <Link href="/seller/products" className="w-fit text-sm text-primary underline">
+        <Link href="/seller/products" className="w-fit py-1 text-sm text-primary underline">
           {s.back}
         </Link>
         <h1 className="text-3xl font-extrabold tracking-tight">{product.name}</h1>
-        <Link href={`/products/${product.slug}`} className="w-fit text-sm text-primary underline">
+        <Link href={`/products/${product.slug}`} className="w-fit py-1 text-sm text-primary underline">
           {s.viewPage}
         </Link>
       </div>

@@ -275,6 +275,15 @@ test("an admin approves the payment, sets the subscription by hand, and the sell
   await expect(row).toContainText("12 months");
 });
 
+test("a lead that does not exist shows the admin's own not-found page", async ({ browser }) => {
+  const page = await newPage(browser);
+  await signInAs(page, STAFF.admin);
+  expect((await page.goto(`/admin/leads/${crypto.randomUUID()}`))?.status()).toBe(404);
+  await expect(page.getByRole("heading", { level: 1, name: "Not found" })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Admin" })).toBeVisible();
+  await expect(page.locator("header")).toHaveCount(1);
+});
+
 test("lead pages are staff-only", async ({ page }) => {
   await page.goto("/admin/leads");
   await expect(page).toHaveURL(/\/staff\/sign-in$/);

@@ -24,7 +24,7 @@ export default async function NewProductPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-10 sm:px-6">
       <div className="flex flex-col gap-2">
-        <Link href="/seller/products" className="w-fit text-sm text-primary underline">
+        <Link href="/seller/products" className="w-fit py-1 text-sm text-primary underline">
           {s.back}
         </Link>
         <h1 className="text-3xl font-extrabold tracking-tight">{s.addProduct}</h1>

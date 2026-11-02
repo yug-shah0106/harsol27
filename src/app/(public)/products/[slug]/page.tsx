@@ -17,7 +17,7 @@ async function load(slug: string) {
 
 export async function generateMetadata({ params }: PageProps<"/products/[slug]">): Promise<Metadata> {
   const product = await load((await params).slug);
-  if (!product) return {};
+  if (!product) return { title: (await getMessages()).notFound.title };
   const { companyName, city } = product.seller;
   return {
     ...pageMetadata({
@@ -50,10 +50,10 @@ export default async function ProductPage({ params }: PageProps<"/products/[slug
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <Link href={`/industries/${product.industry.slug}`} className="w-fit text-sm text-primary underline">
+            <Link href={`/industries/${product.industry.slug}`} className="w-fit py-1 text-sm text-primary underline">
               {industryName(t, product.industry.name)}
             </Link>
-            <h1 className="text-3xl font-extrabold tracking-tight animate-in slide-in-from-bottom-2 duration-500 ease-out">{product.name}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight wrap-anywhere animate-in slide-in-from-bottom-2 duration-500 ease-out">{product.name}</h1>
             <p className="text-muted-foreground">
               {p.by}
               <Link href={`/sellers/${product.seller.slug}`} className="font-medium text-primary underline">

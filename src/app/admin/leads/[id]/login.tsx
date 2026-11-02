@@ -55,7 +55,7 @@ export function LeadLogin({
           ))}
         {reset?.ok && <FormAlert kind="success">Password reset and emailed to {email}.</FormAlert>}
         {reset && !reset.ok && <FormAlert kind="error">{reset.error}</FormAlert>}
-        <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1">
+        <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1">
           <dt className="text-muted-foreground">Username</dt>
           <dd className="font-mono font-semibold">{username}</dd>
           {canCreate && (

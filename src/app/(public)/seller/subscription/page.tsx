@@ -33,7 +33,7 @@ export default async function SellerSubscriptionPage() {
         <p>{s.renewal}</p>
         <p>
           {fill(s.remindBefore, { days })}
-          <strong>{contact?.email ?? s.yourEmail}</strong>
+          <strong className="break-all">{contact?.email ?? s.yourEmail}</strong>
           {fill(s.remindAfter, { days })}
         </p>
       </section>

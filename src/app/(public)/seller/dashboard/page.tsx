@@ -128,7 +128,7 @@ export default async function SellerDashboardPage() {
               <h2 id="subscription-heading" className="font-semibold">
                 {s.subscription}
               </h2>
-              <Link href="/seller/subscription" className="text-sm font-medium text-primary underline">
+              <Link href="/seller/subscription" className="py-1 text-sm font-medium text-primary underline">
                 {s.subscriptionDetails}
               </Link>
             </div>
@@ -178,7 +178,7 @@ export default async function SellerDashboardPage() {
           <MyProductList products={products.slice(0, SHOWN_PRODUCTS)} subscriptionActive={subscriptionActive} awaitingLabel={approved ? undefined : seller?.status === "DRAFT" ? t.sellerStatuses.DRAFT : s.awaitingBadge} t={t} />
         )}
         {listing && (
-          <Link href="/seller/products" className="w-fit text-sm font-medium text-primary underline">
+          <Link href="/seller/products" className="w-fit py-1 text-sm font-medium text-primary underline">
             {s.manageProducts}
           </Link>
         )}
@@ -191,7 +191,7 @@ export default async function SellerDashboardPage() {
           </h2>
           <p className="text-sm text-muted-foreground">{seller && seller.status !== "DRAFT" ? s.profileIntro : s.profileLater}</p>
         </div>
-        <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-[max-content_minmax(0,1fr)]">
           {[
             [s.yourName, user.name],
             [t.sellerSignIn.username, user.username ?? "—"],

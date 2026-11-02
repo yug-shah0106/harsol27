@@ -20,12 +20,7 @@ const ICON = "grid size-12 place-items-center rounded-full bg-secondary text-pri
 export default async function ContactPage() {
   const { contact: c } = await getMessages();
   return (
-    <ProsePage title={c.title} lead={c.lead}>
-      {c.accent && (
-        <p lang={c.accent.lang} className="w-fit rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-primary">
-          {c.accent.text}
-        </p>
-      )}
+    <ProsePage title={c.title} accent={c.accent} lead={c.lead}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className={CARD}>
           <span className={ICON}>

@@ -55,11 +55,11 @@ export default async function CompanyVerificationPage() {
           <h2 id="details-heading" className="text-lg font-semibold">
             {s.details}
           </h2>
-          <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-[max-content_minmax(0,1fr)]">
             {[
               [s.companyName, seller.companyName],
               [s.contact, contact ? `${contact.contactName} · ${contact.phone} · ${contact.email}` : "—"],
-              [s.address, `${seller.address ?? ""}, ${seller.city}, ${seller.state}`],
+              [s.address, [seller.address, seller.city, seller.state].filter(Boolean).join(", ")],
               ...SELLER_DOCUMENTS.map(({ kind }) => [s.docs[kind], seller.documents.find((d) => d.kind === kind)?.fileName ?? s.notProvided]),
             ].map(([term, value]) => (
               <div key={term} className="contents">

@@ -46,7 +46,7 @@ export function clip(text: string, max = 160): string {
 /**
  * A public page's details for search engines and link previews (WhatsApp, Facebook): its title (a string
  * gets " · Harsol27" from the root layout), description, keywords (the page's own, then the site's), and
- * its one address (canonical: "/" and "/coming-soon", or ?page=2, count as the same page).
+ * its one address (canonical: ?page=2 counts as the same page).
  */
 export function pageMetadata({ title, description, path, keywords = [] }: { title: string | { absolute: string }; description: string; path: string; keywords?: string[] }): Metadata {
   return {

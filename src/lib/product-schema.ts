@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 import { PHOTO_TYPES, type PhotoContentType } from "./file-type";
 
 /** Client decisions, 2026-10-08. */

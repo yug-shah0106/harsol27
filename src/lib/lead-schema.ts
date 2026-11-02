@@ -1,5 +1,5 @@
 import { parsePhoneNumberFromString } from "libphonenumber-js/min";
-import { z } from "zod";
+import { z } from "./zod";
 import { INDIAN_STATES } from "./indian-states";
 
 // Shared by the lead form (instant feedback in the browser) and the server (the source of truth).

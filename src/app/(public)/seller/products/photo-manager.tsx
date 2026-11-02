@@ -130,9 +130,10 @@ export function PhotoManager({ productId, photos }: { productId: string; photos:
                 <label htmlFor={`photo-name-${photo.id}`} className="sr-only">
                   {fill(s.photoName, { n: i + 1 })}
                 </label>
-                <div className="flex gap-1">
-                  <Input id={`photo-name-${photo.id}`} name="name" defaultValue={photo.name ?? ""} maxLength={60} placeholder={s.photoNamePlaceholder} className="h-9 min-w-0" />
-                  <SubmitButton variant="outline" size="sm" className="h-9 shrink-0" aria-label={fill(s.savePhotoName, { n: i + 1 })}>
+                {/* In a narrow card (two across on a phone) Save drops under the name rather than squeezing it. */}
+                <div className="flex flex-wrap gap-1">
+                  <Input id={`photo-name-${photo.id}`} name="name" defaultValue={photo.name ?? ""} maxLength={60} placeholder={s.photoNamePlaceholder} className="h-9 w-auto min-w-24 grow-3 basis-24" />
+                  <SubmitButton variant="outline" size="sm" className="h-9 grow" aria-label={fill(s.savePhotoName, { n: i + 1 })}>
                     {s.saveShort}
                   </SubmitButton>
                 </div>

@@ -85,7 +85,7 @@ export const gu: Messages = {
       label: "સેલર રજીસ્ટ્રેશન ઓફર",
       months: "Harsol27 પર {months} મહિના",
       till: "ઓફર {date} સુધી",
-      pay: "રજીસ્ટર કરતી વખતે UPI થી ચુકવણી કરો, અને ચુકવણીનો સ્ક્રીનશોટ ઉમેરો.",
+      pay: "રજીસ્ટર કરતી વખતે UPI થી ચુકવણી કરો, પછી UPI ટ્રાન્ઝેક્શન ID અને ચુકવણીનો સ્ક્રીનશોટ ઉમેરો.",
       usually: "સામાન્ય કિંમત ",
     },
     cta: {
@@ -268,7 +268,7 @@ export const gu: Messages = {
   prose: {
     lastUpdated: "છેલ્લે અપડેટ",
     draftTitle: "ડ્રાફ્ટ.",
-    draft: "આ પેજને અંતિમ સ્વરૂપ અપાઈ રહ્યું છે અને લોન્ચ પહેલાં બદલાઈ શકે છે.",
+    draft: "આ પેજને અંતિમ સ્વરૂપ અપાઈ રહ્યું છે અને તે બદલાઈ શકે છે.",
   },
   about: {
     title: "Harsol27 વિશે",
@@ -289,7 +289,7 @@ export const gu: Messages = {
     faq: [
       { q: "વેચનારનો ફોન નંબર કેવી રીતે મળે?", a: "કોઈ ઉત્પાદન શોધો અથવા ઉદ્યોગ પ્રમાણે જુઓ, પછી વેચનારને પૂછપરછ મોકલો. મોકલતાં જ તમને તેમનો ફોન નંબર અને ઇમેઇલ દેખાય છે." },
       { q: "શું હું Harsol27 પર ઓર્ડર કે ચુકવણી કરી શકું?", a: "ના. કોઈ કાર્ટ, ઓનલાઇન ચુકવણી કે ઓર્ડર નથી. કિંમત, જથ્થો, ડિલિવરી અને ચુકવણી તમે અને વેચનાર પરસ્પર સીધા નક્કી કરો છો." },
-      { q: "શું મારે ખાતાની જરૂર છે?", a: "શોધવા અને જોવા માટે નહીં. પૂછપરછ મોકલવા માટે સાઇન ઇન કરો, અથવા તમારા નામ, મોબાઇલ નંબર અને પાસવર્ડથી ", link: { href: "/sign-up", text: "ખાતું બનાવો" }, after: "." },
+      { q: "શું મારે ખાતાની જરૂર છે?", a: "શોધવા અને જોવા માટે નહીં. પૂછપરછ મોકલવા માટે સાઇન ઇન કરો, અથવા તમારા નામ, મોબાઇલ નંબર, ઇમેઇલ અને પાસવર્ડથી ", link: { href: "/sign-up", text: "ખાતું બનાવો" }, after: "." },
       { q: "Harsol27 પર કોણ વેચી શકે?", a: "વ્યવસાયો Harsol27 પર રજીસ્ટર કરે છે અને ફી ભરે છે, અને દેખાય તે પહેલાં અમારી ટીમ દરેકને મંજૂરી આપે છે." },
       { q: "હું મારો વ્યવસાય કેવી રીતે લિસ્ટ કરું?", a: "", link: { href: "/Seller-Registration", text: "સેલર રજીસ્ટ્રેશન" }, after: " ભરો અને ફી ભરો. અમારી ટીમ મંજૂરી આપે પછી અમે તમને લોગિન મોકલીએ છીએ; પછી તમે તમારું સેલર પેજ બનાવો અને તમારાં ઉત્પાદનો ઉમેરો." },
       { q: "હું મારો પાસવર્ડ ભૂલી ગયો છું. શું કરું?", a: "સાઇન ઇન પેજ પર ", link: { href: "/forgot-password", text: "પાસવર્ડ ભૂલી ગયા?" }, after: " પસંદ કરો અને તમારા ખાતાનો ઇમેઇલ લખો (સેલર: સેલર રજીસ્ટ્રેશનવાળો ઇમેઇલ). અમે નવો પાસવર્ડ પસંદ કરવાની લિંક ઇમેઇલ કરીશું." },
@@ -532,7 +532,7 @@ export const gu: Messages = {
     photoHint: "JPG, PNG અથવા WebP, દરેક 10 MB સુધી, કુલ {max} ફોટા (અત્યાર સુધી {count}). પહેલો ફોટો શોધ પરિણામોમાં દેખાય છે.",
     photoNamesHint: "દરેક ફોટાને નામ આપો, જેમ કે S1, S2 કે 5 લિટર: ખરીદદારો તેની નીચે આ નામ જુએ છે.",
     photoName: "ફોટો {n} નું નામ",
-    photoNamePlaceholder: "નામ, જેમ કે S1",
+    photoNamePlaceholder: "જેમ કે S1",
     savePhotoName: "ફોટો {n} નું નામ સેવ કરો",
     saveShort: "સેવ કરો",
     photoOrder: "ફોટા, દેખાવાના ક્રમમાં",
@@ -685,6 +685,12 @@ export const gu: Messages = {
     "The screenshot did not finish uploading. Please choose it again.": "સ્ક્રીનશોટ પૂરો અપલોડ થયો નહીં. કૃપા કરીને તેને ફરીથી પસંદ કરો.",
     "This file is not a real JPG, PNG or PDF. Please upload the screenshot itself.": "આ સાચી JPG, PNG કે PDF ફાઇલ નથી. કૃપા કરીને સ્ક્રીનશોટ જ અપલોડ કરો.",
     "This screenshot was already used. Please choose it again.": "આ સ્ક્રીનશોટ પહેલેથી વપરાઈ ગયો છે. કૃપા કરીને તેને ફરીથી પસંદ કરો.",
+    "This file cannot be uploaded.": "આ ફાઇલ અપલોડ કરી શકાતી નથી.",
+    "This upload has expired. Please choose the file again.": "આ અપલોડની સમયમર્યાદા પૂરી થઈ ગઈ છે. કૃપા કરીને ફાઇલ ફરીથી પસંદ કરો.",
+    "This file did not finish uploading. Please choose it again.": "આ ફાઇલ પૂરી અપલોડ થઈ નહીં. કૃપા કરીને તેને ફરીથી પસંદ કરો.",
+    "This file is not a real PDF, JPG or PNG. Please upload the original document.": "આ સાચી PDF, JPG કે PNG ફાઇલ નથી. કૃપા કરીને મૂળ દસ્તાવેજ અપલોડ કરો.",
+    "This photo cannot be uploaded.": "આ ફોટો અપલોડ કરી શકાતો નથી.",
+    "Check the photo name.": "ફોટાનું નામ તપાસો.",
     "Too many uploads. Please wait a while and try again.": "બહુ વધારે અપલોડ થયા છે. કૃપા કરીને થોડી વાર પછી ફરી પ્રયાસ કરો.",
     "Upload a PDF, JPG or PNG file.": "PDF, JPG અથવા PNG ફાઇલ અપલોડ કરો.",
     "This file is empty.": "આ ફાઇલ ખાલી છે.",

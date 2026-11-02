@@ -320,7 +320,7 @@ export function LeadForm({ industries, fee }: { industries: Industry[]; fee: Fee
                 className="size-44 rounded-lg border border-border bg-white p-2"
               />
               {/* A PNG: on a phone, UPI apps scan a saved QR code from the photos. */}
-              <a href={PAYMENT_QR_DOWNLOAD} download="harsol27-upi-qr.png" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline">
+              <a href={PAYMENT_QR_DOWNLOAD} download="harsol27-upi-qr.png" className="inline-flex items-center gap-1.5 py-1 text-sm font-medium text-primary underline">
                 <Download aria-hidden="true" className="size-4" />
                 {r.saveQr}
               </a>

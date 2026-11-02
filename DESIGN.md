@@ -177,6 +177,7 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   - `ghost` and `link` (kumkum text, underline on hover).
   - Every button gets the 3px kumkum focus ring, and moves down 1px when pressed.
 - **Input / Textarea**: white (the card colour by lamplight, like the Dropdown, so a form's fields all match), 1px `input` border, 40px tall, radius 16px. Invalid fields get a red
+  A file input's button (its words are the browser's own) is a small turmeric pill, 28px tall, inside the field.
   border and ring plus an error message linked with `aria-describedby`.
 - **Dropdown** (`dropdown.tsx`): use this for every choice from a list. Never use a native `<select>`.
   - Closed, it looks like an Input, with a chevron that flips when open.
@@ -258,9 +259,9 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   page gutters (16px, 24px, 40px from 1024px), like the footer.
   - In the left corner, the Harsol Sattavis Jain Yuvak Trust's logo (`public/logo.webp`, 52px, reaching into
     the header's padding so the header stays 65px; 44px under 360px), then the trust's name in two lines
-    no taller than the button: "Shree" (Hind 12px/600, `muted-foreground`; 10px on phones) before "Harsol27"
-    (Fraunces 22px; 18px on phones), over "Jain Yuvak Trust, Bhayander" (Hind 12px/600, `muted-foreground`;
-    10px and wrapping on phones). The same lockup heads the admin and staff sign-in. The footer reads
+    no taller than the button: "Shree" (Hind 12px/600, `muted-foreground`; 11px on phones, 10px under 360px)
+    before "Harsol27" (Fraunces 22px; 18px on phones), over "Jain Yuvak Trust, Bhayander" (Hind 12px/600,
+    `muted-foreground`; 11px on phones, 10px under 360px, wrapping on phones). The same lockup heads the admin and staff sign-in. The footer reads
     "© <year> Shree Harsol Sattavis Jain Yuvak Trust, Bhayander".
   - In the right corner: 14px/500 text links (Home, Search, About, Sign in or Your account) that underline
     on hover, the **language button** (a languages icon and the current language in its own script,
@@ -275,10 +276,11 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
     a cream bar as you scroll. Seller registration's page starts
     under it (65px), so its rangoli runs up to the toran.
 - **Footer**: turmeric, a top hairline, full width with the page gutters (16px, 24px, 40px from 1024px):
-  one slim row (20px padding): the copyright in `muted-foreground` on the left, the text links (About,
+  one slim row (14px padding): the copyright in `muted-foreground` on the left, the text links (About,
   FAQ, Seller sign in, Contact us, Terms, Privacy) on the right (on their own line, still right, when a phone wraps them).
-- **Contact us** (`/contact`, open while the site is closed): the text-page layout, a Gujarati pill
-  "કોઈ પ્રશ્ન છે? અમારો સંપર્ક કરો.", then two white cards side by side (stacked on phones), each with an
+  Each link has 6px of padding above and below, so it is 32px tall to tap while the text stays slim.
+- **Contact us** (`/contact`): the text-page layout with the Gujarati pill "કોઈ પ્રશ્ન છે? અમારો સંપર્ક કરો."
+  above the title (like Seller registration's), then two white cards side by side (stacked on phones), each with an
   icon disc, a small label, the number or address large, and a pill button: kumkum "Chat on WhatsApp"
   (+91 91520 00352) and outline "Write an email" (sh27jyt@gmail.com); below them, across the row, the trust's
   address with an outline "Open in Google Maps". The details live in `lib/contact.ts`.
@@ -308,6 +310,14 @@ Use the components in `src/components/ui/` rather than restyling raw elements.
   (`navigation-progress.tsx`; a still bar with reduced motion). Pages are not streamed behind a loading
   screen: that would make a missing page answer 200 instead of 404, and break server redirects.
 - **Last updated**: legal pages show "Last updated 10 October 2026" under the title (`ProsePage updated=`).
+- **Small text links** standing alone ("← All industries", "Forgot password?", "Manage products"): 14px text
+  with 4px of padding above and below (`py-1`), so they are at least 28px tall to tap.
+- **Page not found**: "Error 404", the title, a line, and two buttons (Search products, Go to the home page)
+  inside the page's own header and footer. `components/not-found-body.tsx` is shared by `app/not-found.tsx`
+  (an address no page matches: it draws the toran, header and footer) and `(public)/not-found.tsx` (a missing
+  listing, inside the public layout). The admin has its own (`admin/not-found.tsx`), inside the admin layout.
+- **Empty industry**: "No products found in this industry yet." and an outline pill "Register your business".
+  The industries list shows a count only when an industry has products.
 - **Admin and seller tabs**: one horizontal row that scrolls sideways on phones.
 - **Icons**: `lucide-react`, 16px (`size-4`), `aria-hidden`, always next to a text label.
 - **Festival pieces** (Marigold; `src/components/festive.tsx`, styles in `globals.css`):

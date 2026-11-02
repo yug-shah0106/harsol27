@@ -22,7 +22,7 @@ const TITLE = { en: "Terms of use", hi: "उपयोग के नियम", g
 export default async function TermsPage() {
   const locale = await getLocale();
   return (
-    <ProsePage title={TITLE[locale]} updated="2026-10-24">
+    <ProsePage title={TITLE[locale]} updated="2026-11-02">
       <DraftNotice />
       {locale === "hi" ? <TermsHi /> : locale === "gu" ? <TermsGu /> : <TermsEn />}
     </ProsePage>
@@ -53,7 +53,7 @@ function TermsEn() {
         <li>
           Registering as a seller costs {rupees(FEE.regular)} for {FEE.months} months ({rupees(FEE.offer)} if you register by{" "}
           {longDate(FEE.offerLastDay)}). You pay by UPI or bank transfer to the trust&apos;s account shown on the{" "}
-          <Link href="/Seller-Registration">Seller registration</Link> page, and add a screenshot of the payment to the form.
+          <Link href="/Seller-Registration">Seller registration</Link> page, and add the UPI transaction ID and a screenshot of the payment to the form.
         </li>
         <li>
           Our team checks your details and your payment. Your subscription counts once the payment is confirmed, and runs for
@@ -61,7 +61,7 @@ function TermsEn() {
         </li>
         <li>
           Your seller login comes from us: once your registration is approved, our team gives you a username and password.
-          Keep them private. If you forget your password, contact us and we will set a new one.
+          Keep them private. If you forget your password, use the &ldquo;Forgot password?&rdquo; link on the sign-in page, or contact us.
         </li>
       </ul>
       <h2>Sellers</h2>
@@ -73,9 +73,9 @@ function TermsEn() {
       <h2>Buyers</h2>
       <ul>
         <li>
-          You make your own buyer account. Keep your password private. If you forget it, contact us and we will set a new one.
+          You make your own buyer account. Keep your password private. If you forget it, use the &ldquo;Forgot password?&rdquo; link on the sign-in page.
         </li>
-        <li>A seller&apos;s contact details are shown after you send them an enquiry.</li>
+        <li>A seller&apos;s contact details are shown after you send them an inquiry.</li>
         <li>Use contact details only to discuss genuine business with that seller. Collecting them in bulk is not allowed.</li>
       </ul>
       <h2>Fair use</h2>
