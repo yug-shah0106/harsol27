@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ForgotPasswordForm } from "../password-forms";
 
-export const metadata: Metadata = { title: "Forgot password · Staff · Harsol27", robots: { index: false } };
+export const metadata: Metadata = { title: "Forgot password · Staff", robots: { index: false } };
 
 /** Staff only: members cannot reset their own password (the team gives them a new one). */
 export default function StaffForgotPasswordPage() {
@@ -16,7 +16,7 @@ export default function StaffForgotPasswordPage() {
         <div className="rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/10">
           <ForgotPasswordForm />
         </div>
-        <Link href="/staff/sign-in" className="text-center text-sm font-semibold text-primary hover:underline">
+        <Link href="/staff/sign-in" className="py-1 text-center text-sm font-semibold text-primary hover:underline">
           Back to staff sign in
         </Link>
       </main>

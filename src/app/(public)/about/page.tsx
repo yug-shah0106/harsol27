@@ -7,7 +7,7 @@ import { getMessages } from "@/server/locale";
 
 export const metadata: Metadata = pageMetadata({
   title: "About Harsol27 and how it works",
-  description: "How Harsol27, by the Harsol Sattavis (27) Jain community, works: approved Harsol sellers, direct enquiries, no online payment, and common questions.",
+  description: "How Harsol27, by the Harsol Sattavis (27) Jain community, works: approved Harsol sellers, direct inquiries, no online payment, and common questions.",
   path: "/about",
   keywords: ["how Harsol27 works", "Harsol27 FAQ", "sell on Harsol27"],
 });

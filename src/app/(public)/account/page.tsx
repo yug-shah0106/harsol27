@@ -63,7 +63,7 @@ export default async function AccountPage() {
           <h2 id="registration-heading" className="text-lg font-semibold">
             {a.registration}
           </h2>
-          <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-[max-content_1fr]">
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-[max-content_minmax(0,1fr)]">
             <dt className="text-muted-foreground">{a.status}</dt>
             <dd>
               <Badge variant="secondary">{t.decisions[lead.decision]}</Badge>

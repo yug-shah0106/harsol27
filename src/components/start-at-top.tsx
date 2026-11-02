@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 /**
  * Reloading the page starts it at the top again, not where the visitor had scrolled to (the browser's
- * default). For landing pages (coming soon), which are meant to be seen from the start. A link to a
+ * default). For the home page, which is meant to be seen from the start. A link to a
  * #section still goes there. The browser's own setting comes back when the page is left.
  */
 export function StartAtTop() {

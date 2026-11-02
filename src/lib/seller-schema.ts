@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "./zod";
 import { DOCUMENT_TYPES, type DocumentContentType } from "./file-type";
 import { INDIAN_STATES } from "./indian-states";
 import { phoneSchema } from "./lead-schema";

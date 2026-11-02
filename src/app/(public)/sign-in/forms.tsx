@@ -67,7 +67,7 @@ const formError = (state: ActionResult<unknown> | null) => (state && !state.ok &
 /** Under the password, on both sign-in pages (2026-10-30: members reset their own, by an emailed link). */
 function ForgotLink({ label }: { label: string }) {
   return (
-    <Link href="/forgot-password" className="w-fit text-sm font-semibold text-primary hover:underline">
+    <Link href="/forgot-password" className="w-fit py-1 text-sm font-semibold text-primary hover:underline">
       {label}
     </Link>
   );

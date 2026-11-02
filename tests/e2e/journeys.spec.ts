@@ -118,6 +118,12 @@ test("a missing page answers 404 with a helpful page", async ({ page }) => {
   expect((await page.goto("/products/no-such-product"))?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Search products" }).first()).toBeVisible();
+  // One header and footer, whether the page is inside the public layout or matches no page at all.
+  await expect(page.locator("header")).toHaveCount(1);
+  await expect(page.locator("footer")).toHaveCount(1);
+  expect((await page.goto("/no-such-page"))?.status()).toBe(404);
+  await expect(page.locator("header")).toHaveCount(1);
+  await expect(page.locator("footer")).toHaveCount(1);
   expect(csp).toEqual([]);
 });
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { STAFF_PASSWORD_MIN_LENGTH } from "@/server/password";
 import { ResetPasswordForm } from "../password-forms";
 
-export const metadata: Metadata = { title: "Choose a new password · Staff · Harsol27", robots: { index: false }, referrer: "no-referrer" };
+export const metadata: Metadata = { title: "Choose a new password · Staff", robots: { index: false }, referrer: "no-referrer" };
 
 /** Opened from the reset email: /staff/reset-password?token=… (the link works once, for an hour). */
 export default async function StaffResetPasswordPage({ searchParams }: PageProps<"/staff/reset-password">) {
@@ -27,7 +27,7 @@ export default async function StaffResetPasswordPage({ searchParams }: PageProps
             </p>
           )}
         </div>
-        <Link href="/staff/sign-in" className="text-center text-sm font-semibold text-primary hover:underline">
+        <Link href="/staff/sign-in" className="py-1 text-center text-sm font-semibold text-primary hover:underline">
           Back to staff sign in
         </Link>
       </main>
