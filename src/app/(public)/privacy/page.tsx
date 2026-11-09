@@ -57,8 +57,8 @@ function PrivacyEn() {
       <ul>
         <li>Your username, and the mobile number on your account.</li>
         <li>
-          Your password, which our team sets. It is stored encrypted, and our admins can see it so they can send it to you
-          again if you forget it.
+          Your password, which our team sets. A copy is stored encrypted so our admins can send it to you again. If you
+          choose a new password with the &ldquo;Forgot password?&rdquo; link, that copy is deleted.
         </li>
         <li>When you sign in, and failed attempts to sign in (used to lock out password guessing for a while).</li>
         <li>Whether your registration and your payment were approved, and your subscription&apos;s dates.</li>
@@ -68,7 +68,8 @@ function PrivacyEn() {
         <li>Your name, mobile number and email address.</li>
         <li>
           Your password, which you choose. It is stored only as a one-way hash, so nobody can read it, our team included. If
-          you forget it, our team sets a new one, which our admins can see so they can send it to you.
+          you forget it, you choose a new one with a link we email you. If our team sets one for you instead, our admins can
+          see it until you choose your own.
         </li>
         <li>When you sign in, and failed attempts to sign in (used to lock out password guessing for a while).</li>
       </ul>

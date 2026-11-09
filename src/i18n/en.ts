@@ -74,7 +74,7 @@ export const en = {
     whyTitle: "Why Harsol27?",
     promises: {
       approved: { title: "Approved sellers only", body: "Sellers apply to join, and our team approves each one before they appear on Harsol27." },
-      direct: { title: "Straight to the seller", body: "Send an enquiry and you see the seller's phone number and email, so you can speak to them yourself." },
+      direct: { title: "Straight to the seller", body: "Send an inquiry and you see the seller's phone number and email, so you can speak to them yourself." },
       terms: { title: "Your deal, your terms", body: "No cart and no online payment. Price, quantity, delivery and payment are agreed between you and the seller." },
     },
     tradesTitle: "A festival of trades",
@@ -83,7 +83,7 @@ export const en = {
     step: "Step {n}: ",
     steps: [
       { title: "Search", body: "Look up a product or browse by industry to find approved sellers from across Harsol." },
-      { title: "Send an enquiry", body: "Tell the seller what you need. Sending an enquiry shows you their phone number and email." },
+      { title: "Send an inquiry", body: "Tell the seller what you need. Sending an inquiry shows you their phone number and email." },
       { title: "Talk directly", body: "Call or email the seller and agree the deal directly between yourselves." },
     ],
     offer: {
@@ -91,7 +91,7 @@ export const en = {
       label: "Seller registration offer",
       months: "{months} months on Harsol27",
       till: "Offer till {date}",
-      pay: "Pay by UPI when you register, and add a screenshot of the payment.",
+      pay: "Pay by UPI when you register, then add the UPI transaction ID and a screenshot of the payment.",
       usually: "usually ",
     },
     cta: {
@@ -274,7 +274,7 @@ export const en = {
   prose: {
     lastUpdated: "Last updated",
     draftTitle: "Draft.",
-    draft: "This page is being finalised and may change before launch.",
+    draft: "This page is being finalised and may change.",
   },
   about: {
     title: "About Harsol27",
@@ -283,19 +283,19 @@ export const en = {
       "Harsol is full of businesses that make and trade almost everything, from khakhra and thepla to steel parts and ceramic tiles. Harsol27 helps buyers find the right one and talk to them directly.",
     buyersTitle: "For buyers",
     buyers:
-      "Search for a product or browse by industry. When you find a seller you like, send them an enquiry: that shows you their phone number and email so you can speak to them yourself.",
+      "Search for a product or browse by industry. When you find a seller you like, send them an inquiry: that shows you their phone number and email so you can speak to them yourself.",
     sellersTitle: "For sellers",
     sellers:
-      "Sellers register their business and pay the fee. Once our team approves the registration, they get a login, set up their seller page (which our team also checks) and list their products under their main industry. Then buyers can find them and send enquiries.",
+      "Sellers register their business and pay the fee. Once our team approves the registration, they get a login, set up their seller page (which our team also checks) and list their products under their main industry. Then buyers can find them and send inquiries.",
     notTitle: "What Harsol27 does not do",
     not: "There is no cart, no online payment and no ordering on Harsol27. Price, quantity, delivery and payment are agreed directly between buyer and seller.",
     join: "Want to sell on Harsol27? ",
     joinLink: "Register your business",
     faqTitle: "Questions",
     faq: [
-      { q: "How do I get a seller's phone number?", a: "Search for a product or browse by industry, then send the seller an enquiry. Sending it shows you their phone number and email." },
+      { q: "How do I get a seller's phone number?", a: "Search for a product or browse by industry, then send the seller an inquiry. Sending it shows you their phone number and email." },
       { q: "Can I order or pay on Harsol27?", a: "No. There is no cart, no online payment and no ordering. Price, quantity, delivery and payment are agreed directly between you and the seller." },
-      { q: "Do I need an account?", a: "Not to search and browse. To send an enquiry, sign in, or ", link: { href: "/sign-up", text: "create an account" }, after: " with your name, mobile number and a password." },
+      { q: "Do I need an account?", a: "Not to search and browse. To send an inquiry, sign in, or ", link: { href: "/sign-up", text: "create an account" }, after: " with your name, mobile number, email and a password." },
       { q: "Who can sell on Harsol27?", a: "Businesses register on Harsol27 and pay the fee, and our team approves each one before they appear." },
       { q: "How do I list my business?", a: "Fill in ", link: { href: "/Seller-Registration", text: "Seller registration" }, after: " and pay the fee. Once our team approves it, we send you a login; then you set up your seller page and add your products." },
       { q: "I forgot my password. What do I do?", a: "Choose ", link: { href: "/forgot-password", text: "Forgot password?" }, after: " on the sign-in page and enter the email on your account (sellers: the email from your Seller registration). We will email you a link to choose a new one." },
@@ -306,7 +306,7 @@ export const en = {
     productOne: "{count} product",
     productMany: "{count} products",
     allIndustries: "← All industries",
-    industryEmpty: "No products in this industry match yet.",
+    industryEmpty: "No products found in this industry yet.",
     searchTitle: "Search products",
     resultsFor: "Results for “{q}”",
     noMatch: "No products match. Try fewer words, or search all of India.",
@@ -539,7 +539,7 @@ export const en = {
     photoHint: "JPG, PNG or WebP, up to 10 MB each, up to {max} photos ({count} so far). The first photo is shown in search results.",
     photoNamesHint: "Name each photo, for example S1, S2 or 5 litre: buyers see the name under it.",
     photoName: "Name of photo {n}",
-    photoNamePlaceholder: "Name, e.g. S1",
+    photoNamePlaceholder: "e.g. S1",
     savePhotoName: "Save the name of photo {n}",
     saveShort: "Save",
     photoOrder: "Photos, in display order",

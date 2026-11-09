@@ -41,7 +41,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
     ["Contact phone", contact ? <a key="p" href={`tel:${contact.phone}`} className="text-primary underline">{contact.phone}</a> : "—"],
     ["Contact email", contact ? <a key="e" href={`mailto:${contact.email}`} className="text-primary underline">{contact.email}</a> : "—"],
     ["Account", isPlaceholderEmail(seller.user.email) ? (seller.user.phoneNumber ?? "—") : seller.user.email],
-    ["Address", `${seller.address ?? ""}, ${seller.city}, ${seller.state}`],
+    ["Address", [seller.address, seller.city, seller.state].filter(Boolean).join(", ")],
     ["About", seller.description || "—"],
     ["Applied", `${formatIst(seller.createdAt)} IST`],
   ];
@@ -49,7 +49,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <Link href="/admin/sellers" className="w-fit text-sm text-primary underline">
+        <Link href="/admin/sellers" className="w-fit py-1 text-sm text-primary underline">
           ← All sellers
         </Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -58,7 +58,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
         </div>
       </div>
 
-      <dl className="grid gap-x-6 gap-y-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[max-content_1fr]">
+      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 rounded-xl border border-border bg-card p-5 sm:grid-cols-[max-content_minmax(0,1fr)]">
         {details.map(([term, value]) => (
           <div key={term} className="contents">
             <dt className="text-sm text-muted-foreground">{term}</dt>
@@ -123,7 +123,7 @@ export default async function SellerReviewPage({ params }: PageProps<"/admin/sel
                     {product.removedAt && " · removed by staff"}
                   </span>
                 </div>
-                <Link href={`/products/${product.slug}`} className="shrink-0 text-sm font-medium text-primary underline">
+                <Link href={`/products/${product.slug}`} className="shrink-0 py-1 text-sm font-medium text-primary underline">
                   Preview<span className="sr-only"> {product.name}</span>
                 </Link>
               </li>

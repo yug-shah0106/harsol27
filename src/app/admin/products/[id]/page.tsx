@@ -28,7 +28,7 @@ export default async function AdminProductPage({ params }: PageProps<"/admin/pro
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <Link href="/admin/products" className="w-fit text-sm text-primary underline">
+        <Link href="/admin/products" className="w-fit py-1 text-sm text-primary underline">
           ← All products
         </Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -68,7 +68,7 @@ export default async function AdminProductPage({ params }: PageProps<"/admin/pro
         </h2>
         <p className="whitespace-pre-line">{product.description}</p>
         {specs.length > 0 && (
-          <dl className="mt-2 grid max-w-xl gap-x-6 gap-y-1 sm:grid-cols-[max-content_1fr]">
+          <dl className="mt-2 grid max-w-xl grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-[max-content_minmax(0,1fr)]">
             {specs.map((s, i) => (
               <div key={i} className="contents">
                 <dt className="text-muted-foreground">{s.label}</dt>

@@ -85,7 +85,7 @@ export const hi: Messages = {
       label: "सेलर रजिस्ट्रेशन ऑफ़र",
       months: "Harsol27 पर {months} महीने",
       till: "ऑफ़र {date} तक",
-      pay: "रजिस्टर करते समय UPI से भुगतान करें, और भुगतान का स्क्रीनशॉट जोड़ें।",
+      pay: "रजिस्टर करते समय UPI से भुगतान करें, फिर UPI ट्रांज़ैक्शन ID और भुगतान का स्क्रीनशॉट जोड़ें।",
       usually: "सामान्य कीमत ",
     },
     cta: {
@@ -268,7 +268,7 @@ export const hi: Messages = {
   prose: {
     lastUpdated: "अंतिम अपडेट",
     draftTitle: "ड्राफ़्ट।",
-    draft: "इस पेज को अंतिम रूप दिया जा रहा है और यह लॉन्च से पहले बदल सकता है।",
+    draft: "इस पेज को अंतिम रूप दिया जा रहा है और यह बदल सकता है।",
   },
   about: {
     title: "Harsol27 के बारे में",
@@ -289,7 +289,7 @@ export const hi: Messages = {
     faq: [
       { q: "विक्रेता का फ़ोन नंबर कैसे मिलेगा?", a: "कोई उत्पाद खोजें या उद्योग के अनुसार देखें, फिर विक्रेता को पूछताछ भेजें। भेजते ही आपको उनका फ़ोन नंबर और ईमेल दिखता है।" },
       { q: "क्या मैं Harsol27 पर ऑर्डर या भुगतान कर सकता हूँ?", a: "नहीं। कोई कार्ट, ऑनलाइन भुगतान या ऑर्डर नहीं है। कीमत, मात्रा, डिलीवरी और भुगतान आप और विक्रेता आपस में सीधे तय करते हैं।" },
-      { q: "क्या मुझे खाते की ज़रूरत है?", a: "खोजने और देखने के लिए नहीं। पूछताछ भेजने के लिए साइन इन करें, या अपने नाम, मोबाइल नंबर और पासवर्ड से ", link: { href: "/sign-up", text: "खाता बनाएँ" }, after: "।" },
+      { q: "क्या मुझे खाते की ज़रूरत है?", a: "खोजने और देखने के लिए नहीं। पूछताछ भेजने के लिए साइन इन करें, या अपने नाम, मोबाइल नंबर, ईमेल और पासवर्ड से ", link: { href: "/sign-up", text: "खाता बनाएँ" }, after: "।" },
       { q: "Harsol27 पर कौन बेच सकता है?", a: "व्यवसाय Harsol27 पर रजिस्टर करते हैं और फ़ीस भरते हैं, और दिखने से पहले हमारी टीम हर एक को स्वीकृत करती है।" },
       { q: "मैं अपना व्यवसाय कैसे लिस्ट करूँ?", a: "", link: { href: "/Seller-Registration", text: "सेलर रजिस्ट्रेशन" }, after: " भरें और फ़ीस भरें। हमारी टीम द्वारा स्वीकृत होने पर हम आपको लॉगिन भेजते हैं; फिर आप अपना सेलर पेज बनाते हैं और अपने उत्पाद जोड़ते हैं।" },
       { q: "मैं अपना पासवर्ड भूल गया हूँ। क्या करूँ?", a: "साइन इन पेज पर ", link: { href: "/forgot-password", text: "पासवर्ड भूल गए?" }, after: " चुनें और अपने खाते का ईमेल लिखें (सेलर: सेलर रजिस्ट्रेशन वाला ईमेल)। हम नया पासवर्ड चुनने की लिंक ईमेल करेंगे।" },
@@ -532,7 +532,7 @@ export const hi: Messages = {
     photoHint: "JPG, PNG या WebP, हर तस्वीर 10 MB तक, कुल {max} तस्वीरें (अभी तक {count})। पहली तस्वीर खोज परिणामों में दिखती है।",
     photoNamesHint: "हर तस्वीर को नाम दें, जैसे S1, S2 या 5 लीटर: खरीदार उसके नीचे यह नाम देखते हैं।",
     photoName: "तस्वीर {n} का नाम",
-    photoNamePlaceholder: "नाम, जैसे S1",
+    photoNamePlaceholder: "जैसे S1",
     savePhotoName: "तस्वीर {n} का नाम सेव करें",
     saveShort: "सेव करें",
     photoOrder: "तस्वीरें, दिखने के क्रम में",
@@ -685,6 +685,12 @@ export const hi: Messages = {
     "The screenshot did not finish uploading. Please choose it again.": "स्क्रीनशॉट पूरा अपलोड नहीं हुआ। कृपया इसे फिर से चुनें।",
     "This file is not a real JPG, PNG or PDF. Please upload the screenshot itself.": "यह असली JPG, PNG या PDF फ़ाइल नहीं है। कृपया स्क्रीनशॉट ही अपलोड करें।",
     "This screenshot was already used. Please choose it again.": "यह स्क्रीनशॉट पहले ही इस्तेमाल हो चुका है। कृपया इसे फिर से चुनें।",
+    "This file cannot be uploaded.": "यह फ़ाइल अपलोड नहीं की जा सकती।",
+    "This upload has expired. Please choose the file again.": "इस अपलोड की समय-सीमा खत्म हो गई है। कृपया फ़ाइल फिर से चुनें।",
+    "This file did not finish uploading. Please choose it again.": "यह फ़ाइल पूरी अपलोड नहीं हुई। कृपया इसे फिर से चुनें।",
+    "This file is not a real PDF, JPG or PNG. Please upload the original document.": "यह असली PDF, JPG या PNG फ़ाइल नहीं है। कृपया मूल दस्तावेज़ अपलोड करें।",
+    "This photo cannot be uploaded.": "यह फ़ोटो अपलोड नहीं की जा सकती।",
+    "Check the photo name.": "फ़ोटो का नाम जाँचें।",
     "Too many uploads. Please wait a while and try again.": "बहुत ज़्यादा अपलोड हुए हैं। कृपया थोड़ी देर बाद फिर कोशिश करें।",
     "Upload a PDF, JPG or PNG file.": "PDF, JPG या PNG फ़ाइल अपलोड करें।",
     "This file is empty.": "यह फ़ाइल खाली है।",

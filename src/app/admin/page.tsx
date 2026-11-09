@@ -65,7 +65,7 @@ export default async function AdminHomePage() {
             </Link>
           </Button>
           {leads.notContacted > 0 && (
-            <Link href="/admin/leads?status=NEW" className="text-sm font-medium text-primary underline">
+            <Link href="/admin/leads?status=NEW" className="py-1 text-sm font-medium text-primary underline">
               {leads.notContacted} not contacted yet
             </Link>
           )}
@@ -171,12 +171,13 @@ export default async function AdminHomePage() {
   );
 }
 
-/** One bar per day; the count above each bar that has any, the date under every other. */
+/** One bar per day; the count above each bar that has any, the date under every other. Text sizes are in the
+ * 24-units-a-day drawing, which a phone shows at about 0.9 scale: 10 reads as roughly 9px there. */
 function DayChart({ days }: { days: { day: string; count: number }[] }) {
   const max = Math.max(1, ...days.map((d) => d.count));
   const label = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
   return (
-    <svg viewBox={`0 0 ${days.length * 24} 112`} className="mt-4 h-auto w-full" role="img" aria-label={`Registrations per day: ${days.map((d) => `${label(d.day)} ${d.count}`).join(", ")}`}>
+    <svg viewBox={`0 0 ${days.length * 24} 116`} className="mt-4 h-auto w-full" role="img" aria-label={`Registrations per day: ${days.map((d) => `${label(d.day)} ${d.count}`).join(", ")}`}>
       <line x1={0} x2={days.length * 24} y1={90} y2={90} className="stroke-border" strokeWidth={0.5} />
       {days.map((d, i) => {
         const height = (d.count / max) * 72;
@@ -185,12 +186,12 @@ function DayChart({ days }: { days: { day: string; count: number }[] }) {
           <g key={d.day}>
             <rect x={i * 24 + 5} y={90 - Math.max(height, 1)} width={14} height={Math.max(height, 1)} rx={2} className={today ? DECISION_FILL.PENDING : d.count ? "fill-primary" : "fill-border"} />
             {d.count > 0 && (
-              <text x={i * 24 + 12} y={86 - height} textAnchor="middle" fontSize={7} className="fill-foreground font-semibold">
+              <text x={i * 24 + 12} y={86 - height} textAnchor="middle" fontSize={9} className="fill-foreground font-semibold">
                 {d.count}
               </text>
             )}
             {(i % 2 === 1 || today) && (
-              <text x={i * 24 + 12} y={104} textAnchor="middle" fontSize={6.5} className="fill-muted-foreground">
+              <text x={i * 24 + 12} y={107} textAnchor="middle" fontSize={10} className="fill-muted-foreground">
                 {today ? "Today" : label(d.day)}
               </text>
             )}

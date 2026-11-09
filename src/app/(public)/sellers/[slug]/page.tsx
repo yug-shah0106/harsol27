@@ -11,7 +11,7 @@ import { getMessages } from "@/server/locale";
 
 export async function generateMetadata({ params }: PageProps<"/sellers/[slug]">): Promise<Metadata> {
   const seller = await getPublicSeller((await params).slug);
-  if (!seller) return {};
+  if (!seller) return { title: (await getMessages()).notFound.title };
   const { companyName, city, state } = seller;
   return pageMetadata({
     title: `${companyName}, ${city}`,
@@ -31,7 +31,7 @@ export default async function SellerProfilePage({ params }: PageProps<"/sellers/
     <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex flex-col gap-3">
-          <h1 className="text-3xl font-extrabold tracking-tight animate-in slide-in-from-bottom-2 duration-500 ease-out">{seller.companyName}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight wrap-anywhere animate-in slide-in-from-bottom-2 duration-500 ease-out">{seller.companyName}</h1>
           <p className="text-muted-foreground">
             {seller.city}, {seller.state} · {fill(p.since, { year: seller.createdAt.getFullYear() })}
           </p>

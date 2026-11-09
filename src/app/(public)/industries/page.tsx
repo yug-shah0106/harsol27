@@ -32,11 +32,13 @@ export default async function IndustriesPage() {
               className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 font-semibold no-underline transition-transform duration-300 hover:-translate-y-0.5 hover:border-primary"
             >
               {industry.name}
-              <span className="text-sm font-normal text-muted-foreground">
-                {industry.productCount === 1 ? countOne : count}
-                <CountUp value={industry.productCount} />
-                {industry.productCount === 1 ? afterOne : after}
-              </span>
+              {industry.productCount > 0 && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  {industry.productCount === 1 ? countOne : count}
+                  <CountUp value={industry.productCount} />
+                  {industry.productCount === 1 ? afterOne : after}
+                </span>
+              )}
             </Link>
           </li>
         ))}

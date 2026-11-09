@@ -64,7 +64,7 @@ export default async function LeadPage({ params }: PageProps<"/admin/leads/[id]"
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <Link href="/admin/leads" className="w-fit text-sm text-primary underline">
+        <Link href="/admin/leads" className="w-fit py-1 text-sm text-primary underline">
           ← All leads
         </Link>
         <div className="flex flex-wrap items-center gap-3">

@@ -42,10 +42,10 @@ export function Wordmark() {
           second line on narrow phones). */}
       <span className="flex min-w-0 flex-col sm:gap-0.5">
         <span className="font-display text-lg leading-none tracking-tight whitespace-nowrap sm:text-[1.375rem]">
-          <span className="font-sans text-[0.625rem] font-semibold tracking-normal text-muted-foreground sm:text-xs">Shree </span>
+          <span className="font-sans text-[0.625rem] font-semibold tracking-normal text-muted-foreground min-[360px]:text-[0.6875rem] sm:text-xs">Shree </span>
           Harsol<span className="italic">27</span>
         </span>
-        <span className="text-[0.625rem] leading-[1.1] font-semibold text-muted-foreground sm:text-xs sm:whitespace-nowrap">Jain Yuvak Trust, Bhayander</span>
+        <span className="text-[0.625rem] leading-[1.1] font-semibold text-muted-foreground min-[360px]:text-[0.6875rem] sm:text-xs sm:whitespace-nowrap">Jain Yuvak Trust, Bhayander</span>
       </span>
     </Link>
   );
@@ -104,23 +104,26 @@ export async function SiteHeader({ blend = false }: { blend?: boolean }) {
   );
 }
 
+// Tall enough for a thumb (WCAG 2.5.8): the padding is the tap area, the text stays slim.
+const FOOTER_LINK = "py-1.5 hover:underline";
+
 export async function SiteFooter() {
   const t = await getMessages();
   return (
     <footer className="mt-auto border-t border-border bg-secondary print:hidden">
       {/* One slim row: the copyright left, the links right (the floating buttons stop above the footer). */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-5 text-sm sm:px-6 lg:px-10">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3.5 text-sm sm:px-6 lg:px-10">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <p className="text-muted-foreground">© {new Date().getFullYear()} {t.footer.owner}</p>
           <InstallApp />
         </div>
-        <nav aria-label={t.footer.label} className="ml-auto flex flex-wrap gap-x-6 gap-y-2">
-          <Link href="/about" className="hover:underline">{t.footer.about}</Link>
-          <Link href="/about#faq" className="hover:underline">{t.footer.faq}</Link>
-          <Link href="/seller/sign-in" className="hover:underline">{t.footer.sellerSignIn}</Link>
-          <Link href="/contact" className="hover:underline">{t.footer.contact}</Link>
-          <Link href="/terms" className="hover:underline">{t.footer.terms}</Link>
-          <Link href="/privacy" className="hover:underline">{t.footer.privacy}</Link>
+        <nav aria-label={t.footer.label} className="ml-auto flex flex-wrap gap-x-6">
+          <Link href="/about" className={FOOTER_LINK}>{t.footer.about}</Link>
+          <Link href="/about#faq" className={FOOTER_LINK}>{t.footer.faq}</Link>
+          <Link href="/seller/sign-in" className={FOOTER_LINK}>{t.footer.sellerSignIn}</Link>
+          <Link href="/contact" className={FOOTER_LINK}>{t.footer.contact}</Link>
+          <Link href="/terms" className={FOOTER_LINK}>{t.footer.terms}</Link>
+          <Link href="/privacy" className={FOOTER_LINK}>{t.footer.privacy}</Link>
         </nav>
       </div>
     </footer>

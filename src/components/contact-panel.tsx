@@ -66,7 +66,7 @@ export async function ContactPanel({
             <Lock aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
             {c.signInFirst}
           </p>
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="h-auto min-h-12 py-2.5 text-center whitespace-normal">
             <Link href={`/sign-in?next=${encodeURIComponent(returnTo)}`}>{c.signIn}</Link>
           </Button>
           <p className="text-sm">

@@ -83,7 +83,7 @@ export function InquiryForm({
           <FieldMessage id="message-error" message={errors.message} />
         </Field>
       </FieldGroup>
-      <Button type="submit" size="lg" disabled={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} className="h-auto min-h-12 w-full py-2.5 text-center whitespace-normal">
         {pending ? r.sending : r.submit}
       </Button>
     </form>
